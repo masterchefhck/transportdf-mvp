@@ -188,10 +188,10 @@ export default function PassengerDashboard() {
 
       setCurrentTrip(response.data);
       setShowRequestModal(false);
-      Alert.alert('Sucesso', 'Viagem solicitada! Aguardando motorista...');
+      showAlert('Sucesso', 'Viagem solicitada! Aguardando motorista...');
     } catch (error) {
       console.error('Error requesting trip:', error);
-      Alert.alert('Erro', 'Erro ao solicitar viagem');
+      showAlert('Erro', 'Erro ao solicitar viagem');
     } finally {
       setLoading(false);
     }
