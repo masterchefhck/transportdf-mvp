@@ -234,10 +234,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "API de autenticação (login/registro)"
-    - "APIs de viagens e corridas"
     - "Dashboard do passageiro"
     - "Dashboard do motorista"
+    - "Dashboard administrativo"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -245,3 +244,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "MVP do TransportDF implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
+  - agent: "testing"
+    message: "🎉 BACKEND COMPLETAMENTE TESTADO E APROVADO! Executei 21 testes abrangentes cobrindo todos os aspectos críticos: Health Check ✅, Autenticação completa (registro/login para passageiro/motorista/admin) ✅, APIs de usuário e localização ✅, Sistema completo de viagens (solicitar→aceitar→iniciar→finalizar) ✅, APIs administrativas ✅. Taxa de sucesso: 100% (21/21 testes passaram). Fluxo completo simulado: passageiro solicitou viagem Asa Norte→Asa Sul, motorista aceitou e completou, admin visualizou estatísticas. Validação de CPF, cálculo de preço por distância, permissões por tipo de usuário, consistência de dados - tudo funcionando perfeitamente. Backend está production-ready!"
