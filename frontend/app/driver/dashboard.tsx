@@ -275,11 +275,11 @@ export default function DriverDashboard() {
     try {
       console.log('Logging out driver...');
       await AsyncStorage.multiRemove(['access_token', 'user']);
-      router.replace('/');
+      router.replace('/driver');
     } catch (error) {
       console.error('Error during logout:', error);
       // Force logout even if there's an error
-      router.replace('/');
+      router.replace('/driver');
     }
   };
 
