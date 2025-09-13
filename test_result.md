@@ -116,6 +116,9 @@ backend:
       - working: true
         agent: "main"
         comment: "Implementado sistema completo de autenticação com JWT, registro e login para os 3 tipos de usuário"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTADO COMPLETAMENTE - Todos os testes de autenticação passaram: registro de passageiro/motorista/admin (100% sucesso), login para todos os tipos de usuário (100% sucesso), validação JWT funcionando perfeitamente. Tokens gerados corretamente e validação de credenciais operacional."
 
   - task: "APIs de usuários e localização"
     implemented: true
@@ -128,6 +131,9 @@ backend:
       - working: true
         agent: "main"
         comment: "Implementado endpoints para atualizar localização e status de motoristas"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTADO COMPLETAMENTE - APIs de usuário funcionando perfeitamente: atualização de localização (coordenadas de Brasília testadas), mudança de status do motorista (online/offline), recuperação de dados do usuário atual via JWT. Todos os endpoints respondendo corretamente."
 
   - task: "APIs de viagens e corridas"
     implemented: true
@@ -140,6 +146,9 @@ backend:
       - working: true
         agent: "main"
         comment: "Implementado sistema completo de viagens: solicitar, aceitar, iniciar, finalizar"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTADO COMPLETAMENTE - Sistema de viagens 100% funcional: solicitação de viagem pelo passageiro (Asa Norte → Asa Sul testada), listagem de viagens disponíveis para motorista, aceitação de viagem, início da viagem, finalização da viagem, histórico de viagens para passageiro e motorista. Cálculo automático de preço baseado em distância funcionando. Status de motorista atualizado corretamente (busy durante viagem, online após completar)."
 
   - task: "APIs administrativas"
     implemented: true
@@ -152,6 +161,9 @@ backend:
       - working: true
         agent: "main"
         comment: "Implementado endpoints para admin visualizar usuários, viagens e estatísticas"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTADO COMPLETAMENTE - APIs administrativas funcionando perfeitamente: estatísticas gerais (3 usuários, 1 viagem, 100% taxa de conclusão), lista de usuários (3 usuários recuperados), lista de todas as viagens (1 viagem recuperada). Permissões por tipo de usuário funcionando corretamente - apenas admin pode acessar."
 
 frontend:
   - task: "Tela inicial com seleção de modo"
