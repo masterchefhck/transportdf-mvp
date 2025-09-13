@@ -42,6 +42,7 @@ export default function DriverDashboard() {
   const [availableTrips, setAvailableTrips] = useState<Trip[]>([]);
   const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
 
@@ -172,9 +173,11 @@ export default function DriverDashboard() {
   };
 
   const acceptTrip = async (tripId: string) => {
-    setLoading(true);
+    setActionLoading(true);
     try {
       const token = await AsyncStorage.getItem('access_token');
+      console.log('Accepting trip:', tripId);
+      
       await axios.put(
         `${API_URL}/api/trips/${tripId}/accept`,
         {},
@@ -190,13 +193,16 @@ export default function DriverDashboard() {
       console.error('Error accepting trip:', error);
       Alert.alert('Erro', 'Erro ao aceitar viagem');
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
   const startTrip = async (tripId: string) => {
+    setActionLoading(true);
     try {
       const token = await AsyncStorage.getItem('access_token');
+      console.log('Starting trip:', tripId);
+      
       await axios.put(
         `${API_URL}/api/trips/${tripId}/start`,
         {},
@@ -210,6 +216,8 @@ export default function DriverDashboard() {
     } catch (error) {
       console.error('Error starting trip:', error);
       Alert.alert('Erro', 'Erro ao iniciar viagem');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -222,8 +230,11 @@ export default function DriverDashboard() {
         {
           text: 'Finalizar',
           onPress: async () => {
+            setActionLoading(true);
             try {
               const token = await AsyncStorage.getItem('access_token');
+              console.log('Completing trip:', tripId);
+              
               await axios.put(
                 `${API_URL}/api/trips/${tripId}/complete`,
                 {},
@@ -233,11 +244,27 @@ export default function DriverDashboard() {
               );
 
               Alert.alert('Sucesso', 'Viagem finalizada com sucesso!');
+              
+              // Clear current trip
               setCurrentTrip(null);
+              
+              // Update driver status back to online in local state
+              setIsOnline(true);
+              const userData = await AsyncStorage.getItem('user');
+              if (userData) {
+                const parsedUser = JSON.parse(userData);
+                parsedUser.driver_status = 'online';
+                await AsyncStorage.setItem('user', JSON.stringify(parsedUser));
+                setUser(parsedUser);
+              }
+              
+              // Reload available trips
               loadAvailableTrips();
             } catch (error) {
               console.error('Error completing trip:', error);
-              Alert.alert('Erro', 'Erro ao finalizar viagem');
+              Alert.alert('Erro', 'Erro ao finalizar viagem. Tente novamente.');
+            } finally {
+              setActionLoading(false);
             }
           },
         },
@@ -260,8 +287,15 @@ export default function DriverDashboard() {
           text: 'Sair',
           style: 'destructive',
           onPress: async () => {
-            await AsyncStorage.multiRemove(['access_token', 'user']);
-            router.replace('/');
+            try {
+              console.log('Logging out driver...');
+              await AsyncStorage.multiRemove(['access_token', 'user']);
+              router.replace('/');
+            } catch (error) {
+              console.error('Error during logout:', error);
+              // Force logout even if there's an error
+              router.replace('/');
+            }
           },
         },
       ]
@@ -299,10 +333,15 @@ export default function DriverDashboard() {
       )}
 
       <TouchableOpacity
-        style={styles.acceptButton}
+        style={[styles.acceptButton, actionLoading && styles.buttonDisabled]}
         onPress={() => acceptTrip(item.id)}
+        disabled={actionLoading}
       >
-        <Text style={styles.acceptButtonText}>Aceitar Corrida</Text>
+        {actionLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.acceptButtonText}>Aceitar Corrida</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -378,18 +417,28 @@ export default function DriverDashboard() {
             <View style={styles.tripActions}>
               {currentTrip.status === 'accepted' && (
                 <TouchableOpacity
-                  style={styles.actionButton}
+                  style={[styles.actionButton, actionLoading && styles.buttonDisabled]}
                   onPress={() => startTrip(currentTrip.id)}
+                  disabled={actionLoading}
                 >
-                  <Text style={styles.actionButtonText}>Iniciar Viagem</Text>
+                  {actionLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.actionButtonText}>Iniciar Viagem</Text>
+                  )}
                 </TouchableOpacity>
               )}
               {currentTrip.status === 'in_progress' && (
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
+                  style={[styles.actionButton, { backgroundColor: '#4CAF50' }, actionLoading && styles.buttonDisabled]}
                   onPress={() => completeTrip(currentTrip.id)}
+                  disabled={actionLoading}
                 >
-                  <Text style={styles.actionButtonText}>Finalizar Viagem</Text>
+                  {actionLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.actionButtonText}>Finalizar Viagem</Text>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
@@ -587,6 +636,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  buttonDisabled: {
+    backgroundColor: '#666',
+    opacity: 0.6,
   },
   noTripsContainer: {
     flex: 1,
