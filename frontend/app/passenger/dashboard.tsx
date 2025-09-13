@@ -19,6 +19,39 @@ import * as Location from 'expo-location';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
+// Utility functions for cross-platform alerts
+const showAlert = (title: string, message?: string) => {
+  if (Platform.OS === 'web') {
+    if (message) {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      window.alert(title);
+    }
+  } else {
+    Alert.alert(title, message);
+  }
+};
+
+const showConfirm = (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => {
+  if (Platform.OS === 'web') {
+    const confirmed = window.confirm(`${title}\n\n${message}`);
+    if (confirmed) {
+      onConfirm();
+    } else if (onCancel) {
+      onCancel();
+    }
+  } else {
+    Alert.alert(
+      title,
+      message,
+      [
+        { text: 'Cancelar', style: 'cancel', onPress: onCancel },
+        { text: 'Confirmar', onPress: onConfirm },
+      ]
+    );
+  }
+};
+
 interface User {
   id: string;
   name: string;
