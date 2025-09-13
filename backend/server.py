@@ -130,6 +130,38 @@ class Token(BaseModel):
     token_type: str
     user: dict
 
+class ReportCreate(BaseModel):
+    reported_user_id: str
+    trip_id: Optional[str] = None
+    title: str
+    description: str
+    report_type: ReportType
+
+class Report(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    reporter_id: str
+    reported_user_id: str
+    trip_id: Optional[str] = None
+    title: str
+    description: str
+    report_type: ReportType
+    status: ReportStatus = ReportStatus.PENDING
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    admin_message: Optional[str] = None
+    user_response: Optional[str] = None
+    response_allowed: bool = True
+    resolved_at: Optional[datetime] = None
+
+class AdminMessage(BaseModel):
+    message: str
+
+class UserResponse(BaseModel):
+    response: str
+
+class UserBlock(BaseModel):
+    user_id: str
+    reason: str
+
 # Utility functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
