@@ -54,6 +54,16 @@ class DriverStatus(str, Enum):
     ONLINE = "online"
     BUSY = "busy"
 
+class ReportStatus(str, Enum):
+    PENDING = "pending"
+    UNDER_REVIEW = "under_review"
+    RESOLVED = "resolved"
+    DISMISSED = "dismissed"
+
+class ReportType(str, Enum):
+    DRIVER_REPORT = "driver_report"  # Driver reporting passenger
+    PASSENGER_REPORT = "passenger_report"  # Passenger reporting driver
+
 # Models
 class UserCreate(BaseModel):
     name: str
