@@ -34,7 +34,7 @@ const showConfirm = (title: string, message: string, onConfirm: () => void, onCa
   }
 };
 
-export default function Index() {
+export default function DriverApp() {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
@@ -48,22 +48,13 @@ export default function Index() {
       
       if (token && user) {
         const parsedUser = JSON.parse(user);
-        setCurrentUser(parsedUser);
-        
-        // Redirect to appropriate dashboard based on user type
-        switch (parsedUser.user_type) {
-          case 'passenger':
-            router.replace('/passenger');
-            break;
-          case 'driver':
-            router.replace('/driver');
-            break;
-          case 'admin':
-            router.replace('/admin');
-            break;
-          default:
-            // Clear invalid session
-            await AsyncStorage.multiRemove(['access_token', 'user']);
+        if (parsedUser.user_type === 'driver') {
+          setCurrentUser(parsedUser);
+          // Redirect to dashboard if already logged in as driver
+          router.replace('/driver/dashboard');
+        } else {
+          // Clear session if wrong user type
+          await AsyncStorage.multiRemove(['access_token', 'user']);
         }
       }
     } catch (error) {
@@ -71,8 +62,12 @@ export default function Index() {
     }
   };
 
-  const handleModeSelection = (mode: 'passenger' | 'driver' | 'admin') => {
-    router.push(`/${mode}`);
+  const handleLogin = () => {
+    router.push('/auth/login?mode=driver');
+  };
+
+  const handleRegister = () => {
+    router.push('/auth/register?mode=driver');
   };
 
   const handleLogout = async () => {
@@ -96,7 +91,7 @@ export default function Index() {
       
       <View style={styles.header}>
         <Text style={styles.title}>TransportDF</Text>
-        <Text style={styles.subtitle}>Transporte inteligente em Brasília</Text>
+        <Text style={styles.subtitle}>Motoristas</Text>
         
         {currentUser && (
           <View style={styles.userInfo}>
@@ -108,49 +103,41 @@ export default function Index() {
         )}
       </View>
 
-      <View style={styles.modesContainer}>
-        <Text style={styles.selectorTitle}>Escolha seu perfil de acesso:</Text>
-        
-        <TouchableOpacity
-          style={[styles.modeCard, styles.passengerCard]}
-          onPress={() => handleModeSelection('passenger')}
-        >
-          <Ionicons name="person" size={48} color="#fff" />
-          <Text style={styles.modeTitle}>Passageiro</Text>
-          <Text style={styles.modeDescription}>
-            Solicite uma viagem para onde você quiser
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.modeCard, styles.driverCard]}
-          onPress={() => handleModeSelection('driver')}
-        >
-          <Ionicons name="car" size={48} color="#fff" />
-          <Text style={styles.modeTitle}>Motorista</Text>
-          <Text style={styles.modeDescription}>
-            Trabalhe como motorista e ganhe dinheiro
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.modeCard, styles.adminCard]}
-          onPress={() => handleModeSelection('admin')}
-        >
-          <Ionicons name="settings" size={48} color="#fff" />
-          <Text style={styles.modeTitle}>Administrador</Text>
-          <Text style={styles.modeDescription}>
-            Gerencie usuários e operações
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {!currentUser ? (
+        <View style={styles.authContainer}>
+          <View style={styles.appCard}>
+            <Ionicons name="car" size={80} color="#2196F3" />
+            <Text style={styles.appTitle}>Área do Motorista</Text>
+            <Text style={styles.appDescription}>
+              Trabalhe como motorista, defina seus horários e ganhe dinheiro dirigindo em Brasília
+            </Text>
+            
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                <Text style={styles.loginButtonText}>Fazer Login</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+                <Text style={styles.registerButtonText}>Quero ser Motorista</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.loggedInContainer}>
+          <TouchableOpacity
+            style={styles.dashboardButton}
+            onPress={() => router.push('/driver/dashboard')}
+          >
+            <Ionicons name="speedometer" size={32} color="#fff" />
+            <Text style={styles.dashboardButtonText}>Ir para Dashboard</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           📍 Brasília/DF • Versão MVP 1.0
-        </Text>
-        <Text style={styles.footerSubtext}>
-          Acesso direto: /passenger • /driver • /admin
         </Text>
       </View>
     </SafeAreaView>
@@ -164,7 +151,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 40,
     paddingHorizontal: 20,
   },
   title: {
@@ -174,8 +161,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#888',
+    fontSize: 18,
+    color: '#2196F3',
+    fontWeight: '600',
     textAlign: 'center',
   },
   userInfo: {
@@ -204,50 +192,85 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  modesContainer: {
+  authContainer: {
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
   },
-  selectorTitle: {
-    fontSize: 20,
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 30,
-    fontWeight: '600',
-  },
-  modeCard: {
-    padding: 25,
-    borderRadius: 16,
+  appCard: {
+    padding: 40,
+    borderRadius: 20,
     alignItems: 'center',
+    backgroundColor: '#2a2a2a',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-    marginBottom: 15,
   },
-  passengerCard: {
-    backgroundColor: '#4CAF50',
-  },
-  driverCard: {
-    backgroundColor: '#2196F3',
-  },
-  adminCard: {
-    backgroundColor: '#FF9800',
-  },
-  modeTitle: {
-    fontSize: 22,
+  appTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: 20,
+    marginBottom: 15,
   },
-  modeDescription: {
-    fontSize: 14,
-    color: '#fff',
+  appDescription: {
+    fontSize: 16,
+    color: '#888',
     textAlign: 'center',
-    opacity: 0.9,
+    marginBottom: 30,
+    lineHeight: 24,
+  },
+  buttonContainer: {
+    width: '100%',
+    gap: 15,
+  },
+  loginButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  registerButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#2196F3',
+  },
+  registerButtonText: {
+    color: '#2196F3',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  loggedInContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+  },
+  dashboardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2196F3',
+    paddingVertical: 20,
+    paddingHorizontal: 30,
+    borderRadius: 16,
+    gap: 15,
+  },
+  dashboardButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   footer: {
     padding: 20,
@@ -256,11 +279,5 @@ const styles = StyleSheet.create({
   footerText: {
     color: '#666',
     fontSize: 14,
-    marginBottom: 5,
-  },
-  footerSubtext: {
-    color: '#555',
-    fontSize: 12,
-    fontStyle: 'italic',
   },
 });
