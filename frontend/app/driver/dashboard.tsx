@@ -269,28 +269,18 @@ export default function DriverDashboard() {
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Sair',
-      'Tem certeza que deseja sair?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('Logging out driver...');
-              await AsyncStorage.multiRemove(['access_token', 'user']);
-              router.replace('/');
-            } catch (error) {
-              console.error('Error during logout:', error);
-              // Force logout even if there's an error
-              router.replace('/');
-            }
-          },
-        },
-      ]
-    );
+    const confirmed = window.confirm('Tem certeza que deseja sair?');
+    if (!confirmed) return;
+
+    try {
+      console.log('Logging out driver...');
+      await AsyncStorage.multiRemove(['access_token', 'user']);
+      router.replace('/');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Force logout even if there's an error
+      router.replace('/');
+    }
   };
 
   const formatDate = (dateString: string) => {
