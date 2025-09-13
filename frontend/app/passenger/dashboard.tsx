@@ -353,6 +353,18 @@ export default function PassengerDashboard() {
     }
   };
 
+  const handleHistoryPress = () => {
+    showAlert('Histórico', 'Funcionalidade de histórico de viagens será implementada em breve.');
+  };
+
+  const handlePaymentPress = () => {
+    showAlert('Pagamento', 'Funcionalidade de métodos de pagamento será implementada em breve.');
+  };
+
+  const handleHelpPress = () => {
+    showAlert('Ajuda', 'Entre em contato conosco:\n\nEmail: suporte@transportdf.com\nTelefone: (61) 3333-4444\n\nHorário de atendimento:\nSegunda a Sexta: 8h às 18h\nSábado: 8h às 12h');
+  };
+
   const pendingReports = myReports.filter(report => report.response_allowed && report.admin_message);
 
   return (
