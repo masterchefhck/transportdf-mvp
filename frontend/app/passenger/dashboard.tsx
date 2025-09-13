@@ -458,15 +458,15 @@ export default function PassengerDashboard() {
       </View>
 
       <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleHistoryPress}>
           <Ionicons name="time" size={24} color="#2196F3" />
           <Text style={styles.actionText}>Histórico</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={handlePaymentPress}>
           <Ionicons name="card" size={24} color="#4CAF50" />
           <Text style={styles.actionText}>Pagamento</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleHelpPress}>
           <Ionicons name="help-circle" size={24} color="#FF9800" />
           <Text style={styles.actionText}>Ajuda</Text>
         </TouchableOpacity>
