@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
   Platform,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,11 +62,27 @@ interface User {
 
 interface Trip {
   id: string;
+  driver_id?: string;
   pickup_address: string;
   destination_address: string;
   estimated_price: number;
   status: string;
   requested_at: string;
+}
+
+interface Report {
+  id: string;
+  reporter_id: string;
+  reported_user_id: string;
+  trip_id?: string;
+  title: string;
+  description: string;
+  report_type: string;
+  status: string;
+  created_at: string;
+  admin_message?: string;
+  user_response?: string;
+  response_allowed: boolean;
 }
 
 export default function PassengerDashboard() {
@@ -77,11 +94,22 @@ export default function PassengerDashboard() {
   const [estimatedPrice, setEstimatedPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  
+  // Report states
+  const [myReports, setMyReports] = useState<Report[]>([]);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [showReportsPanel, setShowReportsPanel] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [responseText, setResponseText] = useState('');
 
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
     checkCurrentTrip();
+    loadMyReports();
   }, []);
 
   const loadUserData = async () => {
@@ -92,6 +120,18 @@ export default function PassengerDashboard() {
       }
     } catch (error) {
       console.log('Error loading user data:', error);
+    }
+  };
+
+  const loadMyReports = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/reports/my`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMyReports(response.data);
+    } catch (error) {
+      console.log('Error loading reports:', error);
     }
   };
 
@@ -197,6 +237,78 @@ export default function PassengerDashboard() {
     }
   };
 
+  const handleReportDriver = () => {
+    if (!currentTrip || !currentTrip.driver_id) {
+      showAlert('Erro', 'Não há motorista para reportar nesta viagem');
+      return;
+    }
+    setShowReportModal(true);
+  };
+
+  const submitReport = async () => {
+    if (!reportTitle.trim() || !reportDescription.trim() || !currentTrip) {
+      showAlert('Erro', 'Preencha todos os campos');
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/reports/create`,
+        {
+          reported_user_id: currentTrip.driver_id,
+          trip_id: currentTrip.id,
+          title: reportTitle,
+          description: reportDescription,
+          report_type: 'passenger_report'
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showAlert('Sucesso', 'Report enviado com sucesso!');
+      setShowReportModal(false);
+      setReportTitle('');
+      setReportDescription('');
+      loadMyReports();
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      showAlert('Erro', 'Erro ao enviar report');
+    }
+  };
+
+  const handleRespondToReport = (report: Report) => {
+    setSelectedReport(report);
+    setShowResponseModal(true);
+  };
+
+  const submitResponse = async () => {
+    if (!responseText.trim() || !selectedReport) {
+      showAlert('Erro', 'Digite sua resposta');
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/reports/${selectedReport.id}/respond`,
+        { response: responseText },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showAlert('Sucesso', 'Resposta enviada com sucesso!');
+      setShowResponseModal(false);
+      setResponseText('');
+      loadMyReports();
+    } catch (error) {
+      console.error('Error submitting response:', error);
+      showAlert('Erro', 'Erro ao enviar resposta');
+    }
+  };
+
   const handleLogout = async () => {
     showConfirm(
       'Sair',
@@ -233,9 +345,15 @@ export default function PassengerDashboard() {
       case 'in_progress': return '#4CAF50';
       case 'completed': return '#4CAF50';
       case 'cancelled': return '#f44336';
+      case 'pending': return '#FF9800';
+      case 'under_review': return '#2196F3';
+      case 'resolved': return '#4CAF50';
+      case 'dismissed': return '#666';
       default: return '#666';
     }
   };
+
+  const pendingReports = myReports.filter(report => report.response_allowed && report.admin_message);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -251,9 +369,22 @@ export default function PassengerDashboard() {
             </Text>
           </View>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {pendingReports.length > 0 && (
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => setShowReportsPanel(true)}
+            >
+              <Ionicons name="notifications" size={24} color="#FF9800" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>{pendingReports.length}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.mainContent}>
@@ -281,6 +412,19 @@ export default function PassengerDashboard() {
               </View>
               <Text style={styles.priceText}>R$ {currentTrip.estimated_price.toFixed(2)}</Text>
             </View>
+
+            {/* Report Driver Button */}
+            {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_id && (
+              <View style={styles.tripActions}>
+                <TouchableOpacity
+                  style={styles.reportButton}
+                  onPress={handleReportDriver}
+                >
+                  <Ionicons name="flag" size={16} color="#fff" />
+                  <Text style={styles.reportButtonText}>Reportar Motorista</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         ) : (
           <View style={styles.noTripContainer}>
@@ -379,6 +523,133 @@ export default function PassengerDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Report Driver Modal */}
+      <Modal visible={showReportModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reportar Motorista</Text>
+              <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.modalSubtitle}>
+              Descreva o problema ocorrido com o motorista
+            </Text>
+            
+            <TextInput
+              style={styles.reportInput}
+              placeholder="Título do report"
+              placeholderTextColor="#666"
+              value={reportTitle}
+              onChangeText={setReportTitle}
+            />
+            
+            <TextInput
+              style={[styles.reportInput, styles.textArea]}
+              placeholder="Descrição detalhada do problema..."
+              placeholderTextColor="#666"
+              value={reportDescription}
+              onChangeText={setReportDescription}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+            
+            <TouchableOpacity style={styles.submitButton} onPress={submitReport}>
+              <Text style={styles.submitButtonText}>Enviar Report</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Response Modal */}
+      <Modal visible={showResponseModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Responder Report</Text>
+              <TouchableOpacity onPress={() => setShowResponseModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedReport && (
+              <>
+                <Text style={styles.modalSubtitle}>Report: {selectedReport.title}</Text>
+                
+                {selectedReport.admin_message && (
+                  <View style={styles.adminMessageBox}>
+                    <Text style={styles.adminMessageLabel}>Mensagem do Administrador:</Text>
+                    <Text style={styles.adminMessageText}>{selectedReport.admin_message}</Text>
+                  </View>
+                )}
+                
+                <TextInput
+                  style={[styles.reportInput, styles.textArea]}
+                  placeholder="Digite sua resposta/defesa..."
+                  placeholderTextColor="#666"
+                  value={responseText}
+                  onChangeText={setResponseText}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+                
+                <TouchableOpacity style={styles.submitButton} onPress={submitResponse}>
+                  <Text style={styles.submitButtonText}>Enviar Resposta</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Reports Panel Modal */}
+      <Modal visible={showReportsPanel} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reports Pendentes</Text>
+              <TouchableOpacity onPress={() => setShowReportsPanel(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              data={pendingReports}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.reportItem}>
+                  <View style={styles.reportItemHeader}>
+                    <Text style={styles.reportItemTitle}>{item.title}</Text>
+                    <View style={[styles.reportStatusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+                      <Text style={styles.reportStatusText}>
+                        {item.status === 'pending' ? 'Pendente' : 'Em Análise'}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <Text style={styles.reportItemDescription}>{item.description}</Text>
+                  
+                  {item.admin_message && item.response_allowed && (
+                    <TouchableOpacity
+                      style={styles.respondButton}
+                      onPress={() => handleRespondToReport(item)}
+                    >
+                      <Ionicons name="chatbubble" size={16} color="#fff" />
+                      <Text style={styles.respondButtonText}>Responder</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -398,6 +669,7 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   avatar: {
     width: 50,
@@ -420,6 +692,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  notificationButton: {
+    position: 'relative',
+    padding: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: '#f44336',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   logoutButton: {
     padding: 8,
@@ -463,6 +760,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 16,
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -478,6 +776,24 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#4CAF50',
+  },
+  tripActions: {
+    marginTop: 16,
+  },
+  reportButton: {
+    backgroundColor: '#FF9800',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  reportButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   noTripContainer: {
     flex: 1,
@@ -528,26 +844,33 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContent: {
     backgroundColor: '#2a2a2a',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderRadius: 16,
     padding: 20,
+    width: '90%',
+    maxWidth: 400,
     maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 16,
   },
   closeButton: {
     padding: 4,
@@ -566,6 +889,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     marginLeft: 12,
+  },
+  reportInput: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
   },
   priceEstimate: {
     flexDirection: 'row',
@@ -596,5 +931,82 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  submitButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  adminMessageBox: {
+    backgroundColor: '#1a1a1a',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  adminMessageLabel: {
+    fontSize: 12,
+    color: '#FF9800',
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  adminMessageText: {
+    fontSize: 14,
+    color: '#fff',
+    lineHeight: 20,
+  },
+  reportItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  reportItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reportItemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    flex: 1,
+  },
+  reportStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  reportStatusText: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  reportItemDescription: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 12,
+  },
+  respondButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  respondButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
