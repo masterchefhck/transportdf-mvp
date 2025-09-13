@@ -201,7 +201,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 def calculate_trip_price(distance_km: float) -> float:
     """Calculate trip price based on distance (Brasília rates)"""
     base_price = 5.0  # Base fare R$ 5.00
-    price_per_km = 2.5  # R$ 2.50 per km
+    price_per_km = 1.5  # R$ 1.50 per km
     return round(base_price + (distance_km * price_per_km), 2)
 
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -406,6 +406,51 @@ async def get_my_trips(current_user: User = Depends(get_current_user)):
     
     return [Trip(**trip) for trip in trips]
 
+# Report endpoints
+@api_router.post("/reports/create")
+async def create_report(report_data: ReportCreate, current_user: User = Depends(get_current_user)):
+    """Create a new report"""
+    report = Report(
+        reporter_id=current_user.id,
+        reported_user_id=report_data.reported_user_id,
+        trip_id=report_data.trip_id,
+        title=report_data.title,
+        description=report_data.description,
+        report_type=report_data.report_type
+    )
+    
+    await db.reports.insert_one(report.dict())
+    return {"message": "Report created successfully", "report_id": report.id}
+
+@api_router.get("/reports/my")
+async def get_my_reports(current_user: User = Depends(get_current_user)):
+    """Get reports where current user is the reported person (to respond)"""
+    reports = await db.reports.find({"reported_user_id": current_user.id, "status": {"$in": ["pending", "under_review"]}}).to_list(100)
+    return [Report(**report) for report in reports]
+
+@api_router.post("/reports/{report_id}/respond")
+async def respond_to_report(report_id: str, response_data: UserResponse, current_user: User = Depends(get_current_user)):
+    """User responds to a report against them"""
+    report = await db.reports.find_one({"id": report_id, "reported_user_id": current_user.id})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    if not report.get("response_allowed", True):
+        raise HTTPException(status_code=400, detail="Response no longer allowed for this report")
+    
+    await db.reports.update_one(
+        {"id": report_id},
+        {
+            "$set": {
+                "user_response": response_data.response,
+                "response_allowed": False,
+                "status": "under_review"
+            }
+        }
+    )
+    
+    return {"message": "Response submitted successfully"}
+
 # Admin endpoints
 @api_router.get("/admin/users", response_model=List[User])
 async def get_all_users(current_user: User = Depends(get_current_user)):
@@ -443,53 +488,6 @@ async def get_stats(current_user: User = Depends(get_current_user)):
         "completion_rate": round((completed_trips / total_trips * 100) if total_trips > 0 else 0, 2)
     }
 
-# Report endpoints
-@api_router.post("/reports/create")
-async def create_report(report_data: ReportCreate, current_user: User = Depends(get_current_user)):
-    """Create a new report"""
-    report = Report(
-        reporter_id=current_user.id,
-        reported_user_id=report_data.reported_user_id,
-        trip_id=report_data.trip_id,
-        title=report_data.title,
-        description=report_data.description,
-        report_type=report_data.report_type
-    )
-    
-    await db.reports.insert_one(report.dict())
-    return {"message": "Report created successfully", "report_id": report.id}
-
-@api_router.get("/reports/my")
-async def get_my_reports(current_user: User = Depends(get_current_user)):
-    """Get reports where current user is the reported person (to respond)"""
-    reports = []
-    async for report in db.reports.find({"reported_user_id": current_user.id, "status": {"$in": ["pending", "under_review"]}}):
-        reports.append(Report(**report))
-    return reports
-
-@api_router.post("/reports/{report_id}/respond")
-async def respond_to_report(report_id: str, response_data: UserResponse, current_user: User = Depends(get_current_user)):
-    """User responds to a report against them"""
-    report = await db.reports.find_one({"id": report_id, "reported_user_id": current_user.id})
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-    
-    if not report.get("response_allowed", True):
-        raise HTTPException(status_code=400, detail="Response no longer allowed for this report")
-    
-    await db.reports.update_one(
-        {"id": report_id},
-        {
-            "$set": {
-                "user_response": response_data.response,
-                "response_allowed": False,
-                "status": "under_review"
-            }
-        }
-    )
-    
-    return {"message": "Response submitted successfully"}
-
 # Admin report management endpoints
 @api_router.get("/admin/reports")
 async def get_all_reports(current_user: User = Depends(get_current_user)):
@@ -498,7 +496,8 @@ async def get_all_reports(current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     
     reports = []
-    async for report in db.reports.find({}).sort("created_at", -1):
+    reports_cursor = db.reports.find({}).sort("created_at", -1)
+    async for report in reports_cursor:
         # Get reporter and reported user details
         reporter = await db.users.find_one({"id": report["reporter_id"]})
         reported = await db.users.find_one({"id": report["reported_user_id"]})
