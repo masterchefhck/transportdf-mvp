@@ -222,54 +222,45 @@ export default function DriverDashboard() {
   };
 
   const completeTrip = async (tripId: string) => {
-    Alert.alert(
-      'Finalizar viagem',
-      'Tem certeza que deseja finalizar esta viagem?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Finalizar',
-          onPress: async () => {
-            setActionLoading(true);
-            try {
-              const token = await AsyncStorage.getItem('access_token');
-              console.log('Completing trip:', tripId);
-              
-              await axios.put(
-                `${API_URL}/api/trips/${tripId}/complete`,
-                {},
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                }
-              );
+    const confirmed = window.confirm('Tem certeza que deseja finalizar esta viagem?');
+    if (!confirmed) return;
 
-              Alert.alert('Sucesso', 'Viagem finalizada com sucesso!');
-              
-              // Clear current trip
-              setCurrentTrip(null);
-              
-              // Update driver status back to online in local state
-              setIsOnline(true);
-              const userData = await AsyncStorage.getItem('user');
-              if (userData) {
-                const parsedUser = JSON.parse(userData);
-                parsedUser.driver_status = 'online';
-                await AsyncStorage.setItem('user', JSON.stringify(parsedUser));
-                setUser(parsedUser);
-              }
-              
-              // Reload available trips
-              loadAvailableTrips();
-            } catch (error) {
-              console.error('Error completing trip:', error);
-              Alert.alert('Erro', 'Erro ao finalizar viagem. Tente novamente.');
-            } finally {
-              setActionLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    setActionLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      console.log('Completing trip:', tripId);
+      
+      await axios.put(
+        `${API_URL}/api/trips/${tripId}/complete`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      window.alert('Sucesso! Viagem finalizada com sucesso!');
+      
+      // Clear current trip
+      setCurrentTrip(null);
+      
+      // Update driver status back to online in local state
+      setIsOnline(true);
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        parsedUser.driver_status = 'online';
+        await AsyncStorage.setItem('user', JSON.stringify(parsedUser));
+        setUser(parsedUser);
+      }
+      
+      // Reload available trips
+      loadAvailableTrips();
+    } catch (error) {
+      console.error('Error completing trip:', error);
+      window.alert('Erro ao finalizar viagem. Tente novamente.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const onRefresh = () => {
