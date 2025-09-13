@@ -443,6 +443,184 @@ async def get_stats(current_user: User = Depends(get_current_user)):
         "completion_rate": round((completed_trips / total_trips * 100) if total_trips > 0 else 0, 2)
     }
 
+# Report endpoints
+@api_router.post("/reports/create")
+async def create_report(report_data: ReportCreate, current_user: User = Depends(get_current_user)):
+    """Create a new report"""
+    report = Report(
+        reporter_id=current_user.id,
+        reported_user_id=report_data.reported_user_id,
+        trip_id=report_data.trip_id,
+        title=report_data.title,
+        description=report_data.description,
+        report_type=report_data.report_type
+    )
+    
+    await db.reports.insert_one(report.dict())
+    return {"message": "Report created successfully", "report_id": report.id}
+
+@api_router.get("/reports/my")
+async def get_my_reports(current_user: User = Depends(get_current_user)):
+    """Get reports where current user is the reported person (to respond)"""
+    reports = []
+    async for report in db.reports.find({"reported_user_id": current_user.id, "status": {"$in": ["pending", "under_review"]}}):
+        reports.append(Report(**report))
+    return reports
+
+@api_router.post("/reports/{report_id}/respond")
+async def respond_to_report(report_id: str, response_data: UserResponse, current_user: User = Depends(get_current_user)):
+    """User responds to a report against them"""
+    report = await db.reports.find_one({"id": report_id, "reported_user_id": current_user.id})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    if not report.get("response_allowed", True):
+        raise HTTPException(status_code=400, detail="Response no longer allowed for this report")
+    
+    await db.reports.update_one(
+        {"id": report_id},
+        {
+            "$set": {
+                "user_response": response_data.response,
+                "response_allowed": False,
+                "status": "under_review"
+            }
+        }
+    )
+    
+    return {"message": "Response submitted successfully"}
+
+# Admin report management endpoints
+@api_router.get("/admin/reports")
+async def get_all_reports(current_user: User = Depends(get_current_user)):
+    """Get all reports for admin review"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    reports = []
+    async for report in db.reports.find({}).sort("created_at", -1):
+        # Get reporter and reported user details
+        reporter = await db.users.find_one({"id": report["reporter_id"]})
+        reported = await db.users.find_one({"id": report["reported_user_id"]})
+        
+        report_with_details = Report(**report)
+        report_dict = report_with_details.dict()
+        report_dict["reporter_name"] = reporter.get("name", "Unknown") if reporter else "Unknown"
+        report_dict["reported_name"] = reported.get("name", "Unknown") if reported else "Unknown"
+        report_dict["reported_user_type"] = reported.get("user_type", "Unknown") if reported else "Unknown"
+        
+        reports.append(report_dict)
+    
+    return reports
+
+@api_router.post("/admin/reports/{report_id}/message")
+async def send_admin_message(report_id: str, message_data: AdminMessage, current_user: User = Depends(get_current_user)):
+    """Admin sends message to reported user giving them opportunity to respond"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    report = await db.reports.find_one({"id": report_id})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    await db.reports.update_one(
+        {"id": report_id},
+        {
+            "$set": {
+                "admin_message": message_data.message,
+                "response_allowed": True,
+                "status": "under_review"
+            }
+        }
+    )
+    
+    return {"message": "Message sent to user successfully"}
+
+@api_router.post("/admin/reports/{report_id}/resolve")
+async def resolve_report(report_id: str, current_user: User = Depends(get_current_user)):
+    """Admin resolves a report"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.reports.update_one(
+        {"id": report_id},
+        {
+            "$set": {
+                "status": "resolved",
+                "resolved_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {"message": "Report resolved successfully"}
+
+@api_router.post("/admin/reports/{report_id}/dismiss")
+async def dismiss_report(report_id: str, current_user: User = Depends(get_current_user)):
+    """Admin dismisses a report"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.reports.update_one(
+        {"id": report_id},
+        {
+            "$set": {
+                "status": "dismissed",
+                "resolved_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {"message": "Report dismissed successfully"}
+
+# User blocking endpoints
+@api_router.post("/admin/users/{user_id}/block")
+async def block_user(user_id: str, block_data: UserBlock, current_user: User = Depends(get_current_user)):
+    """Admin blocks a user"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "is_active": False,
+                "blocked_at": datetime.utcnow(),
+                "block_reason": block_data.reason
+            }
+        }
+    )
+    
+    return {"message": "User blocked successfully"}
+
+@api_router.post("/admin/users/{user_id}/unblock")
+async def unblock_user(user_id: str, current_user: User = Depends(get_current_user)):
+    """Admin unblocks a user"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "is_active": True
+            },
+            "$unset": {
+                "blocked_at": "",
+                "block_reason": ""
+            }
+        }
+    )
+    
+    return {"message": "User unblocked successfully"}
+
 # Basic health check
 @api_router.get("/health")
 async def health_check():
