@@ -99,7 +99,7 @@ export default function PassengerDashboard() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Erro', 'Permissão de localização necessária');
+        showAlert('Erro', 'Permissão de localização necessária');
         return;
       }
 
