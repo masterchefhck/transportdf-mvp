@@ -142,11 +142,11 @@ export default function AdminDashboard() {
         try {
           console.log('Logging out admin...');
           await AsyncStorage.multiRemove(['access_token', 'user']);
-          router.replace('/');
+          router.replace('/admin');
         } catch (error) {
           console.error('Error during logout:', error);
           // Force logout even if there's an error
-          router.replace('/');
+          router.replace('/admin');
         }
       }
     );
