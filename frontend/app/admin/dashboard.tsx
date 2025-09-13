@@ -9,6 +9,8 @@ import {
   RefreshControl,
   ActivityIndicator,
   Platform,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,36 +19,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  user_type: string;
-  is_active: boolean;
-  created_at: string;
-  driver_status?: string;
-}
-
-interface Trip {
-  id: string;
-  passenger_id: string;
-  driver_id?: string;
-  pickup_address: string;
-  destination_address: string;
-  estimated_price: number;
-  status: string;
-  requested_at: string;
-}
-
-interface Stats {
-  total_users: number;
-  total_drivers: number;
-  total_passengers: number;
-  total_trips: number;
-  completed_trips: number;
-  completion_rate: number;
-}
 
 // Utility functions for cross-platform alerts
 const showAlert = (title: string, message?: string) => {
@@ -81,14 +53,73 @@ const showConfirm = (title: string, message: string, onConfirm: () => void, onCa
   }
 };
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  user_type: string;
+  is_active: boolean;
+  created_at: string;
+  driver_status?: string;
+  blocked_at?: string;
+  block_reason?: string;
+}
+
+interface Trip {
+  id: string;
+  passenger_id: string;
+  driver_id?: string;
+  pickup_address: string;
+  destination_address: string;
+  estimated_price: number;
+  status: string;
+  requested_at: string;
+}
+
+interface Report {
+  id: string;
+  reporter_id: string;
+  reported_user_id: string;
+  trip_id?: string;
+  title: string;
+  description: string;
+  report_type: string;
+  status: string;
+  created_at: string;
+  admin_message?: string;
+  user_response?: string;
+  response_allowed: boolean;
+  reporter_name: string;
+  reported_name: string;
+  reported_user_type: string;
+}
+
+interface Stats {
+  total_users: number;
+  total_drivers: number;
+  total_passengers: number;
+  total_trips: number;
+  completed_trips: number;
+  completion_rate: number;
+}
+
 export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'trips'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'trips' | 'reports'>('stats');
+  
+  // Modal states
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [adminMessage, setAdminMessage] = useState('');
+  const [blockReason, setBlockReason] = useState('');
 
   useEffect(() => {
     loadUserData();
@@ -112,15 +143,17 @@ export default function AdminDashboard() {
       const token = await AsyncStorage.getItem('access_token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [statsResponse, usersResponse, tripsResponse] = await Promise.all([
+      const [statsResponse, usersResponse, tripsResponse, reportsResponse] = await Promise.all([
         axios.get(`${API_URL}/api/admin/stats`, { headers }),
         axios.get(`${API_URL}/api/admin/users`, { headers }),
         axios.get(`${API_URL}/api/admin/trips`, { headers }),
+        axios.get(`${API_URL}/api/admin/reports`, { headers }),
       ]);
 
       setStats(statsResponse.data);
       setUsers(usersResponse.data);
       setTrips(tripsResponse.data.slice(0, 10)); // Last 10 trips
+      setReports(reportsResponse.data);
     } catch (error) {
       console.error('Error loading admin data:', error);
       showAlert('Erro', 'Erro ao carregar dados administrativos');
@@ -152,6 +185,117 @@ export default function AdminDashboard() {
     );
   };
 
+  const handleSendMessage = async () => {
+    if (!adminMessage.trim() || !selectedReport) return;
+    
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/admin/reports/${selectedReport.id}/message`,
+        { message: adminMessage },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      showAlert('Sucesso', 'Mensagem enviada ao usuário!');
+      setShowMessageModal(false);
+      setAdminMessage('');
+      loadData();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      showAlert('Erro', 'Erro ao enviar mensagem');
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!blockReason.trim() || !selectedUser) return;
+    
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/admin/users/${selectedUser.id}/block`,
+        { user_id: selectedUser.id, reason: blockReason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      showAlert('Sucesso', `${selectedUser.name} foi bloqueado(a)!`);
+      setShowBlockModal(false);
+      setBlockReason('');
+      loadData();
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      showAlert('Erro', 'Erro ao bloquear usuário');
+    }
+  };
+
+  const handleUnblockUser = async (user: User) => {
+    showConfirm(
+      'Desbloquear Usuário',
+      `Tem certeza que deseja desbloquear ${user.name}?`,
+      async () => {
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/users/${user.id}/unblock`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', `${user.name} foi desbloqueado(a)!`);
+          loadData();
+        } catch (error) {
+          console.error('Error unblocking user:', error);
+          showAlert('Erro', 'Erro ao desbloquear usuário');
+        }
+      }
+    );
+  };
+
+  const handleResolveReport = async (report: Report) => {
+    showConfirm(
+      'Resolver Report',
+      'Tem certeza que deseja marcar este report como resolvido?',
+      async () => {
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/reports/${report.id}/resolve`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', 'Report resolvido com sucesso!');
+          loadData();
+        } catch (error) {
+          console.error('Error resolving report:', error);
+          showAlert('Erro', 'Erro ao resolver report');
+        }
+      }
+    );
+  };
+
+  const handleDismissReport = async (report: Report) => {
+    showConfirm(
+      'Descartar Report',
+      'Tem certeza que deseja descartar este report?',
+      async () => {
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/reports/${report.id}/dismiss`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', 'Report descartado com sucesso!');
+          loadData();
+        } catch (error) {
+          console.error('Error dismissing report:', error);
+          showAlert('Erro', 'Erro ao descartar report');
+        }
+      }
+    );
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
@@ -167,6 +311,10 @@ export default function AdminDashboard() {
       case 'in_progress': return '#4CAF50';
       case 'completed': return '#4CAF50';
       case 'cancelled': return '#f44336';
+      case 'pending': return '#FF9800';
+      case 'under_review': return '#2196F3';
+      case 'resolved': return '#4CAF50';
+      case 'dismissed': return '#666';
       default: return '#666';
     }
   };
@@ -220,6 +368,10 @@ export default function AdminDashboard() {
           <Text style={styles.statRowLabel}>Taxa de Conclusão:</Text>
           <Text style={styles.statRowValue}>{stats?.completion_rate || 0}%</Text>
         </View>
+        <View style={styles.statRow}>
+          <Text style={styles.statRowLabel}>Reports Pendentes:</Text>
+          <Text style={styles.statRowValue}>{reports.filter(r => r.status === 'pending').length}</Text>
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -259,9 +411,115 @@ export default function AdminDashboard() {
                   )}
                 </Text>
                 <Text style={styles.userDate}>Registrado em: {formatDate(user.created_at)}</Text>
+                {!user.is_active && (
+                  <Text style={styles.blockedText}>Bloqueado: {user.block_reason}</Text>
+                )}
               </View>
             </View>
-            <View style={[styles.statusIndicator, { backgroundColor: user.is_active ? '#4CAF50' : '#f44336' }]} />
+            <View style={styles.userActions}>
+              <View style={[styles.statusIndicator, { backgroundColor: user.is_active ? '#4CAF50' : '#f44336' }]} />
+              {user.is_active ? (
+                <TouchableOpacity
+                  style={styles.blockButton}
+                  onPress={() => {
+                    setSelectedUser(user);
+                    setShowBlockModal(true);
+                  }}
+                >
+                  <Ionicons name="ban" size={16} color="#f44336" />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.unblockButton}
+                  onPress={() => handleUnblockUser(user)}
+                >
+                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+
+  const renderReports = () => (
+    <ScrollView
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Reports do Sistema</Text>
+        {reports.map(report => (
+          <View key={report.id} style={styles.reportCard}>
+            <View style={styles.reportHeader}>
+              <View style={[styles.reportStatusBadge, { backgroundColor: getStatusColor(report.status) }]}>
+                <Text style={styles.reportStatusText}>
+                  {report.status === 'pending' ? 'Pendente' :
+                   report.status === 'under_review' ? 'Em Análise' :
+                   report.status === 'resolved' ? 'Resolvido' :
+                   report.status === 'dismissed' ? 'Descartado' : report.status}
+                </Text>
+              </View>
+              <Text style={styles.reportDate}>{formatDateTime(report.created_at)}</Text>
+            </View>
+
+            <Text style={styles.reportTitle}>{report.title}</Text>
+            <Text style={styles.reportDescription}>{report.description}</Text>
+            
+            <View style={styles.reportUsers}>
+              <Text style={styles.reportUserText}>
+                <Text style={styles.bold}>Reportado por:</Text> {report.reporter_name}
+              </Text>
+              <Text style={styles.reportUserText}>
+                <Text style={styles.bold}>Reportado:</Text> {report.reported_name} ({report.reported_user_type})
+              </Text>
+            </View>
+
+            {report.admin_message && (
+              <View style={styles.adminMessageBox}>
+                <Text style={styles.adminMessageLabel}>Mensagem do Admin:</Text>
+                <Text style={styles.adminMessageText}>{report.admin_message}</Text>
+              </View>
+            )}
+
+            {report.user_response && (
+              <View style={styles.userResponseBox}>
+                <Text style={styles.userResponseLabel}>Resposta do Usuário:</Text>
+                <Text style={styles.userResponseText}>{report.user_response}</Text>
+              </View>
+            )}
+
+            {report.status === 'pending' || report.status === 'under_review' ? (
+              <View style={styles.reportActions}>
+                <TouchableOpacity
+                  style={styles.reportActionButton}
+                  onPress={() => {
+                    setSelectedReport(report);
+                    setShowMessageModal(true);
+                  }}
+                >
+                  <Ionicons name="mail" size={16} color="#2196F3" />
+                  <Text style={styles.reportActionText}>Enviar Mensagem</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.reportActionButton, { backgroundColor: '#4CAF50' }]}
+                  onPress={() => handleResolveReport(report)}
+                >
+                  <Ionicons name="checkmark" size={16} color="#fff" />
+                  <Text style={[styles.reportActionText, { color: '#fff' }]}>Resolver</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.reportActionButton, { backgroundColor: '#666' }]}
+                  onPress={() => handleDismissReport(report)}
+                >
+                  <Ionicons name="close" size={16} color="#fff" />
+                  <Text style={[styles.reportActionText, { color: '#fff' }]}>Descartar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
         ))}
       </View>
@@ -354,6 +612,14 @@ export default function AdminDashboard() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'reports' && styles.activeTab]}
+          onPress={() => setActiveTab('reports')}
+        >
+          <Text style={[styles.tabText, activeTab === 'reports' && styles.activeTabText]}>
+            Reports
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'trips' && styles.activeTab]}
           onPress={() => setActiveTab('trips')}
         >
@@ -366,8 +632,67 @@ export default function AdminDashboard() {
       <View style={styles.mainContent}>
         {activeTab === 'stats' && renderStats()}
         {activeTab === 'users' && renderUsers()}
+        {activeTab === 'reports' && renderReports()}
         {activeTab === 'trips' && renderTrips()}
       </View>
+
+      {/* Admin Message Modal */}
+      <Modal visible={showMessageModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Enviar Mensagem</Text>
+              <TouchableOpacity onPress={() => setShowMessageModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Dar oportunidade de defesa para: {selectedReport?.reported_name}
+            </Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Digite sua mensagem..."
+              placeholderTextColor="#666"
+              value={adminMessage}
+              onChangeText={setAdminMessage}
+              multiline
+              numberOfLines={4}
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
+              <Text style={styles.sendButtonText}>Enviar Mensagem</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Block User Modal */}
+      <Modal visible={showBlockModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Bloquear Usuário</Text>
+              <TouchableOpacity onPress={() => setShowBlockModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Bloquear usuário: {selectedUser?.name}
+            </Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Motivo do bloqueio..."
+              placeholderTextColor="#666"
+              value={blockReason}
+              onChangeText={setBlockReason}
+              multiline
+              numberOfLines={3}
+            />
+            <TouchableOpacity style={[styles.sendButton, { backgroundColor: '#f44336' }]} onPress={handleBlockUser}>
+              <Text style={styles.sendButtonText}>Bloquear Usuário</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -439,7 +764,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#FF9800',
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#888',
   },
   activeTabText: {
@@ -574,10 +899,127 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
+  blockedText: {
+    fontSize: 12,
+    color: '#f44336',
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  userActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   statusIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  blockButton: {
+    padding: 8,
+  },
+  unblockButton: {
+    padding: 8,
+  },
+  reportCard: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  reportHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  reportStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  reportStatusText: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  reportDate: {
+    fontSize: 12,
+    color: '#666',
+  },
+  reportTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  reportDescription: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 12,
+  },
+  reportUsers: {
+    marginBottom: 12,
+  },
+  reportUserText: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 4,
+  },
+  bold: {
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  adminMessageBox: {
+    backgroundColor: '#1a1a1a',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  adminMessageLabel: {
+    fontSize: 12,
+    color: '#FF9800',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  adminMessageText: {
+    fontSize: 14,
+    color: '#fff',
+  },
+  userResponseBox: {
+    backgroundColor: '#1a1a1a',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  userResponseLabel: {
+    fontSize: 12,
+    color: '#4CAF50',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  userResponseText: {
+    fontSize: 14,
+    color: '#fff',
+  },
+  reportActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  reportActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    gap: 6,
+  },
+  reportActionText: {
+    fontSize: 12,
+    color: '#2196F3',
+    fontWeight: 'bold',
   },
   tripCard: {
     backgroundColor: '#2a2a2a',
@@ -622,5 +1064,54 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 8,
     textAlign: 'right',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 16,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 16,
+  },
+  messageInput: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    color: '#fff',
+    fontSize: 16,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  sendButton: {
+    backgroundColor: '#FF9800',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  sendButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
