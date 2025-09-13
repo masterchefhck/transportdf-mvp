@@ -103,6 +103,8 @@ export default function DriverDashboard() {
       const newStatus = isOnline ? 'offline' : 'online';
       const token = await AsyncStorage.getItem('access_token');
       
+      console.log('Changing driver status to:', newStatus);
+      
       await axios.put(
         `${API_URL}/api/drivers/status/${newStatus}`,
         {},
@@ -111,16 +113,28 @@ export default function DriverDashboard() {
         }
       );
 
+      // Update local state
       setIsOnline(!isOnline);
+      
+      // Update user data in AsyncStorage
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        parsedUser.driver_status = newStatus;
+        await AsyncStorage.setItem('user', JSON.stringify(parsedUser));
+        setUser(parsedUser);
+      }
       
       if (newStatus === 'online') {
         loadAvailableTrips();
+        Alert.alert('Status atualizado', 'Você está online e pode receber corridas!');
       } else {
         setAvailableTrips([]);
+        Alert.alert('Status atualizado', 'Você está offline.');
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      Alert.alert('Erro', 'Erro ao alterar status');
+      Alert.alert('Erro', 'Erro ao alterar status. Tente novamente.');
     } finally {
       setLoading(false);
     }
