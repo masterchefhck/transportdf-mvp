@@ -155,12 +155,12 @@ export default function PassengerDashboard() {
 
   const handleRequestTrip = async () => {
     if (!pickupAddress || !destinationAddress) {
-      Alert.alert('Erro', 'Preencha origem e destino');
+      showAlert('Erro', 'Preencha origem e destino');
       return;
     }
 
     if (!location) {
-      Alert.alert('Erro', 'Localização não encontrada');
+      showAlert('Erro', 'Localização não encontrada');
       return;
     }
 
