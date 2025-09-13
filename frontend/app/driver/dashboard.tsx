@@ -8,6 +8,9 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
+  Platform,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +31,7 @@ interface User {
 
 interface Trip {
   id: string;
+  passenger_id: string;
   pickup_address: string;
   destination_address: string;
   estimated_price: number;
@@ -35,6 +39,54 @@ interface Trip {
   requested_at: string;
   distance_km?: number;
 }
+
+interface Report {
+  id: string;
+  reporter_id: string;
+  reported_user_id: string;
+  trip_id?: string;
+  title: string;
+  description: string;
+  report_type: string;
+  status: string;
+  created_at: string;
+  admin_message?: string;
+  user_response?: string;
+  response_allowed: boolean;
+}
+
+// Utility functions for cross-platform alerts
+const showAlert = (title: string, message?: string) => {
+  if (Platform.OS === 'web') {
+    if (message) {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      window.alert(title);
+    }
+  } else {
+    Alert.alert(title, message);
+  }
+};
+
+const showConfirm = (title: string, message: string, onConfirm: () => void, onCancel?: () => void) => {
+  if (Platform.OS === 'web') {
+    const confirmed = window.confirm(`${title}\n\n${message}`);
+    if (confirmed) {
+      onConfirm();
+    } else if (onCancel) {
+      onCancel();
+    }
+  } else {
+    Alert.alert(
+      title,
+      message,
+      [
+        { text: 'Cancelar', style: 'cancel', onPress: onCancel },
+        { text: 'Confirmar', onPress: onConfirm },
+      ]
+    );
+  }
+};
 
 export default function DriverDashboard() {
   const [user, setUser] = useState<User | null>(null);
@@ -45,10 +97,21 @@ export default function DriverDashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  
+  // Report states
+  const [myReports, setMyReports] = useState<Report[]>([]);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [showReportsPanel, setShowReportsPanel] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [responseText, setResponseText] = useState('');
 
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
+    loadMyReports();
     if (isOnline) {
       loadAvailableTrips();
       checkCurrentTrip();
@@ -68,11 +131,23 @@ export default function DriverDashboard() {
     }
   };
 
+  const loadMyReports = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/reports/my`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMyReports(response.data);
+    } catch (error) {
+      console.log('Error loading reports:', error);
+    }
+  };
+
   const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Erro', 'Permissão de localização necessária');
+        showAlert('Erro', 'Permissão de localização necessária');
         return;
       }
 
@@ -128,14 +203,14 @@ export default function DriverDashboard() {
       
       if (newStatus === 'online') {
         loadAvailableTrips();
-        Alert.alert('Status atualizado', 'Você está online e pode receber corridas!');
+        showAlert('Status atualizado', 'Você está online e pode receber corridas!');
       } else {
         setAvailableTrips([]);
-        Alert.alert('Status atualizado', 'Você está offline.');
+        showAlert('Status atualizado', 'Você está offline.');
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      Alert.alert('Erro', 'Erro ao alterar status. Tente novamente.');
+      showAlert('Erro', 'Erro ao alterar status. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -186,12 +261,12 @@ export default function DriverDashboard() {
         }
       );
 
-      Alert.alert('Sucesso', 'Viagem aceita! Indo buscar o passageiro...');
+      showAlert('Sucesso', 'Viagem aceita! Indo buscar o passageiro...');
       loadAvailableTrips();
       checkCurrentTrip();
     } catch (error) {
       console.error('Error accepting trip:', error);
-      Alert.alert('Erro', 'Erro ao aceitar viagem');
+      showAlert('Erro', 'Erro ao aceitar viagem');
     } finally {
       setActionLoading(false);
     }
@@ -211,61 +286,136 @@ export default function DriverDashboard() {
         }
       );
 
-      Alert.alert('Sucesso', 'Viagem iniciada!');
+      showAlert('Sucesso', 'Viagem iniciada!');
       checkCurrentTrip();
     } catch (error) {
       console.error('Error starting trip:', error);
-      Alert.alert('Erro', 'Erro ao iniciar viagem');
+      showAlert('Erro', 'Erro ao iniciar viagem');
     } finally {
       setActionLoading(false);
     }
   };
 
   const completeTrip = async (tripId: string) => {
-    const confirmed = window.confirm('Tem certeza que deseja finalizar esta viagem?');
-    if (!confirmed) return;
+    showConfirm(
+      'Finalizar viagem',
+      'Tem certeza que deseja finalizar esta viagem?',
+      async () => {
+        setActionLoading(true);
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          console.log('Completing trip:', tripId);
+          
+          await axios.put(
+            `${API_URL}/api/trips/${tripId}/complete`,
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
 
-    setActionLoading(true);
+          showAlert('Sucesso', 'Viagem finalizada com sucesso!');
+          
+          // Clear current trip
+          setCurrentTrip(null);
+          
+          // Update driver status back to online in local state
+          setIsOnline(true);
+          const userData = await AsyncStorage.getItem('user');
+          if (userData) {
+            const parsedUser = JSON.parse(userData);
+            parsedUser.driver_status = 'online';
+            await AsyncStorage.setItem('user', JSON.stringify(parsedUser));
+            setUser(parsedUser);
+          }
+          
+          // Reload available trips
+          loadAvailableTrips();
+        } catch (error) {
+          console.error('Error completing trip:', error);
+          showAlert('Erro', 'Erro ao finalizar viagem. Tente novamente.');
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    );
+  };
+
+  const handleReportPassenger = () => {
+    if (!currentTrip) {
+      showAlert('Erro', 'Não há viagem ativa para reportar');
+      return;
+    }
+    setShowReportModal(true);
+  };
+
+  const submitReport = async () => {
+    if (!reportTitle.trim() || !reportDescription.trim() || !currentTrip) {
+      showAlert('Erro', 'Preencha todos os campos');
+      return;
+    }
+
     try {
       const token = await AsyncStorage.getItem('access_token');
-      console.log('Completing trip:', tripId);
-      
-      await axios.put(
-        `${API_URL}/api/trips/${tripId}/complete`,
-        {},
+      await axios.post(
+        `${API_URL}/api/reports/create`,
+        {
+          reported_user_id: currentTrip.passenger_id,
+          trip_id: currentTrip.id,
+          title: reportTitle,
+          description: reportDescription,
+          report_type: 'driver_report'
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      window.alert('Sucesso! Viagem finalizada com sucesso!');
-      
-      // Clear current trip
-      setCurrentTrip(null);
-      
-      // Update driver status back to online in local state
-      setIsOnline(true);
-      const userData = await AsyncStorage.getItem('user');
-      if (userData) {
-        const parsedUser = JSON.parse(userData);
-        parsedUser.driver_status = 'online';
-        await AsyncStorage.setItem('user', JSON.stringify(parsedUser));
-        setUser(parsedUser);
-      }
-      
-      // Reload available trips
-      loadAvailableTrips();
+      showAlert('Sucesso', 'Report enviado com sucesso!');
+      setShowReportModal(false);
+      setReportTitle('');
+      setReportDescription('');
+      loadMyReports();
     } catch (error) {
-      console.error('Error completing trip:', error);
-      window.alert('Erro ao finalizar viagem. Tente novamente.');
-    } finally {
-      setActionLoading(false);
+      console.error('Error submitting report:', error);
+      showAlert('Erro', 'Erro ao enviar report');
+    }
+  };
+
+  const handleRespondToReport = (report: Report) => {
+    setSelectedReport(report);
+    setShowResponseModal(true);
+  };
+
+  const submitResponse = async () => {
+    if (!responseText.trim() || !selectedReport) {
+      showAlert('Erro', 'Digite sua resposta');
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/reports/${selectedReport.id}/respond`,
+        { response: responseText },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showAlert('Sucesso', 'Resposta enviada com sucesso!');
+      setShowResponseModal(false);
+      setResponseText('');
+      loadMyReports();
+    } catch (error) {
+      console.error('Error submitting response:', error);
+      showAlert('Erro', 'Erro ao enviar resposta');
     }
   };
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadAvailableTrips().finally(() => setRefreshing(false));
+    Promise.all([loadAvailableTrips(), loadMyReports()]).finally(() => setRefreshing(false));
   };
 
   const handleLogout = async () => {
@@ -288,6 +438,16 @@ export default function DriverDashboard() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return '#FF9800';
+      case 'under_review': return '#2196F3';
+      case 'resolved': return '#4CAF50';
+      case 'dismissed': return '#666';
+      default: return '#666';
+    }
   };
 
   const renderTripItem = ({ item }: { item: Trip }) => (
@@ -327,6 +487,8 @@ export default function DriverDashboard() {
     </View>
   );
 
+  const pendingReports = myReports.filter(report => report.response_allowed && report.admin_message);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -341,9 +503,22 @@ export default function DriverDashboard() {
             </Text>
           </View>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {pendingReports.length > 0 && (
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => setShowReportsPanel(true)}
+            >
+              <Ionicons name="notifications" size={24} color="#FF9800" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>{pendingReports.length}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.statusContainer}>
@@ -422,6 +597,17 @@ export default function DriverDashboard() {
                   )}
                 </TouchableOpacity>
               )}
+              
+              {/* Report Passenger Button */}
+              {(currentTrip.status === 'in_progress' || currentTrip.status === 'accepted') && (
+                <TouchableOpacity
+                  style={[styles.reportButton]}
+                  onPress={handleReportPassenger}
+                >
+                  <Ionicons name="flag" size={16} color="#fff" />
+                  <Text style={styles.reportButtonText}>Reportar Passageiro</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         ) : isOnline ? (
@@ -459,6 +645,133 @@ export default function DriverDashboard() {
           </View>
         )}
       </View>
+
+      {/* Report Passenger Modal */}
+      <Modal visible={showReportModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reportar Passageiro</Text>
+              <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.modalSubtitle}>
+              Descreva o problema ocorrido com o passageiro
+            </Text>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Título do report"
+              placeholderTextColor="#666"
+              value={reportTitle}
+              onChangeText={setReportTitle}
+            />
+            
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Descrição detalhada do problema..."
+              placeholderTextColor="#666"
+              value={reportDescription}
+              onChangeText={setReportDescription}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+            
+            <TouchableOpacity style={styles.submitButton} onPress={submitReport}>
+              <Text style={styles.submitButtonText}>Enviar Report</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Response Modal */}
+      <Modal visible={showResponseModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Responder Report</Text>
+              <TouchableOpacity onPress={() => setShowResponseModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedReport && (
+              <>
+                <Text style={styles.modalSubtitle}>Report: {selectedReport.title}</Text>
+                
+                {selectedReport.admin_message && (
+                  <View style={styles.adminMessageBox}>
+                    <Text style={styles.adminMessageLabel}>Mensagem do Administrador:</Text>
+                    <Text style={styles.adminMessageText}>{selectedReport.admin_message}</Text>
+                  </View>
+                )}
+                
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Digite sua resposta/defesa..."
+                  placeholderTextColor="#666"
+                  value={responseText}
+                  onChangeText={setResponseText}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+                
+                <TouchableOpacity style={styles.submitButton} onPress={submitResponse}>
+                  <Text style={styles.submitButtonText}>Enviar Resposta</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Reports Panel Modal */}
+      <Modal visible={showReportsPanel} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reports Pendentes</Text>
+              <TouchableOpacity onPress={() => setShowReportsPanel(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              data={pendingReports}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.reportItem}>
+                  <View style={styles.reportItemHeader}>
+                    <Text style={styles.reportItemTitle}>{item.title}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+                      <Text style={styles.statusText}>
+                        {item.status === 'pending' ? 'Pendente' : 'Em Análise'}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <Text style={styles.reportItemDescription}>{item.description}</Text>
+                  
+                  {item.admin_message && item.response_allowed && (
+                    <TouchableOpacity
+                      style={styles.respondButton}
+                      onPress={() => handleRespondToReport(item)}
+                    >
+                      <Ionicons name="chatbubble" size={16} color="#fff" />
+                      <Text style={styles.respondButtonText}>Responder</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -478,6 +791,7 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   avatar: {
     width: 50,
@@ -500,6 +814,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  notificationButton: {
+    position: 'relative',
+    padding: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: '#f44336',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   logoutButton: {
     padding: 8,
@@ -543,6 +882,7 @@ const styles = StyleSheet.create({
   },
   tripActions: {
     marginTop: 16,
+    gap: 12,
   },
   actionButton: {
     backgroundColor: '#2196F3',
@@ -552,6 +892,21 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  reportButton: {
+    backgroundColor: '#FF9800',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  reportButtonText: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#fff',
   },
@@ -655,5 +1010,119 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 16,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  submitButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  adminMessageBox: {
+    backgroundColor: '#1a1a1a',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  adminMessageLabel: {
+    fontSize: 12,
+    color: '#FF9800',
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  adminMessageText: {
+    fontSize: 14,
+    color: '#fff',
+    lineHeight: 20,
+  },
+  reportItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  reportItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reportItemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    flex: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  reportItemDescription: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 12,
+  },
+  respondButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  respondButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
