@@ -198,20 +198,20 @@ export default function PassengerDashboard() {
   };
 
   const handleLogout = async () => {
-    Alert.alert(
+    showConfirm(
       'Sair',
       'Tem certeza que deseja sair?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            await AsyncStorage.multiRemove(['access_token', 'user']);
-            router.replace('/');
-          },
-        },
-      ]
+      async () => {
+        try {
+          console.log('Logging out passenger...');
+          await AsyncStorage.multiRemove(['access_token', 'user']);
+          router.replace('/');
+        } catch (error) {
+          console.error('Error during logout:', error);
+          // Force logout even if there's an error
+          router.replace('/');
+        }
+      }
     );
   };
 
