@@ -123,7 +123,7 @@ export default function AdminDashboard() {
       setTrips(tripsResponse.data.slice(0, 10)); // Last 10 trips
     } catch (error) {
       console.error('Error loading admin data:', error);
-      Alert.alert('Erro', 'Erro ao carregar dados administrativos');
+      showAlert('Erro', 'Erro ao carregar dados administrativos');
     } finally {
       setLoading(false);
     }
