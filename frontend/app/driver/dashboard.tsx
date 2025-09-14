@@ -1034,6 +1034,33 @@ export default function DriverDashboard() {
           onClose={() => setShowChatModal(false)}
         />
       </Modal>
+
+      {/* Photo Viewer Modal */}
+      <Modal visible={showPhotoModal} transparent animationType="fade">
+        <View style={styles.photoModalOverlay}>
+          <TouchableOpacity 
+            style={styles.photoModalBackground} 
+            onPress={() => setShowPhotoModal(false)}
+          >
+            <View style={styles.photoModalContent}>
+              <View style={styles.photoModalHeader}>
+                <Text style={styles.photoModalTitle}>{selectedPhotoUser}</Text>
+                <TouchableOpacity 
+                  onPress={() => setShowPhotoModal(false)}
+                  style={styles.photoModalCloseButton}
+                >
+                  <Ionicons name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              <Image 
+                source={{ uri: selectedPhotoUrl }} 
+                style={styles.photoModalImage}
+                resizeMode="contain"
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
