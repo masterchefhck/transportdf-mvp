@@ -1212,4 +1212,78 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  // Alert styles
+  alertItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#f44336',
+  },
+  alertHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  alertStarsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  alertRatingText: {
+    color: '#FF9800',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  alertDate: {
+    color: '#888',
+    fontSize: 12,
+  },
+  alertReasonContainer: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  alertReasonLabel: {
+    color: '#FF9800',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  alertReasonText: {
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  alertMessageContainer: {
+    marginBottom: 12,
+  },
+  alertMessageLabel: {
+    color: '#2196F3',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  alertMessageText: {
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  alertWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  alertWarningText: {
+    color: '#f44336',
+    fontSize: 12,
+    fontStyle: 'italic',
+    flex: 1,
+  },
 });
