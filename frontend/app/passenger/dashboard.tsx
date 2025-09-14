@@ -214,6 +214,50 @@ export default function PassengerDashboard() {
     }
   };
 
+  const pickImage = async () => {
+    // Request permission
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      showAlert('Permissão negada', 'É necessário permitir acesso à galeria de fotos');
+      return;
+    }
+
+    // Pick image
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      uploadProfilePhoto(result.assets[0].base64);
+    }
+  };
+
+  const uploadProfilePhoto = async (base64Image: string) => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('access_token');
+      
+      await axios.put(
+        `${API_URL}/api/users/profile-photo`,
+        { profile_photo: `data:image/jpeg;base64,${base64Image}` },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setProfilePhoto(`data:image/jpeg;base64,${base64Image}`);
+      showAlert('Sucesso', 'Foto de perfil atualizada com sucesso!');
+    } catch (error) {
+      console.log('Error uploading photo:', error);
+      showAlert('Erro', 'Erro ao fazer upload da foto');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
