@@ -862,10 +862,34 @@ async def get_driver_alerts(current_user: User = Depends(get_current_user)):
             "created_at": alert["created_at"],
             "rating_stars": rating.get("rating", 0),
             "rating_reason": rating.get("reason", ""),
-            "rating_date": rating.get("created_at", "")
+            "rating_date": rating.get("created_at", ""),
+            "read": alert.get("read", False)
         })
     
     return result
+
+@api_router.post("/drivers/alerts/{alert_id}/read")
+async def mark_alert_as_read(alert_id: str, current_user: User = Depends(get_current_user)):
+    """Mark alert as read by driver"""
+    if current_user.user_type != UserType.DRIVER:
+        raise HTTPException(status_code=403, detail="Only drivers can mark alerts as read")
+    
+    # Verify alert belongs to current driver
+    alert = await db.admin_alerts.find_one({
+        "id": alert_id,
+        "driver_id": current_user.id
+    })
+    
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    
+    # Mark as read
+    await db.admin_alerts.update_one(
+        {"id": alert_id},
+        {"$set": {"read": True, "read_at": datetime.utcnow()}}
+    )
+    
+    return {"message": "Alert marked as read"}
 
 # Basic health check
 @api_router.get("/health")
