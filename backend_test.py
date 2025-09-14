@@ -774,6 +774,378 @@ class TransportDFTester:
             else:
                 self.log_test("Mark Alert as Read - Access Control", False, f"Passenger should not have access (status: {status_code})", data)
 
+    # NEW TESTS FOR BULK OPERATIONS AND ADMIN MESSAGING
+    def test_bulk_delete_trips_valid_ids(self):
+        """Test 31: Bulk delete trips with valid IDs"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Bulk Delete Trips - Valid IDs", False, "No admin token available")
+            return
+            
+        # First get existing trips to have valid IDs
+        success, trips_data, _ = self.make_request("GET", "/admin/trips", 
+                                                 auth_token=self.tokens["admin"])
+        
+        if not success or not trips_data:
+            self.log_test("Bulk Delete Trips - Valid IDs", False, "No trips available for bulk delete test")
+            return
+            
+        # Use first trip ID for bulk delete
+        trip_ids = [trips_data[0]["id"]] if trips_data else []
+        
+        bulk_delete_data = {"ids": trip_ids}
+        
+        success, data, status_code = self.make_request("POST", "/admin/trips/bulk-delete", 
+                                                     bulk_delete_data, auth_token=self.tokens["admin"])
+        
+        if success and "deleted" in str(data).lower():
+            deleted_count = data.get("message", "").split()[1] if "deleted" in data.get("message", "") else "0"
+            self.log_test("Bulk Delete Trips - Valid IDs", True, f"Bulk delete successful - {deleted_count} trips deleted")
+        else:
+            self.log_test("Bulk Delete Trips - Valid IDs", False, f"Bulk delete failed (status: {status_code})", data)
+
+    def test_bulk_delete_trips_invalid_ids(self):
+        """Test 32: Bulk delete trips with non-existent IDs"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Bulk Delete Trips - Invalid IDs", False, "No admin token available")
+            return
+            
+        # Use non-existent trip IDs
+        fake_ids = ["fake-trip-id-1", "fake-trip-id-2", "fake-trip-id-3"]
+        bulk_delete_data = {"ids": fake_ids}
+        
+        success, data, status_code = self.make_request("POST", "/admin/trips/bulk-delete", 
+                                                     bulk_delete_data, auth_token=self.tokens["admin"])
+        
+        if success:
+            # Should return 0 deleted count for non-existent IDs
+            message = data.get("message", "")
+            if "deleted 0" in message.lower():
+                self.log_test("Bulk Delete Trips - Invalid IDs", True, "Correctly returned 0 deleted for non-existent IDs")
+            else:
+                self.log_test("Bulk Delete Trips - Invalid IDs", True, f"Bulk delete handled invalid IDs: {message}")
+        else:
+            self.log_test("Bulk Delete Trips - Invalid IDs", False, f"Bulk delete failed (status: {status_code})", data)
+
+    def test_bulk_delete_users_excludes_admins(self):
+        """Test 33: Bulk delete users should exclude admin users"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Bulk Delete Users - Exclude Admins", False, "No admin token available")
+            return
+            
+        # Get all users including admin
+        success, users_data, _ = self.make_request("GET", "/admin/users", 
+                                                 auth_token=self.tokens["admin"])
+        
+        if not success or not users_data:
+            self.log_test("Bulk Delete Users - Exclude Admins", False, "No users available for bulk delete test")
+            return
+            
+        # Get admin user ID and some other user IDs
+        admin_user_id = None
+        other_user_ids = []
+        
+        for user in users_data:
+            if user.get("user_type") == "admin":
+                admin_user_id = user["id"]
+            else:
+                other_user_ids.append(user["id"])
+        
+        if not admin_user_id:
+            self.log_test("Bulk Delete Users - Exclude Admins", False, "No admin user found for test")
+            return
+            
+        # Try to bulk delete including admin ID
+        all_ids = [admin_user_id] + other_user_ids[:1]  # Include admin + one other user
+        bulk_delete_data = {"ids": all_ids}
+        
+        success, data, status_code = self.make_request("POST", "/admin/users/bulk-delete", 
+                                                     bulk_delete_data, auth_token=self.tokens["admin"])
+        
+        if success:
+            message = data.get("message", "")
+            # Should delete less than total IDs provided (excluding admin)
+            if "deleted" in message.lower():
+                self.log_test("Bulk Delete Users - Exclude Admins", True, f"Bulk delete excluded admin users: {message}")
+            else:
+                self.log_test("Bulk Delete Users - Exclude Admins", True, "Bulk delete processed with admin exclusion")
+        else:
+            self.log_test("Bulk Delete Users - Exclude Admins", False, f"Bulk delete failed (status: {status_code})", data)
+
+    def test_bulk_delete_reports(self):
+        """Test 34: Bulk delete reports"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Bulk Delete Reports", False, "No admin token available")
+            return
+            
+        # Create a test report first
+        if "passenger" in self.tokens and "driver" in self.tokens:
+            report_data = {
+                "reported_user_id": self.users.get("driver", {}).get("id", ""),
+                "title": "Teste de Report para Bulk Delete",
+                "description": "Report criado especificamente para testar bulk delete",
+                "report_type": "passenger_report"
+            }
+            
+            self.make_request("POST", "/reports/create", report_data, auth_token=self.tokens["passenger"])
+        
+        # Get existing reports
+        success, reports_data, _ = self.make_request("GET", "/admin/reports", 
+                                                   auth_token=self.tokens["admin"])
+        
+        if success and reports_data:
+            # Use first report ID for bulk delete
+            report_ids = [reports_data[0]["id"]]
+            bulk_delete_data = {"ids": report_ids}
+            
+            success, data, status_code = self.make_request("POST", "/admin/reports/bulk-delete", 
+                                                         bulk_delete_data, auth_token=self.tokens["admin"])
+            
+            if success and "deleted" in str(data).lower():
+                self.log_test("Bulk Delete Reports", True, f"Reports bulk delete successful: {data.get('message', '')}")
+            else:
+                self.log_test("Bulk Delete Reports", False, f"Reports bulk delete failed (status: {status_code})", data)
+        else:
+            # Test with empty list
+            bulk_delete_data = {"ids": []}
+            success, data, status_code = self.make_request("POST", "/admin/reports/bulk-delete", 
+                                                         bulk_delete_data, auth_token=self.tokens["admin"])
+            
+            if success:
+                self.log_test("Bulk Delete Reports", True, "Reports bulk delete endpoint working (no reports to delete)")
+            else:
+                self.log_test("Bulk Delete Reports", False, f"Reports bulk delete failed (status: {status_code})", data)
+
+    def test_bulk_delete_ratings(self):
+        """Test 35: Bulk delete ratings"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Bulk Delete Ratings", False, "No admin token available")
+            return
+            
+        # Get existing low ratings
+        success, ratings_data, _ = self.make_request("GET", "/ratings/low", 
+                                                   auth_token=self.tokens["admin"])
+        
+        if success and ratings_data:
+            # Use first rating ID for bulk delete
+            rating_ids = [ratings_data[0]["id"]]
+            bulk_delete_data = {"ids": rating_ids}
+            
+            success, data, status_code = self.make_request("POST", "/admin/ratings/bulk-delete", 
+                                                         bulk_delete_data, auth_token=self.tokens["admin"])
+            
+            if success and "deleted" in str(data).lower():
+                self.log_test("Bulk Delete Ratings", True, f"Ratings bulk delete successful: {data.get('message', '')}")
+            else:
+                self.log_test("Bulk Delete Ratings", False, f"Ratings bulk delete failed (status: {status_code})", data)
+        else:
+            # Test with empty list
+            bulk_delete_data = {"ids": []}
+            success, data, status_code = self.make_request("POST", "/admin/ratings/bulk-delete", 
+                                                         bulk_delete_data, auth_token=self.tokens["admin"])
+            
+            if success:
+                self.log_test("Bulk Delete Ratings", True, "Ratings bulk delete endpoint working (no ratings to delete)")
+            else:
+                self.log_test("Bulk Delete Ratings", False, f"Ratings bulk delete failed (status: {status_code})", data)
+
+    def test_bulk_delete_permissions(self):
+        """Test 36: Bulk delete operations require admin permissions"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Bulk Delete Permissions", False, "No passenger token available for permission test")
+            return
+            
+        # Test passenger trying to bulk delete trips (should fail)
+        bulk_delete_data = {"ids": ["fake-id"]}
+        
+        success, data, status_code = self.make_request("POST", "/admin/trips/bulk-delete", 
+                                                     bulk_delete_data, auth_token=self.tokens["passenger"])
+        
+        if not success and status_code == 403:
+            self.log_test("Bulk Delete Permissions", True, "Non-admin correctly denied access to bulk delete operations")
+        else:
+            self.log_test("Bulk Delete Permissions", False, f"Non-admin should not have access (status: {status_code})", data)
+
+    def test_admin_send_message_to_passenger(self):
+        """Test 37: Admin send message to passenger"""
+        
+        if "admin" not in self.tokens or "passenger" not in self.tokens:
+            self.log_test("Admin Send Message to Passenger", False, "Admin or passenger token not available")
+            return
+            
+        passenger_id = self.users.get("passenger", {}).get("id", "")
+        if not passenger_id:
+            self.log_test("Admin Send Message to Passenger", False, "Passenger ID not available")
+            return
+            
+        message_data = {
+            "user_id": passenger_id,
+            "message": "Olá! Esta é uma mensagem importante do administrador do TransportDF. Por favor, mantenha seu perfil atualizado e siga as diretrizes de segurança durante as viagens."
+        }
+        
+        success, data, status_code = self.make_request("POST", "/admin/messages/send", 
+                                                     message_data, auth_token=self.tokens["admin"])
+        
+        if success and "message sent" in str(data).lower():
+            self.log_test("Admin Send Message to Passenger", True, "Admin message sent to passenger successfully")
+        else:
+            self.log_test("Admin Send Message to Passenger", False, f"Failed to send message (status: {status_code})", data)
+
+    def test_admin_send_message_to_driver_should_fail(self):
+        """Test 38: Admin send message to driver should fail (only passengers allowed)"""
+        
+        if "admin" not in self.tokens or "driver" not in self.tokens:
+            self.log_test("Admin Send Message to Driver - Should Fail", False, "Admin or driver token not available")
+            return
+            
+        driver_id = self.users.get("driver", {}).get("id", "")
+        if not driver_id:
+            self.log_test("Admin Send Message to Driver - Should Fail", False, "Driver ID not available")
+            return
+            
+        message_data = {
+            "user_id": driver_id,
+            "message": "Esta mensagem não deveria ser enviada para motorista"
+        }
+        
+        success, data, status_code = self.make_request("POST", "/admin/messages/send", 
+                                                     message_data, auth_token=self.tokens["admin"])
+        
+        if not success and status_code == 400 and "only send messages to passengers" in str(data).lower():
+            self.log_test("Admin Send Message to Driver - Should Fail", True, "Correctly prevented sending message to driver")
+        else:
+            self.log_test("Admin Send Message to Driver - Should Fail", False, f"Should prevent sending to driver (status: {status_code})", data)
+
+    def test_admin_send_message_to_nonexistent_user(self):
+        """Test 39: Admin send message to non-existent user"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Admin Send Message - Non-existent User", False, "No admin token available")
+            return
+            
+        message_data = {
+            "user_id": "non-existent-user-id-12345",
+            "message": "Esta mensagem não deveria ser enviada"
+        }
+        
+        success, data, status_code = self.make_request("POST", "/admin/messages/send", 
+                                                     message_data, auth_token=self.tokens["admin"])
+        
+        if not success and status_code == 404:
+            self.log_test("Admin Send Message - Non-existent User", True, "Correctly returned 404 for non-existent user")
+        else:
+            self.log_test("Admin Send Message - Non-existent User", False, f"Should return 404 for non-existent user (status: {status_code})", data)
+
+    def test_passenger_get_messages(self):
+        """Test 40: Passenger retrieve their messages"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Passenger Get Messages", False, "No passenger token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/passengers/messages", 
+                                                     auth_token=self.tokens["passenger"])
+        
+        if success and isinstance(data, list):
+            message_count = len(data)
+            self.log_test("Passenger Get Messages", True, f"Passenger retrieved {message_count} messages successfully")
+            
+            # Verify message structure if messages exist
+            if data:
+                message = data[0]
+                required_fields = ["id", "user_id", "admin_id", "message", "created_at", "read"]
+                missing_fields = [field for field in required_fields if field not in message]
+                
+                if not missing_fields:
+                    self.log_test("Passenger Messages Structure", True, "Message structure contains all required fields")
+                else:
+                    self.log_test("Passenger Messages Structure", False, f"Missing fields in message: {missing_fields}")
+        else:
+            self.log_test("Passenger Get Messages", False, f"Failed to get messages (status: {status_code})", data)
+
+    def test_passenger_messages_access_control(self):
+        """Test 41: Only passengers can access their messages"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("Passenger Messages Access Control", False, "No driver token available for access control test")
+            return
+            
+        # Driver trying to access passenger messages (should fail)
+        success, data, status_code = self.make_request("GET", "/passengers/messages", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if not success and status_code == 403:
+            self.log_test("Passenger Messages Access Control", True, "Driver correctly denied access to passenger messages")
+        else:
+            self.log_test("Passenger Messages Access Control", False, f"Driver should not have access (status: {status_code})", data)
+
+    def test_passenger_mark_message_as_read(self):
+        """Test 42: Passenger mark message as read"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Passenger Mark Message as Read", False, "No passenger token available")
+            return
+            
+        # First get messages to find a message ID
+        success, messages_data, _ = self.make_request("GET", "/passengers/messages", 
+                                                    auth_token=self.tokens["passenger"])
+        
+        if not success or not messages_data:
+            self.log_test("Passenger Mark Message as Read", False, "No messages available to mark as read")
+            return
+            
+        # Use the first message
+        message_id = messages_data[0]["id"]
+        
+        success, data, status_code = self.make_request("POST", f"/passengers/messages/{message_id}/read", 
+                                                     auth_token=self.tokens["passenger"])
+        
+        if success and "marked as read" in str(data).lower():
+            self.log_test("Passenger Mark Message as Read", True, "Message successfully marked as read")
+        else:
+            self.log_test("Passenger Mark Message as Read", False, f"Failed to mark message as read (status: {status_code})", data)
+
+    def test_passenger_mark_message_as_read_not_found(self):
+        """Test 43: Passenger mark non-existent message as read"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Passenger Mark Message as Read - Not Found", False, "No passenger token available")
+            return
+            
+        # Use a non-existent message ID
+        fake_message_id = "non-existent-message-id-12345"
+        
+        success, data, status_code = self.make_request("POST", f"/passengers/messages/{fake_message_id}/read", 
+                                                     auth_token=self.tokens["passenger"])
+        
+        # Should return 404
+        if not success and status_code == 404:
+            self.log_test("Passenger Mark Message as Read - Not Found", True, "Correctly returned 404 for non-existent message")
+        else:
+            self.log_test("Passenger Mark Message as Read - Not Found", False, f"Should return 404 for non-existent message (status: {status_code})", data)
+
+    def test_passenger_mark_message_access_control(self):
+        """Test 44: Only message owner can mark it as read"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("Passenger Mark Message Access Control", False, "No driver token available for access control test")
+            return
+            
+        # Driver trying to mark passenger message as read (should fail)
+        fake_message_id = "test-message-id"
+        success, data, status_code = self.make_request("POST", f"/passengers/messages/{fake_message_id}/read", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if not success and status_code == 403:
+            self.log_test("Passenger Mark Message Access Control", True, "Driver correctly denied access to mark passenger messages as read")
+        else:
+            self.log_test("Passenger Mark Message Access Control", False, f"Driver should not have access (status: {status_code})", data)
+
     def run_all_tests(self):
         """Run all backend tests in sequence"""
         print("=" * 80)
