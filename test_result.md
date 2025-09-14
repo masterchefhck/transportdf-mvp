@@ -256,6 +256,18 @@ test_plan:
         agent: "testing"
         comment: "✅ SISTEMA DE AVALIAÇÕES COMPLETAMENTE TESTADO E APROVADO! Executei 8 testes específicos do sistema de avaliações com 100% de sucesso: 1) Criação de avaliação 5 estrelas sem motivo ✅, 2) Criação de avaliação 3 estrelas com motivo obrigatório ✅, 3) Prevenção de avaliações duplicadas ✅, 4) Validação de motivo obrigatório para ratings < 5 estrelas ✅, 5) Admin buscar avaliações baixas ✅, 6) Admin enviar alerta para motorista ✅, 7) Cálculo correto de rating médio (4.0 calculado corretamente) ✅, 8) Atualização do rating no perfil do usuário ✅. Todas as regras de negócio funcionando: rating inicial 5.0, reset a cada 100 viagens, campo reason obrigatório para < 5 estrelas, apenas uma avaliação por viagem. Sistema production-ready!"
 
+  - task: "Endpoint de Alertas para Motoristas"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ NOVO ENDPOINT /api/drivers/alerts TESTADO COM SUCESSO TOTAL! Executei 5 testes específicos com 100% de aprovação: 1) Endpoint funcionando corretamente - retornou 2 alertas ✅, 2) Estrutura de dados correta com todos os campos obrigatórios (id, admin_message, created_at, rating_stars, rating_reason, rating_date) ✅, 3) Ordenação por data funcionando (mais recentes primeiro) ✅, 4) Controle de acesso - passageiro corretamente negado (403) ✅, 5) Controle de acesso - admin corretamente negado (403) ✅. Endpoint production-ready e seguindo todas as especificações!"
+
 agent_communication:
   - agent: "main"
     message: "MVP do TransportDF implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
