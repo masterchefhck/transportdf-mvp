@@ -627,8 +627,11 @@ async def get_all_trips(current_user: User = Depends(get_current_user)):
         passenger = trip["passenger"][0] if trip["passenger"] else {}
         driver = trip["driver"][0] if trip["driver"] else {}
         
+        # Remove MongoDB ObjectId fields that cause serialization issues
+        trip_clean = {k: v for k, v in trip.items() if k != "_id"}
+        
         trip_data = {
-            **trip,
+            **trip_clean,
             "passenger_name": passenger.get("name"),
             "passenger_phone": passenger.get("phone"),
             "passenger_photo": passenger.get("profile_photo"),
