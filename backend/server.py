@@ -26,14 +26,14 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Security
-SECRET_KEY = "skycab-brasilia-mvp-secret-key-2025"
+SECRET_KEY = "transport-app-brasilia-mvp-secret-key-2025"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 days
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
-app = FastAPI(title="SkyCab Brasília MVP")
+app = FastAPI(title="Transport App Brasília MVP")
 api_router = APIRouter(prefix="/api")
 
 # Enums
@@ -870,7 +870,7 @@ async def get_driver_alerts(current_user: User = Depends(get_current_user)):
 # Basic health check
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "SkyCab Brasília MVP"}
+    return {"status": "healthy", "service": "Transport App Brasília MVP"}
 
 # Include router
 app.include_router(api_router)
