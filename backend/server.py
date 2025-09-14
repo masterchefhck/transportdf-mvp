@@ -627,8 +627,15 @@ async def get_all_trips(current_user: User = Depends(get_current_user)):
         passenger = trip["passenger"][0] if trip["passenger"] else {}
         driver = trip["driver"][0] if trip["driver"] else {}
         
-        # Remove MongoDB ObjectId fields that cause serialization issues
-        trip_clean = {k: v for k, v in trip.items() if k != "_id"}
+        # Clean trip data by removing MongoDB ObjectId fields and nested arrays
+        trip_clean = {}
+        for k, v in trip.items():
+            if k not in ["_id", "passenger", "driver"]:
+                # Convert datetime objects to ISO strings for JSON serialization
+                if isinstance(v, datetime):
+                    trip_clean[k] = v.isoformat()
+                else:
+                    trip_clean[k] = v
         
         trip_data = {
             **trip_clean,
