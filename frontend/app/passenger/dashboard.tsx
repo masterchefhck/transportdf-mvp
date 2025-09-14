@@ -97,6 +97,7 @@ export default function PassengerDashboard() {
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [currentRating, setCurrentRating] = useState<number>(5.0);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   
   // Admin Messages states
   const [adminMessages, setAdminMessages] = useState<any[]>([]);
