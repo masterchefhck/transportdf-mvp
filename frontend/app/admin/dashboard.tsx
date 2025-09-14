@@ -175,6 +175,9 @@ export default function AdminDashboard() {
       setTrips(tripsResponse.data.slice(0, 10)); // Last 10 trips
       setReports(reportsResponse.data);
       setRatings(ratingsResponse.data);
+      
+      // Set passengers for messaging
+      setPassengers(usersResponse.data.filter((user: User) => user.user_type === 'passenger'));
     } catch (error) {
       console.error('Error loading admin data:', error);
       showAlert('Erro', 'Erro ao carregar dados administrativos');
