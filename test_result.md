@@ -280,6 +280,30 @@ test_plan:
         agent: "testing"
         comment: "🎯 NOVOS ENDPOINTS DASHBOARD MOTORISTA TESTADOS COM SUCESSO TOTAL! Executei 39 testes (36 passaram, 3 falhas esperadas de usuários existentes) com taxa de sucesso de 92.3%. FOCO NOS NOVOS ENDPOINTS: ✅ GET /api/users/rating funcionando perfeitamente - retorna rating entre 1.0-5.0 (testado: 4.0), ✅ POST /api/drivers/alerts/{alert_id}/read funcionando - marca alerta como lido com sucesso, retorna 404 para alerta inexistente, controle de acesso correto (403 para não-motoristas), ✅ GET /api/drivers/alerts inclui campo 'read' (boolean) e ordenação por data (mais recentes primeiro). Todos os 3 endpoints solicitados estão production-ready e atendendo perfeitamente às especificações!"
 
+  - task: "Bulk Delete Operations Backend"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado endpoints de bulk delete para trips, users, reports e ratings. Funcionalidades incluem: POST /api/admin/trips/bulk-delete, POST /api/admin/users/bulk-delete (exclui admins), POST /api/admin/reports/bulk-delete, POST /api/admin/ratings/bulk-delete. Todos aceitam lista de IDs via BulkDeleteRequest model."
+
+  - task: "Admin Messages to Passengers Backend"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado sistema completo de mensagens do admin para passageiros. Funcionalidades incluem: POST /api/admin/messages/send para enviar mensagem, GET /api/passengers/messages para passageiro ler mensagens, POST /api/passengers/messages/{message_id}/read para marcar como lida. AdminMessageToUser model com read status."
+
 agent_communication:
   - agent: "main"
     message: "MVP do SkyCab implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
