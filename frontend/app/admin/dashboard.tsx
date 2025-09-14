@@ -342,6 +342,7 @@ export default function AdminDashboard() {
       setShowAlertModal(false);
       setAlertMessage('');
       setSelectedRating(null);
+      loadData(); // Reload to update button states
     } catch (error) {
       console.error('Error sending alert:', error);
       showAlert('Erro', 'Erro ao enviar alerta');
