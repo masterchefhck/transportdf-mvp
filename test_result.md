@@ -119,6 +119,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTADO COMPLETAMENTE - Todos os testes de autenticação passaram: registro de passageiro/motorista/admin (100% sucesso), login para todos os tipos de usuário (100% sucesso), validação JWT funcionando perfeitamente. Tokens gerados corretamente e validação de credenciais operacional."
+      - working: true
+        agent: "testing"
+        comment: "✅ RE-TESTADO PÓS BUG FIX - Autenticação funcionando perfeitamente após correção do bug do modal de avaliação. Registro de novos usuários (passageiro/motorista) com 100% sucesso, validação JWT operacional, tokens gerados corretamente. Nenhuma regressão detectada no sistema de autenticação."
 
   - task: "APIs de usuários e localização"
     implemented: true
