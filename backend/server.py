@@ -26,7 +26,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Security
-SECRET_KEY = "transport-app-brasilia-mvp-secret-key-2025"
+SECRET_KEY = "skycab-brasilia-mvp-secret-key-2025"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 days
 
