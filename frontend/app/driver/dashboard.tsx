@@ -565,14 +565,14 @@ export default function DriverDashboard() {
               </View>
             </TouchableOpacity>
           )}
-          {myAlerts.length > 0 && (
+          {myAlerts.filter(alert => !alert.read).length > 0 && (
             <TouchableOpacity 
               style={styles.notificationButton}
               onPress={() => setShowAlertsPanel(true)}
             >
               <Ionicons name="warning" size={24} color="#f44336" />
               <View style={styles.notificationBadge}>
-                <Text style={styles.notificationText}>{myAlerts.length}</Text>
+                <Text style={styles.notificationText}>{myAlerts.filter(alert => !alert.read).length}</Text>
               </View>
             </TouchableOpacity>
           )}
