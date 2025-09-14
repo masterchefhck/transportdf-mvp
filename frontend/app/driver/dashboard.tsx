@@ -1446,4 +1446,74 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  // Profile photo styles for driver
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  defaultAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#2196F3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraIcon: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#4CAF50',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#2a2a2a',
+  },
+  // Passenger info styles in trip cards
+  passengerInfo: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  passengerDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  passengerPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  defaultPassengerPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  passengerTextInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  passengerName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  passengerRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  passengerRatingText: {
+    color: '#FF9800',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
 });
