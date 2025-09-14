@@ -673,9 +673,17 @@ export default function PassengerDashboard() {
               <Text style={styles.priceText}>R$ {currentTrip.estimated_price.toFixed(2)}</Text>
             </View>
 
-            {/* Report Driver Button */}
+            {/* Action Buttons */}
             {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_id && (
               <View style={styles.tripActions}>
+                <TouchableOpacity
+                  style={styles.chatButton}
+                  onPress={() => setShowChatModal(true)}
+                >
+                  <Ionicons name="chatbubble" size={16} color="#fff" />
+                  <Text style={styles.chatButtonText}>Chat</Text>
+                </TouchableOpacity>
+                
                 <TouchableOpacity
                   style={styles.reportButton}
                   onPress={handleReportDriver}
