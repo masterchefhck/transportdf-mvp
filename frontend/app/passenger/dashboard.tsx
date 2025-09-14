@@ -126,7 +126,7 @@ export default function PassengerDashboard() {
   const [reportDescription, setReportDescription] = useState('');
   const [responseText, setResponseText] = useState('');
 
-  // Rating states - COM CORREÇÃO PARA RACE CONDITION
+  // Rating states - COM CORREÇÃO COMPLETA PARA RACE CONDITION
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [completedTrip, setCompletedTrip] = useState<Trip | null>(null);
   const [rating, setRating] = useState(5);
@@ -166,6 +166,7 @@ export default function PassengerDashboard() {
     }
   };
 
+  // FUNÇÃO CORRIGIDA - Atualização IMEDIATA do estado local (síncrona)
   const markTripAsRated = async (tripId: string) => {
     try {
       // Atualização IMEDIATA do estado local primeiro (síncrona)
@@ -829,7 +830,315 @@ export default function PassengerDashboard() {
         </TouchableOpacity>
       </View>
 
-      {/* Rating Modal COM CORREÇÃO PARA RACE CONDITION */}
+      {/* Photo Modal */}
+      <Modal visible={showPhotoModal} transparent animationType="fade">
+        <View style={styles.photoModalOverlay}>
+          <View style={styles.photoModalContent}>
+            <View style={styles.photoModalHeader}>
+              <Text style={styles.photoModalTitle}>{selectedPhotoUser}</Text>
+              <TouchableOpacity
+                onPress={() => setShowPhotoModal(false)}
+                style={styles.photoModalCloseButton}
+              >
+                <Ionicons name="close" size={28} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            {selectedPhotoUrl && (
+              <Image source={{ uri: selectedPhotoUrl }} style={styles.fullSizePhoto} />
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Request Trip Modal */}
+      <Modal
+        visible={showRequestModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRequestModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Solicitar Viagem</Text>
+              <TouchableOpacity
+                onPress={() => setShowRequestModal(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="radio-button-on" size={20} color="#4CAF50" />
+              <TextInput
+                style={styles.input}
+                placeholder="Endereço de origem"
+                placeholderTextColor="#666"
+                value={pickupAddress}
+                onChangeText={setPickupAddress}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="location" size={20} color="#f44336" />
+              <TextInput
+                style={styles.input}
+                placeholder="Endereço de destino"
+                placeholderTextColor="#666"
+                value={destinationAddress}
+                onChangeText={setDestinationAddress}
+                onEndEditing={calculateEstimatePrice}
+              />
+            </View>
+
+            {estimatedPrice > 0 && (
+              <View style={styles.priceEstimate}>
+                <Text style={styles.priceLabel}>Preço estimado:</Text>
+                <Text style={styles.priceValue}>R$ {estimatedPrice.toFixed(2)}</Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={handleRequestTrip}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.confirmButtonText}>Confirmar Viagem</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Report Driver Modal */}
+      <Modal visible={showReportModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reportar Motorista</Text>
+              <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.modalSubtitle}>
+              Descreva o problema ocorrido com o motorista
+            </Text>
+            
+            <TextInput
+              style={styles.reportInput}
+              placeholder="Título do report"
+              placeholderTextColor="#666"
+              value={reportTitle}
+              onChangeText={setReportTitle}
+            />
+            
+            <TextInput
+              style={[styles.reportInput, styles.textArea]}
+              placeholder="Descrição detalhada do problema..."
+              placeholderTextColor="#666"
+              value={reportDescription}
+              onChangeText={setReportDescription}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+            
+            <TouchableOpacity style={styles.submitButton} onPress={submitReport}>
+              <Text style={styles.submitButtonText}>Enviar Report</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Response Modal */}
+      <Modal visible={showResponseModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Responder Report</Text>
+              <TouchableOpacity onPress={() => setShowResponseModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedReport && (
+              <>
+                <Text style={styles.modalSubtitle}>Report: {selectedReport.title}</Text>
+                
+                {selectedReport.admin_message && (
+                  <View style={styles.adminMessageBox}>
+                    <Text style={styles.adminMessageLabel}>Mensagem do Administrador:</Text>
+                    <Text style={styles.adminMessageText}>{selectedReport.admin_message}</Text>
+                  </View>
+                )}
+                
+                <TextInput
+                  style={[styles.reportInput, styles.textArea]}
+                  placeholder="Digite sua resposta/defesa..."
+                  placeholderTextColor="#666"
+                  value={responseText}
+                  onChangeText={setResponseText}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+                
+                <TouchableOpacity style={styles.submitButton} onPress={submitResponse}>
+                  <Text style={styles.submitButtonText}>Enviar Resposta</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Admin Messages Panel Modal */}
+      <Modal visible={showMessagesPanel} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Mensagens do Admin</Text>
+              <TouchableOpacity onPress={() => setShowMessagesPanel(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {adminMessages.length === 0 ? (
+              <View style={styles.noMessagesContainer}>
+                <Ionicons name="chatbubble-outline" size={60} color="#666" />
+                <Text style={styles.noMessagesText}>Nenhuma mensagem</Text>
+                <Text style={styles.noMessagesSubtext}>Você não tem mensagens do administrador</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={adminMessages}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.messageItem,
+                      !item.read && styles.unreadMessage
+                    ]}
+                    onPress={() => handleViewMessage(item)}
+                  >
+                    <View style={styles.messageHeader}>
+                      <View style={styles.messageInfo}>
+                        <Ionicons 
+                          name={item.read ? "mail-open" : "mail"} 
+                          size={20} 
+                          color={item.read ? "#888" : "#4CAF50"} 
+                        />
+                        <Text style={[
+                          styles.messageDate,
+                          !item.read && styles.unreadText
+                        ]}>
+                          {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                        </Text>
+                      </View>
+                      {!item.read && <View style={styles.unreadIndicator} />}
+                    </View>
+                    
+                    <Text 
+                      style={[
+                        styles.messagePreview,
+                        !item.read && styles.unreadText
+                      ]} 
+                      numberOfLines={2}
+                    >
+                      {item.message}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                showsVerticalScrollIndicator={false}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Message Detail Modal */}
+      <Modal visible={showMessageModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Mensagem do Admin</Text>
+              <TouchableOpacity onPress={() => setShowMessageModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedMessage && (
+              <>
+                <Text style={styles.modalSubtitle}>
+                  {new Date(selectedMessage.created_at).toLocaleString('pt-BR')}
+                </Text>
+                
+                <View style={styles.messageContent}>
+                  <Text style={styles.messageText}>{selectedMessage.message}</Text>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.closeMessageButton} 
+                  onPress={() => setShowMessageModal(false)}
+                >
+                  <Text style={styles.closeMessageButtonText}>Fechar</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Reports Panel Modal */}
+      <Modal visible={showReportsPanel} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reports Pendentes</Text>
+              <TouchableOpacity onPress={() => setShowReportsPanel(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              data={pendingReports}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.reportItem}>
+                  <View style={styles.reportItemHeader}>
+                    <Text style={styles.reportItemTitle}>{item.title}</Text>
+                    <View style={[styles.reportStatusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+                      <Text style={styles.reportStatusText}>
+                        {item.status === 'pending' ? 'Pendente' : 'Em Análise'}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <Text style={styles.reportItemDescription}>{item.description}</Text>
+                  
+                  {item.admin_message && item.response_allowed && (
+                    <TouchableOpacity
+                      style={styles.respondButton}
+                      onPress={() => handleRespondToReport(item)}
+                    >
+                      <Ionicons name="chatbubble" size={16} color="#fff" />
+                      <Text style={styles.respondButtonText}>Responder</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Rating Modal COM CORREÇÃO TOTAL PARA RACE CONDITION */}
       <Modal visible={showRatingModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -905,134 +1214,6 @@ export default function PassengerDashboard() {
           onClose={() => setShowChatModal(false)}
         />
       )}
-
-      {/* Request Trip Modal */}
-      <Modal visible={showRequestModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Solicitar Viagem</Text>
-              <TouchableOpacity onPress={() => setShowRequestModal(false)}>
-                <Ionicons name="close" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Origem</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Digite o endereço de origem"
-                placeholderTextColor="#666"
-                value={pickupAddress}
-                onChangeText={setPickupAddress}
-              />
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Destino</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Digite o endereço de destino"
-                placeholderTextColor="#666"
-                value={destinationAddress}
-                onChangeText={setDestinationAddress}
-              />
-            </View>
-            
-            <TouchableOpacity
-              style={styles.calculateButton}
-              onPress={calculateEstimatePrice}
-            >
-              <Text style={styles.calculateButtonText}>Calcular Preço</Text>
-            </TouchableOpacity>
-            
-            {estimatedPrice > 0 && (
-              <View style={styles.priceContainer}>
-                <Text style={styles.priceLabel}>Preço estimado:</Text>
-                <Text style={styles.priceValue}>R$ {estimatedPrice.toFixed(2)}</Text>
-              </View>
-            )}
-            
-            <TouchableOpacity
-              style={[styles.requestTripButton, loading && styles.disabledButton]}
-              onPress={handleRequestTrip}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.requestTripButtonText}>Solicitar Viagem</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Report Modal */}
-      <Modal visible={showReportModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Reportar Motorista</Text>
-              <TouchableOpacity onPress={() => setShowReportModal(false)}>
-                <Ionicons name="close" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Título</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Título do report"
-                placeholderTextColor="#666"
-                value={reportTitle}
-                onChangeText={setReportTitle}
-              />
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Descrição</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Descreva o problema..."
-                placeholderTextColor="#666"
-                value={reportDescription}
-                onChangeText={setReportDescription}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
-            
-            <TouchableOpacity
-              style={styles.submitReportButton}
-              onPress={submitReport}
-            >
-              <Text style={styles.submitReportButtonText}>Enviar Report</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Photo Modal */}
-      <Modal visible={showPhotoModal} transparent animationType="fade">
-        <View style={styles.photoModalOverlay}>
-          <TouchableOpacity 
-            style={styles.photoModalClose}
-            onPress={() => setShowPhotoModal(false)}
-          >
-            <Ionicons name="close" size={30} color="#fff" />
-          </TouchableOpacity>
-          
-          {selectedPhotoUrl && (
-            <View style={styles.photoModalContent}>
-              <Image source={{ uri: selectedPhotoUrl }} style={styles.fullScreenPhoto} />
-              <Text style={styles.photoUserName}>{selectedPhotoUser}</Text>
-            </View>
-          )}
-        </View>
-      </Modal>
-      
     </SafeAreaView>
   );
 }
@@ -1046,11 +1227,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    padding: 20,
     backgroundColor: '#2a2a2a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
   userInfo: {
     flexDirection: 'row',
@@ -1070,20 +1248,22 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#333',
-    justifyContent: 'center',
+    backgroundColor: '#4CAF50',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   cameraIcon: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
+    bottom: 0,
+    right: 0,
     backgroundColor: '#4CAF50',
     borderRadius: 10,
     width: 20,
     height: 20,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#2a2a2a',
   },
   userDetails: {
     flex: 1,
@@ -1092,31 +1272,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   locationText: {
     fontSize: 14,
     color: '#888',
-  },
-  userRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingText: {
-    fontSize: 14,
-    color: '#FF9800',
-    fontWeight: '600',
+    marginTop: 2,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   notificationButton: {
     position: 'relative',
@@ -1124,14 +1289,14 @@ const styles = StyleSheet.create({
   },
   notificationBadge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 2,
+    right: 2,
     backgroundColor: '#f44336',
     borderRadius: 10,
     minWidth: 20,
     height: 20,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   notificationText: {
     color: '#fff',
@@ -1140,8 +1305,6 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     padding: 8,
-    backgroundColor: '#f44336',
-    borderRadius: 8,
   },
   mainContent: {
     flex: 1,
@@ -1178,56 +1341,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
-  driverInfo: {
-    backgroundColor: '#333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  driverInfoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 12,
-  },
-  driverDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  driverPhoto: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  defaultDriverPhoto: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#444',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  driverTextInfo: {
-    flex: 1,
-  },
-  driverName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  driverRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  driverRatingText: {
-    fontSize: 14,
-    color: '#FF9800',
-    fontWeight: '500',
-  },
   tripStatus: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1237,227 +1350,283 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 12,
   },
   statusText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   priceText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#4CAF50',
   },
   tripActions: {
+    marginTop: 16,
     flexDirection: 'row',
     gap: 12,
   },
   chatButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#2196F3',
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
-    gap: 8,
-  },
-  chatButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  reportButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  chatButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  reportButton: {
     backgroundColor: '#FF9800',
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
+    flex: 1,
   },
   reportButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   noTripContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    justifyContent: 'center',
   },
   noTripTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
     marginTop: 20,
-    marginBottom: 12,
-    textAlign: 'center',
+    marginBottom: 8,
   },
   noTripSubtitle: {
     fontSize: 16,
     color: '#888',
     textAlign: 'center',
     marginBottom: 40,
-    lineHeight: 24,
   },
   requestButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#4CAF50',
-    paddingHorizontal: 32,
+    paddingHorizontal: 30,
     paddingVertical: 16,
     borderRadius: 12,
-    gap: 12,
   },
   requestButtonText: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 8,
   },
   quickActions: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    justifyContent: 'space-around',
+    padding: 20,
     backgroundColor: '#2a2a2a',
-    borderTopWidth: 1,
-    borderTopColor: '#333',
   },
   actionButton: {
-    flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
+    padding: 12,
   },
   actionText: {
-    color: '#888',
     fontSize: 12,
+    color: '#888',
     marginTop: 4,
-    fontWeight: '500',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   modalContent: {
     backgroundColor: '#2a2a2a',
     borderRadius: 16,
     padding: 20,
-    width: '100%',
+    width: '90%',
     maxWidth: 400,
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
   },
   modalSubtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#888',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  inputContainer: {
     marginBottom: 16,
   },
-  inputLabel: {
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 8,
-    fontWeight: '500',
+  closeButton: {
+    padding: 4,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    marginBottom: 16,
   },
   input: {
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flex: 1,
     fontSize: 16,
     color: '#fff',
-    borderWidth: 1,
-    borderColor: '#444',
+    marginLeft: 12,
+  },
+  reportInput: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 12,
   },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
   },
-  calculateButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  calculateButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  priceContainer: {
+  priceEstimate: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#333',
+    backgroundColor: '#1a1a1a',
     padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
+    borderRadius: 12,
+    marginBottom: 20,
   },
   priceLabel: {
     fontSize: 16,
     color: '#888',
   },
   priceValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#4CAF50',
   },
-  requestTripButton: {
+  confirmButton: {
     backgroundColor: '#4CAF50',
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  requestTripButtonText: {
-    color: '#fff',
+  confirmButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#fff',
   },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  submitReportButton: {
-    backgroundColor: '#FF9800',
-    paddingVertical: 16,
+  submitButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 8,
   },
-  submitReportButtonText: {
+  submitButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  adminMessageBox: {
+    backgroundColor: '#1a1a1a',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  adminMessageLabel: {
+    fontSize: 12,
+    color: '#FF9800',
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  adminMessageText: {
+    fontSize: 14,
+    color: '#fff',
+    lineHeight: 20,
+  },
+  reportItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  reportItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reportItemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    flex: 1,
+  },
+  reportStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  reportStatusText: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  reportItemDescription: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 12,
+  },
+  respondButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  respondButtonText: {
+    color: '#fff',
+    fontSize: 14,
     fontWeight: 'bold',
   },
   starContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 16,
+    alignItems: 'center',
+    marginVertical: 20,
+    gap: 10,
   },
   starButton: {
-    padding: 4,
+    padding: 5,
   },
   ratingDisplayText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FF9800',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -1465,74 +1634,214 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   reasonLabel: {
-    fontSize: 16,
-    color: '#fff',
+    fontSize: 14,
+    color: '#FF9800',
+    fontWeight: 'bold',
     marginBottom: 8,
-    fontWeight: '500',
-  },
-  reportInput: {
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#444',
   },
   ratingModalButtons: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
   },
   skipButton: {
-    flex: 1,
     backgroundColor: '#666',
-    paddingVertical: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 8,
+    flex: 1,
     alignItems: 'center',
   },
   skipButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
-  submitButton: {
-    flex: 1,
+  // Rating display styles
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  userRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  ratingText: {
+    color: '#FF9800',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  // Messages styles
+  noMessagesContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  noMessagesText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  noMessagesSubtext: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  messageItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  unreadMessage: {
+    backgroundColor: '#2a3a2a',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  messageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  messageInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  messageDate: {
+    color: '#888',
+    fontSize: 12,
+  },
+  unreadText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  unreadIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#4CAF50',
-    paddingVertical: 16,
+  },
+  messagePreview: {
+    color: '#888',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  messageContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  messageText: {
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  closeMessageButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
-  submitButtonText: {
+  closeMessageButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
+  // Driver info styles in trip cards
+  driverInfo: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  driverInfoTitle: {
+    color: '#4CAF50',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  driverDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  driverPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  defaultDriverPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  driverTextInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  driverName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  driverRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  driverRatingText: {
+    color: '#FF9800',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  // Photo modal styles
   photoModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  photoModalClose: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 1,
-    padding: 10,
-  },
   photoModalContent: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 16,
+    padding: 20,
+    width: '90%',
+    maxWidth: 350,
     alignItems: 'center',
   },
-  fullScreenPhoto: {
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+  photoModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
   },
-  photoUserName: {
+  photoModalTitle: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 20,
+  },
+  photoModalCloseButton: {
+    padding: 4,
+  },
+  fullSizePhoto: {
+    width: 300,
+    height: 400,
+    borderRadius: 12,
+    resizeMode: 'cover',
   },
 });
