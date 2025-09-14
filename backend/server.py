@@ -970,6 +970,47 @@ async def mark_message_as_read(message_id: str, current_user: User = Depends(get
     return {"message": "Message marked as read"}
 
 # Basic health check
+# Bulk Delete endpoints
+@api_router.post("/admin/trips/bulk-delete")
+async def bulk_delete_trips(request: BulkDeleteRequest, current_user: User = Depends(get_current_user)):
+    """Admin bulk delete trips"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.trips.delete_many({"id": {"$in": request.ids}})
+    return {"message": f"Deleted {result.deleted_count} trips"}
+
+@api_router.post("/admin/users/bulk-delete")
+async def bulk_delete_users(request: BulkDeleteRequest, current_user: User = Depends(get_current_user)):
+    """Admin bulk delete users"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Don't allow deleting admin users
+    result = await db.users.delete_many({
+        "id": {"$in": request.ids},
+        "user_type": {"$ne": "admin"}
+    })
+    return {"message": f"Deleted {result.deleted_count} users"}
+
+@api_router.post("/admin/reports/bulk-delete")
+async def bulk_delete_reports(request: BulkDeleteRequest, current_user: User = Depends(get_current_user)):
+    """Admin bulk delete reports"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.reports.delete_many({"id": {"$in": request.ids}})
+    return {"message": f"Deleted {result.deleted_count} reports"}
+
+@api_router.post("/admin/ratings/bulk-delete")
+async def bulk_delete_ratings(request: BulkDeleteRequest, current_user: User = Depends(get_current_user)):
+    """Admin bulk delete ratings"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.ratings.delete_many({"id": {"$in": request.ids}})
+    return {"message": f"Deleted {result.deleted_count} ratings"}
+
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "Transport App Brasília MVP"}
