@@ -161,6 +161,31 @@ export default function DriverDashboard() {
     }
   };
 
+  const loadCurrentRating = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/users/rating`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCurrentRating(response.data.rating);
+    } catch (error) {
+      console.log('Error loading current rating:', error);
+    }
+  };
+
+  const markAlertAsRead = async (alertId: string) => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(`${API_URL}/api/drivers/alerts/${alertId}/read`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      loadMyAlerts(); // Reload alerts to update read status
+    } catch (error) {
+      console.error('Error marking alert as read:', error);
+      showAlert('Erro', 'Erro ao marcar alerta como lido');
+    }
+  };
+
   const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
