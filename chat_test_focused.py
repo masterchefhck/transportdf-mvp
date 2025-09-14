@@ -70,24 +70,59 @@ class ChatSystemTester:
         """Setup users and create a trip for chat testing"""
         print("🔧 Setting up users and trip for chat testing...")
         
-        # Login users
-        login_data = [
-            {"email": "maria.santos@email.com", "password": "senha123", "type": "passenger"},
-            {"email": "joao.motorista@email.com", "password": "motorista456", "type": "driver"},
-            {"email": "admin@transportdf.com", "password": "admin789", "type": "admin"}
+        # Try to register users first (in case they don't exist)
+        test_users = [
+            {
+                "name": "Maria Silva Santos",
+                "email": "maria.santos.chat@email.com",
+                "phone": "(61) 99999-1234",
+                "cpf": "123.456.789-01",
+                "user_type": "passenger",
+                "password": "senha123"
+            },
+            {
+                "name": "João Carlos Oliveira",
+                "email": "joao.motorista.chat@email.com", 
+                "phone": "(61) 98888-5678",
+                "cpf": "987.654.321-09",
+                "user_type": "driver",
+                "password": "motorista456"
+            },
+            {
+                "name": "Ana Paula Administradora",
+                "email": "admin.chat@transportdf.com",
+                "phone": "(61) 97777-9999",
+                "cpf": "111.222.333-44",
+                "user_type": "admin", 
+                "password": "admin789"
+            }
         ]
         
-        for login in login_data:
-            success, data, status_code = self.make_request("POST", "/auth/login", 
-                                                         {"email": login["email"], "password": login["password"]})
+        # Register users
+        for user_data in test_users:
+            success, data, status_code = self.make_request("POST", "/auth/register", user_data)
             
-            if success and "access_token" in data:
-                self.tokens[login["type"]] = data["access_token"]
-                if "user" in data:
-                    self.users[login["type"]] = data["user"]
-                print(f"✅ {login['type'].title()} logged in successfully")
+            if success and "access_token" in data and "user" in data:
+                user_type = user_data["user_type"]
+                self.tokens[user_type] = data["access_token"]
+                self.users[user_type] = data["user"]
+                print(f"✅ {user_type.title()} registered successfully")
+            elif status_code == 400 and "already exists" in str(data).lower():
+                # User exists, try to login
+                login_data = {"email": user_data["email"], "password": user_data["password"]}
+                success, login_response, login_status = self.make_request("POST", "/auth/login", login_data)
+                
+                if success and "access_token" in login_response:
+                    user_type = user_data["user_type"]
+                    self.tokens[user_type] = login_response["access_token"]
+                    if "user" in login_response:
+                        self.users[user_type] = login_response["user"]
+                    print(f"✅ {user_type.title()} logged in successfully (user existed)")
+                else:
+                    print(f"❌ {user_data['user_type'].title()} login failed after registration attempt")
+                    return False
             else:
-                print(f"❌ {login['type'].title()} login failed")
+                print(f"❌ {user_data['user_type'].title()} registration failed: {data}")
                 return False
         
         # Create a trip for chat testing
