@@ -168,10 +168,14 @@ export default function PassengerDashboard() {
 
   const markTripAsRated = async (tripId: string) => {
     try {
+      // Atualização IMEDIATA do estado local primeiro (síncrona)
       const newRatedTrips = new Set(ratedTrips);
       newRatedTrips.add(tripId);
       setRatedTrips(newRatedTrips);
+      
+      // Depois salva no AsyncStorage (assíncrona)
       await AsyncStorage.setItem('rated_trips', JSON.stringify(Array.from(newRatedTrips)));
+      console.log('Trip marked as rated:', tripId, 'Total rated trips:', newRatedTrips.size);
     } catch (error) {
       console.log('Error saving rated trip:', error);
     }
