@@ -1992,6 +1992,22 @@ class TransportDFTester:
         self.test_trip_status_updates_with_driver_info()
         self.test_driver_info_completeness()
         
+        # Chat Endpoints Tests - NEW CHAT FEATURE
+        print("\n" + "=" * 50)
+        print("💬 TESTING CHAT ENDPOINTS - NEW CHAT FEATURE")
+        print("=" * 50)
+        self.test_chat_send_message_passenger()
+        self.test_chat_send_message_driver()
+        self.test_chat_message_character_limit()
+        self.test_chat_unauthorized_user_access()
+        self.test_chat_inactive_trip_restriction()
+        self.test_chat_get_messages_passenger()
+        self.test_chat_get_messages_driver()
+        self.test_chat_get_messages_admin_access()
+        self.test_admin_chats_aggregation()
+        self.test_admin_trips_complete_user_data()
+        self.test_chat_nonexistent_trip()
+        
         # Summary
         print("=" * 80)
         print("📊 TEST SUMMARY")
