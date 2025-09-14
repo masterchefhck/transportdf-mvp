@@ -908,6 +908,67 @@ async def mark_alert_as_read(alert_id: str, current_user: User = Depends(get_cur
     
     return {"message": "Alert marked as read"}
 
+# Admin Messages to Passengers endpoints
+@api_router.post("/admin/messages/send")
+async def send_message_to_passenger(message_data: AdminMessageCreate, current_user: User = Depends(get_current_user)):
+    """Admin sends message to passenger"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Verify user exists and is a passenger
+    user = await db.users.find_one({"id": message_data.user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user["user_type"] != "passenger":
+        raise HTTPException(status_code=400, detail="Can only send messages to passengers")
+    
+    # Create message
+    admin_message = AdminMessageToUser(
+        user_id=message_data.user_id,
+        admin_id=current_user.id,
+        message=message_data.message
+    )
+    
+    await db.admin_messages.insert_one(admin_message.dict())
+    
+    return {"message": "Message sent to passenger successfully"}
+
+@api_router.get("/passengers/messages")
+async def get_passenger_messages(current_user: User = Depends(get_current_user)):
+    """Get messages sent to current passenger"""
+    if current_user.user_type != UserType.PASSENGER:
+        raise HTTPException(status_code=403, detail="Only passengers can view their messages")
+    
+    messages = await db.admin_messages.find({
+        "user_id": current_user.id
+    }).sort("created_at", -1).to_list(50)
+    
+    return [AdminMessageToUser(**msg) for msg in messages]
+
+@api_router.post("/passengers/messages/{message_id}/read")
+async def mark_message_as_read(message_id: str, current_user: User = Depends(get_current_user)):
+    """Mark message as read by passenger"""
+    if current_user.user_type != UserType.PASSENGER:
+        raise HTTPException(status_code=403, detail="Only passengers can mark messages as read")
+    
+    # Verify message belongs to current passenger
+    message = await db.admin_messages.find_one({
+        "id": message_id,
+        "user_id": current_user.id
+    })
+    
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Mark as read
+    await db.admin_messages.update_one(
+        {"id": message_id},
+        {"$set": {"read": True, "read_at": datetime.utcnow()}}
+    )
+    
+    return {"message": "Message marked as read"}
+
 # Basic health check
 @api_router.get("/health")
 async def health_check():
