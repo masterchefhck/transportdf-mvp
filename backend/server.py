@@ -777,12 +777,16 @@ async def get_low_ratings(current_user: User = Depends(get_current_user)):
     
     ratings = await db.ratings.aggregate(pipeline).to_list(100)
     
-    # Process results to include user names
+    # Process results to include user names and alert status
     result = []
     for rating in ratings:
         rated_user = rating["rated_user"][0] if rating["rated_user"] else {}
         rater = rating["rater"][0] if rating["rater"] else {}
         trip = rating["trip"][0] if rating["trip"] else {}
+        
+        # Check if alert was already sent for this rating
+        existing_alert = await db.admin_alerts.find_one({"rating_id": rating["id"]})
+        alert_sent = existing_alert is not None
         
         result.append({
             "id": rating["id"],
@@ -793,7 +797,8 @@ async def get_low_ratings(current_user: User = Depends(get_current_user)):
             "rated_user_id": rating["rated_user_id"],
             "rater_name": rater.get("name", "Unknown"),
             "trip_pickup": trip.get("pickup_address", "Unknown"),
-            "trip_destination": trip.get("destination_address", "Unknown")
+            "trip_destination": trip.get("destination_address", "Unknown"),
+            "alert_sent": alert_sent
         })
     
     return result
