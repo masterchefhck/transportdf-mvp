@@ -433,13 +433,26 @@ async def request_trip(trip_data: TripRequest, current_user: User = Depends(get_
     await db.trips.insert_one(trip.dict())
     return trip
 
-@api_router.get("/trips/available", response_model=List[Trip])
+@api_router.get("/trips/available")
 async def get_available_trips(current_user: User = Depends(get_current_user)):
     if current_user.user_type != UserType.DRIVER:
         raise HTTPException(status_code=403, detail="Only drivers can view available trips")
     
     trips = await db.trips.find({"status": TripStatus.REQUESTED}).to_list(50)
-    return [Trip(**trip) for trip in trips]
+    
+    # Enrich trips with passenger information
+    enriched_trips = []
+    for trip in trips:
+        passenger = await db.users.find_one({"id": trip["passenger_id"]})
+        if passenger:
+            trip_data = Trip(**trip)
+            trip_dict = trip_data.dict()
+            trip_dict["passenger_name"] = passenger["name"]
+            trip_dict["passenger_rating"] = passenger.get("rating", 5.0)
+            trip_dict["passenger_photo"] = passenger.get("profile_photo")
+            enriched_trips.append(trip_dict)
+    
+    return enriched_trips
 
 @api_router.put("/trips/{trip_id}/accept")
 async def accept_trip(trip_id: str, current_user: User = Depends(get_current_user)):
