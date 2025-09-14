@@ -1196,6 +1196,110 @@ export default function AdminDashboard() {
     );
   }
 
+  const renderChats = () => (
+    <View style={styles.contentContainer}>
+      <Text style={styles.sectionTitle}>Histórico de Chat (Passageiro/Motorista)</Text>
+      
+      {chats.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons name="chatbubbles-outline" size={60} color="#666" />
+          <Text style={styles.emptyStateText}>Nenhuma conversa encontrada</Text>
+          <Text style={styles.emptyStateSubtext}>
+            Os chats aparecerão quando viagens com conversas forem realizadas
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={chats}
+          keyExtractor={(item) => item.trip_id}
+          renderItem={({ item }) => (
+            <View style={styles.chatCard}>
+              <View style={styles.chatHeader}>
+                <View style={styles.chatUsers}>
+                  {/* Passenger Info */}
+                  <View style={styles.chatUser}>
+                    <TouchableOpacity
+                      onPress={() => handleViewPhoto(item.passenger.profile_photo, item.passenger.name)}
+                      disabled={!item.passenger.profile_photo}
+                    >
+                      <View style={styles.chatUserAvatar}>
+                        {item.passenger.profile_photo ? (
+                          <Image 
+                            source={{ uri: item.passenger.profile_photo }} 
+                            style={styles.chatUserPhoto}
+                          />
+                        ) : (
+                          <Ionicons name="person" size={16} color="#4CAF50" />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                    <View>
+                      <Text style={styles.chatUserName}>{item.passenger.name}</Text>
+                      <Text style={styles.chatUserType}>Passageiro</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.chatSeparator}>
+                    <Ionicons name="chatbubbles" size={20} color="#FF9800" />
+                  </View>
+
+                  {/* Driver Info */}
+                  <View style={styles.chatUser}>
+                    <TouchableOpacity
+                      onPress={() => handleViewPhoto(item.driver.profile_photo, item.driver.name)}
+                      disabled={!item.driver.profile_photo}
+                    >
+                      <View style={styles.chatUserAvatar}>
+                        {item.driver.profile_photo ? (
+                          <Image 
+                            source={{ uri: item.driver.profile_photo }} 
+                            style={styles.chatUserPhoto}
+                          />
+                        ) : (
+                          <Ionicons name="car" size={16} color="#2196F3" />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                    <View>
+                      <Text style={styles.chatUserName}>{item.driver.name}</Text>
+                      <Text style={styles.chatUserType}>Motorista</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.viewChatButton}
+                  onPress={() => {
+                    setSelectedChatId(item.trip_id);
+                    setShowChatModal(true);
+                  }}
+                >
+                  <Text style={styles.viewChatButtonText}>Ver Chat</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.chatInfo}>
+                <Text style={styles.chatRoute}>
+                  {item.pickup_address} → {item.destination_address}
+                </Text>
+                <Text style={styles.chatStats}>
+                  {item.message_count} mensagens • Status: {item.trip_status}
+                </Text>
+                <Text style={styles.chatDates}>
+                  Início: {new Date(item.first_message).toLocaleString('pt-BR')}
+                  {item.last_message !== item.first_message && (
+                    <Text> • Última: {new Date(item.last_message).toLocaleString('pt-BR')}</Text>
+                  )}
+                </Text>
+              </View>
+            </View>
+          )}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
