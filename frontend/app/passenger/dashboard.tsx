@@ -1270,6 +1270,24 @@ const styles = StyleSheet.create({
   },
   tripActions: {
     marginTop: 16,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  chatButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  chatButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   reportButton: {
     backgroundColor: '#FF9800',
@@ -1280,6 +1298,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    flex: 1,
   },
   reportButtonText: {
     fontSize: 14,
