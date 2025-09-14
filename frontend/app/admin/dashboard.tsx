@@ -1535,6 +1535,16 @@ export default function AdminDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Chat Modal */}
+      <Modal visible={showChatModal} animationType="slide" presentationStyle="pageSheet">
+        <ChatComponent
+          tripId={selectedChatId}
+          currentUserId={user?.id || ''}
+          currentUserType="admin"
+          onClose={() => setShowChatModal(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
