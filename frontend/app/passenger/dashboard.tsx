@@ -182,8 +182,20 @@ export default function PassengerDashboard() {
         (trip: Trip) => trip.status === 'requested' || trip.status === 'accepted' || trip.status === 'in_progress'
       );
 
+      // Check for recently completed trips that need rating
+      const recentlyCompleted = response.data.find(
+        (trip: Trip) => trip.status === 'completed' && !trip.rated
+      );
+
       if (activeTrip) {
         setCurrentTrip(activeTrip);
+      } else if (recentlyCompleted && currentTrip?.status !== 'completed') {
+        // Trip just completed, show rating modal
+        setCompletedTrip(recentlyCompleted);
+        setShowRatingModal(true);
+        setCurrentTrip(null);
+      } else {
+        setCurrentTrip(null);
       }
     } catch (error) {
       console.log('Error checking current trip:', error);
