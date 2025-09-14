@@ -800,6 +800,65 @@ export default function DriverDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Alerts Panel Modal */}
+      <Modal visible={showAlertsPanel} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Alertas do Administrador</Text>
+              <TouchableOpacity onPress={() => setShowAlertsPanel(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              data={myAlerts}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.alertItem}>
+                  <View style={styles.alertHeader}>
+                    <View style={styles.alertStarsContainer}>
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Ionicons
+                          key={star}
+                          name={star <= item.rating_stars ? "star" : "star-outline"}
+                          size={16}
+                          color={star <= item.rating_stars ? "#FF9800" : "#666"}
+                        />
+                      ))}
+                      <Text style={styles.alertRatingText}>({item.rating_stars})</Text>
+                    </View>
+                    <Text style={styles.alertDate}>
+                      {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                    </Text>
+                  </View>
+
+                  {item.rating_reason && (
+                    <View style={styles.alertReasonContainer}>
+                      <Text style={styles.alertReasonLabel}>Motivo da avaliação:</Text>
+                      <Text style={styles.alertReasonText}>{item.rating_reason}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.alertMessageContainer}>
+                    <Text style={styles.alertMessageLabel}>Mensagem do Administrador:</Text>
+                    <Text style={styles.alertMessageText}>{item.admin_message}</Text>
+                  </View>
+
+                  <View style={styles.alertWarning}>
+                    <Ionicons name="warning" size={16} color="#f44336" />
+                    <Text style={styles.alertWarningText}>
+                      Por favor, revise suas práticas para melhorar o atendimento aos passageiros.
+                    </Text>
+                  </View>
+                </View>
+              )}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
