@@ -648,14 +648,29 @@ export default function AdminDashboard() {
               )}
 
               <TouchableOpacity
-                style={styles.alertButton}
+                style={[
+                  styles.alertButton,
+                  rating.alert_sent && styles.alertButtonDisabled
+                ]}
                 onPress={() => {
-                  setSelectedRating(rating);
-                  setShowAlertModal(true);
+                  if (!rating.alert_sent) {
+                    setSelectedRating(rating);
+                    setShowAlertModal(true);
+                  }
                 }}
+                disabled={rating.alert_sent}
               >
-                <Ionicons name="warning" size={16} color="#fff" />
-                <Text style={styles.alertButtonText}>Enviar Alerta</Text>
+                <Ionicons 
+                  name={rating.alert_sent ? "checkmark-circle" : "warning"} 
+                  size={16} 
+                  color={rating.alert_sent ? "#888" : "#fff"} 
+                />
+                <Text style={[
+                  styles.alertButtonText,
+                  rating.alert_sent && styles.alertButtonTextDisabled
+                ]}>
+                  {rating.alert_sent ? "Alerta Enviado" : "Enviar Alerta"}
+                </Text>
               </TouchableOpacity>
             </View>
           ))
