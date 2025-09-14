@@ -1249,6 +1249,17 @@ class TransportDFTester:
         self.test_passenger_mark_message_as_read_not_found()
         self.test_passenger_mark_message_access_control()
         
+        # Profile Photo Upload Tests - NEW FEATURE FROM REVIEW REQUEST
+        print("\n" + "=" * 50)
+        print("📸 TESTING PROFILE PHOTO UPLOAD ENDPOINT - REVIEW REQUEST")
+        print("=" * 50)
+        self.test_profile_photo_upload_valid()
+        self.test_profile_photo_upload_no_auth()
+        self.test_profile_photo_upload_invalid_payload()
+        self.test_profile_photo_retrieval_via_users_me()
+        self.test_profile_photo_overwrite_existing()
+        self.test_profile_photo_in_available_trips()
+        
         # Summary
         print("=" * 80)
         print("📊 TEST SUMMARY")
