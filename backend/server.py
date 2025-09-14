@@ -595,13 +595,52 @@ async def get_all_users(current_user: User = Depends(get_current_user)):
     users = await db.users.find({}).to_list(1000)
     return [User(**user) for user in users]
 
-@api_router.get("/admin/trips", response_model=List[Trip])
+@api_router.get("/admin/trips")
 async def get_all_trips(current_user: User = Depends(get_current_user)):
+    """Get all trips with complete user information for admin dashboard"""
     if current_user.user_type != UserType.ADMIN:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    trips = await db.trips.find({}).sort("requested_at", -1).to_list(1000)
-    return [Trip(**trip) for trip in trips]
+    # Aggregate trips with user details
+    pipeline = [
+        {"$lookup": {
+            "from": "users",
+            "localField": "passenger_id",
+            "foreignField": "id",
+            "as": "passenger"
+        }},
+        {"$lookup": {
+            "from": "users",
+            "localField": "driver_id",
+            "foreignField": "id",
+            "as": "driver"
+        }},
+        {"$sort": {"requested_at": -1}},
+        {"$limit": 1000}
+    ]
+    
+    trips = await db.trips.aggregate(pipeline).to_list(1000)
+    
+    # Process results to include user details
+    result = []
+    for trip in trips:
+        passenger = trip["passenger"][0] if trip["passenger"] else {}
+        driver = trip["driver"][0] if trip["driver"] else {}
+        
+        trip_data = {
+            **trip,
+            "passenger_name": passenger.get("name"),
+            "passenger_phone": passenger.get("phone"),
+            "passenger_photo": passenger.get("profile_photo"),
+            "passenger_rating": passenger.get("rating"),
+            "driver_name": driver.get("name"),
+            "driver_phone": driver.get("phone"),
+            "driver_photo": driver.get("profile_photo"),
+            "driver_rating": driver.get("rating")
+        }
+        result.append(trip_data)
+    
+    return result
 
 @api_router.get("/admin/stats")
 async def get_stats(current_user: User = Depends(get_current_user)):
