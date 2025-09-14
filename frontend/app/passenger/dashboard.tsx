@@ -132,6 +132,9 @@ export default function PassengerDashboard() {
   const [rating, setRating] = useState(5);
   const [ratingReason, setRatingReason] = useState('');
 
+  // Chat states
+  const [showChatModal, setShowChatModal] = useState(false);
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
