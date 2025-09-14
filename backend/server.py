@@ -542,7 +542,23 @@ async def get_my_trips(current_user: User = Depends(get_current_user)):
         
     elif current_user.user_type == UserType.DRIVER:
         trips = await db.trips.find({"driver_id": current_user.id}).sort("requested_at", -1).to_list(50)
-        return [Trip(**trip) for trip in trips]
+        
+        # Enrich trips with passenger information for drivers
+        enriched_trips = []
+        for trip in trips:
+            trip_data = Trip(**trip)
+            trip_dict = trip_data.dict()
+            
+            # Add passenger info for all driver trips
+            passenger = await db.users.find_one({"id": trip["passenger_id"]})
+            if passenger:
+                trip_dict["passenger_name"] = passenger["name"]
+                trip_dict["passenger_rating"] = passenger.get("rating", 5.0)
+                trip_dict["passenger_photo"] = passenger.get("profile_photo")
+            
+            enriched_trips.append(trip_dict)
+        
+        return enriched_trips
     else:
         raise HTTPException(status_code=403, detail="Invalid user type")
 
