@@ -1200,6 +1200,30 @@ class TransportDFTester:
         self.test_mark_alert_as_read_not_found()
         self.test_mark_alert_as_read_access_control()
         
+        # Bulk Operations Tests - NEW FEATURE
+        print("\n" + "=" * 50)
+        print("🗑️ TESTING BULK DELETE OPERATIONS - NEW FEATURE")
+        print("=" * 50)
+        self.test_bulk_delete_trips_valid_ids()
+        self.test_bulk_delete_trips_invalid_ids()
+        self.test_bulk_delete_users_excludes_admins()
+        self.test_bulk_delete_reports()
+        self.test_bulk_delete_ratings()
+        self.test_bulk_delete_permissions()
+        
+        # Admin Messaging Tests - NEW FEATURE
+        print("\n" + "=" * 50)
+        print("💬 TESTING ADMIN MESSAGING TO PASSENGERS - NEW FEATURE")
+        print("=" * 50)
+        self.test_admin_send_message_to_passenger()
+        self.test_admin_send_message_to_driver_should_fail()
+        self.test_admin_send_message_to_nonexistent_user()
+        self.test_passenger_get_messages()
+        self.test_passenger_messages_access_control()
+        self.test_passenger_mark_message_as_read()
+        self.test_passenger_mark_message_as_read_not_found()
+        self.test_passenger_mark_message_access_control()
+        
         # Summary
         print("=" * 80)
         print("📊 TEST SUMMARY")
