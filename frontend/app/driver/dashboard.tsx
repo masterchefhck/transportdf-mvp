@@ -1038,6 +1038,26 @@ export default function DriverDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Photo Modal */}
+      <Modal visible={showPhotoModal} transparent animationType="fade">
+        <View style={styles.photoModalOverlay}>
+          <View style={styles.photoModalContent}>
+            <View style={styles.photoModalHeader}>
+              <Text style={styles.photoModalTitle}>{selectedPhotoUser}</Text>
+              <TouchableOpacity
+                onPress={() => setShowPhotoModal(false)}
+                style={styles.photoModalCloseButton}
+              >
+                <Ionicons name="close" size={28} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            {selectedPhotoUrl && (
+              <Image source={{ uri: selectedPhotoUrl }} style={styles.fullSizePhoto} />
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
