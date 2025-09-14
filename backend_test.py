@@ -379,9 +379,246 @@ class BackendTester:
         except Exception as e:
             self.log_test("Admin Trips View", False, f"Error: {str(e)}")
     
+    def test_specific_reported_issues(self):
+        """Test the three specific issues reported by user"""
+        print("\n🚨 TESTING SPECIFIC REPORTED ISSUES")
+        print("-" * 50)
+        
+        # Issue 1: Test bulk delete ratings endpoint
+        self.test_bulk_delete_ratings()
+        
+        # Issue 2: Test location processing in trip request
+        self.test_location_processing()
+        
+        # Issue 3: Test rating creation and duplicate prevention
+        self.test_rating_duplicate_prevention()
+    
+    def test_bulk_delete_ratings(self):
+        """Test /api/admin/ratings/bulk-delete endpoint"""
+        if "admin" not in self.tokens:
+            self.log_test("Bulk Delete Ratings Setup", False, "No admin token available")
+            return
+            
+        try:
+            # First, ensure we have some ratings to delete
+            # Create a test rating if we have completed trips
+            if "completed" in self.trips and "rating_created" not in self.trips:
+                headers = {"Authorization": f"Bearer {self.tokens['passenger']}"}
+                rating_data = {
+                    "trip_id": self.trips["completed"]["id"],
+                    "rated_user_id": self.users["driver"]["id"],
+                    "rating": 3,
+                    "reason": "Test rating for bulk delete"
+                }
+                
+                rating_response = self.session.post(f"{API_BASE}/ratings/create", json=rating_data, headers=headers)
+                if rating_response.status_code == 200:
+                    self.log_test("Create Test Rating for Bulk Delete", True, "Rating created successfully")
+                
+            # Get existing ratings to find IDs for bulk delete
+            headers = {"Authorization": f"Bearer {self.tokens['admin']}"}
+            ratings_response = self.session.get(f"{API_BASE}/ratings/low", headers=headers)
+            
+            if ratings_response.status_code == 200:
+                ratings = ratings_response.json()
+                if len(ratings) > 0:
+                    # Test bulk delete with existing rating IDs
+                    rating_ids = [rating["id"] for rating in ratings[:2]]  # Take first 2 ratings
+                    
+                    bulk_delete_data = {"ids": rating_ids}
+                    response = self.session.post(f"{API_BASE}/admin/ratings/bulk-delete", 
+                                               json=bulk_delete_data, headers=headers)
+                    
+                    success = response.status_code == 200
+                    if success:
+                        result = response.json()
+                        deleted_count = result.get("message", "").split()[1] if "Deleted" in result.get("message", "") else "0"
+                        self.log_test("Bulk Delete Ratings", success, f"Deleted {deleted_count} ratings")
+                    else:
+                        self.log_test("Bulk Delete Ratings", False, f"Status: {response.status_code}, Response: {response.text}")
+                else:
+                    # Test with empty list
+                    bulk_delete_data = {"ids": []}
+                    response = self.session.post(f"{API_BASE}/admin/ratings/bulk-delete", 
+                                               json=bulk_delete_data, headers=headers)
+                    success = response.status_code == 200
+                    self.log_test("Bulk Delete Ratings (Empty)", success, f"Status: {response.status_code}")
+            else:
+                self.log_test("Get Ratings for Bulk Delete", False, f"Status: {ratings_response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Bulk Delete Ratings", False, f"Error: {str(e)}")
+    
+    def test_location_processing(self):
+        """Test location processing in trip request endpoint"""
+        if "passenger" not in self.tokens:
+            self.log_test("Location Processing Setup", False, "No passenger token available")
+            return
+            
+        # Test with valid Brasília coordinates
+        valid_trip_data = {
+            "passenger_id": self.users["passenger"]["id"],
+            "pickup_latitude": -15.7801,
+            "pickup_longitude": -47.9292,
+            "pickup_address": "Asa Norte, Brasília - DF",
+            "destination_latitude": -15.8267,
+            "destination_longitude": -47.9218,
+            "destination_address": "Asa Sul, Brasília - DF",
+            "estimated_price": 15.50
+        }
+        
+        try:
+            headers = {"Authorization": f"Bearer {self.tokens['passenger']}"}
+            response = self.session.post(f"{API_BASE}/trips/request", json=valid_trip_data, headers=headers)
+            
+            success = response.status_code == 200
+            if success:
+                trip = response.json()
+                # Check if location data is properly processed
+                has_coordinates = all(key in trip for key in ["pickup_latitude", "pickup_longitude", "destination_latitude", "destination_longitude"])
+                has_distance = "distance_km" in trip and trip["distance_km"] > 0
+                has_price = "estimated_price" in trip and trip["estimated_price"] > 0
+                
+                location_processing_ok = has_coordinates and has_distance and has_price
+                self.log_test("Location Processing - Valid Coordinates", location_processing_ok, 
+                            f"Coordinates: {has_coordinates}, Distance: {has_distance}, Price: {has_price}")
+            else:
+                self.log_test("Location Processing - Valid Coordinates", False, f"Status: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Location Processing - Valid Coordinates", False, f"Error: {str(e)}")
+        
+        # Test with invalid coordinates (should still work but might have issues)
+        invalid_trip_data = {
+            "passenger_id": self.users["passenger"]["id"],
+            "pickup_latitude": 0.0,  # Invalid coordinates
+            "pickup_longitude": 0.0,
+            "pickup_address": "Invalid Location",
+            "destination_latitude": 0.0,
+            "destination_longitude": 0.0,
+            "destination_address": "Invalid Destination",
+            "estimated_price": 15.50
+        }
+        
+        try:
+            headers = {"Authorization": f"Bearer {self.tokens['passenger']}"}
+            response = self.session.post(f"{API_BASE}/trips/request", json=invalid_trip_data, headers=headers)
+            
+            # This should either succeed (backend handles it) or fail gracefully
+            if response.status_code == 200:
+                self.log_test("Location Processing - Invalid Coordinates", True, "Backend handled invalid coordinates")
+            elif response.status_code == 400:
+                self.log_test("Location Processing - Invalid Coordinates", True, "Backend properly rejected invalid coordinates")
+            else:
+                self.log_test("Location Processing - Invalid Coordinates", False, f"Unexpected status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Location Processing - Invalid Coordinates", False, f"Error: {str(e)}")
+    
+    def test_rating_duplicate_prevention(self):
+        """Test rating creation and duplicate prevention"""
+        if "passenger" not in self.tokens or "driver" not in self.tokens:
+            self.log_test("Rating Duplicate Prevention Setup", False, "Missing required tokens")
+            return
+            
+        # Create a new trip for rating test
+        trip_data = {
+            "passenger_id": self.users["passenger"]["id"],
+            "pickup_latitude": -15.7801,
+            "pickup_longitude": -47.9292,
+            "pickup_address": "Test Pickup Location",
+            "destination_latitude": -15.8267,
+            "destination_longitude": -47.9218,
+            "destination_address": "Test Destination",
+            "estimated_price": 10.00
+        }
+        
+        try:
+            # Create and complete a trip for rating
+            headers_passenger = {"Authorization": f"Bearer {self.tokens['passenger']}"}
+            headers_driver = {"Authorization": f"Bearer {self.tokens['driver']}"}
+            
+            # Request trip
+            trip_response = self.session.post(f"{API_BASE}/trips/request", json=trip_data, headers=headers_passenger)
+            if trip_response.status_code != 200:
+                self.log_test("Rating Test Trip Creation", False, f"Failed to create trip: {trip_response.status_code}")
+                return
+                
+            trip = trip_response.json()
+            trip_id = trip["id"]
+            
+            # Driver accepts and completes trip
+            self.session.put(f"{API_BASE}/drivers/status/online", headers=headers_driver)
+            self.session.put(f"{API_BASE}/trips/{trip_id}/accept", headers=headers_driver)
+            self.session.put(f"{API_BASE}/trips/{trip_id}/start", headers=headers_driver)
+            complete_response = self.session.put(f"{API_BASE}/trips/{trip_id}/complete", headers=headers_driver)
+            
+            if complete_response.status_code != 200:
+                self.log_test("Rating Test Trip Completion", False, f"Failed to complete trip: {complete_response.status_code}")
+                return
+            
+            # Test 1: Create first rating
+            rating_data = {
+                "trip_id": trip_id,
+                "rated_user_id": self.users["driver"]["id"],
+                "rating": 4,
+                "reason": "Good service but could be better"
+            }
+            
+            rating_response = self.session.post(f"{API_BASE}/ratings/create", json=rating_data, headers=headers_passenger)
+            success = rating_response.status_code == 200
+            self.log_test("Create First Rating", success, f"Status: {rating_response.status_code}")
+            
+            if not success:
+                self.log_test("Rating Creation Failed", False, f"Response: {rating_response.text}")
+                return
+            
+            # Test 2: Try to create duplicate rating (should fail)
+            duplicate_rating_data = {
+                "trip_id": trip_id,
+                "rated_user_id": self.users["driver"]["id"],
+                "rating": 5,
+                "reason": "Changed my mind"
+            }
+            
+            duplicate_response = self.session.post(f"{API_BASE}/ratings/create", json=duplicate_rating_data, headers=headers_passenger)
+            duplicate_prevented = duplicate_response.status_code == 400
+            self.log_test("Prevent Duplicate Rating", duplicate_prevented, 
+                         f"Status: {duplicate_response.status_code}, Expected: 400")
+            
+            if not duplicate_prevented:
+                self.log_test("Duplicate Rating Issue", False, f"Duplicate rating was allowed! Response: {duplicate_response.text}")
+            
+        except Exception as e:
+            self.log_test("Rating Duplicate Prevention", False, f"Error: {str(e)}")
+    
+    def test_mongodb_connection(self):
+        """Test MongoDB connection by checking if endpoints return data"""
+        try:
+            # Test health check (basic connectivity)
+            health_response = self.session.get(f"{API_BASE}/health")
+            health_ok = health_response.status_code == 200
+            self.log_test("MongoDB Connection - Health Check", health_ok, f"Status: {health_response.status_code}")
+            
+            # Test data retrieval (requires DB access)
+            if "admin" in self.tokens:
+                headers = {"Authorization": f"Bearer {self.tokens['admin']}"}
+                stats_response = self.session.get(f"{API_BASE}/admin/stats", headers=headers)
+                stats_ok = stats_response.status_code == 200
+                
+                if stats_ok:
+                    stats = stats_response.json()
+                    has_data = any(stats.get(key, 0) > 0 for key in ["total_users", "total_trips"])
+                    self.log_test("MongoDB Connection - Data Access", has_data, f"Stats: {stats}")
+                else:
+                    self.log_test("MongoDB Connection - Data Access", False, f"Status: {stats_response.status_code}")
+            
+        except Exception as e:
+            self.log_test("MongoDB Connection", False, f"Error: {str(e)}")
+
     def run_focused_validation_tests(self):
         """Run focused validation tests as per review request"""
-        print("🎯 STARTING FOCUSED VALIDATION TESTS - RATING SYSTEM & CORE TRIP FLOW")
+        print("🎯 STARTING FOCUSED VALIDATION TESTS - SPECIFIC USER REPORTED ISSUES")
         print("=" * 80)
         
         # Core tests as requested
@@ -389,6 +626,10 @@ class BackendTester:
         self.register_test_users()
         self.test_basic_trip_flow()
         self.test_rating_system()
+        
+        # NEW: Test specific reported issues
+        self.test_specific_reported_issues()
+        self.test_mongodb_connection()
         
         # Regression tests
         self.test_trip_endpoints_regression()
