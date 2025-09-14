@@ -1586,4 +1586,54 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  // Driver info styles in trip cards
+  driverInfo: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  driverInfoTitle: {
+    color: '#4CAF50',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  driverDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  driverPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  defaultDriverPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  driverTextInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  driverName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  driverRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  driverRatingText: {
+    color: '#FF9800',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
 });
