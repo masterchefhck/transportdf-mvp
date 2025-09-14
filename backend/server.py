@@ -95,6 +95,9 @@ class User(BaseModel):
     
     # Rating field (for drivers and passengers)
     rating: Optional[float] = 5.0
+    
+    # Profile photo (base64 encoded)
+    profile_photo: Optional[str] = None
 
 class LocationUpdate(BaseModel):
     latitude: float
