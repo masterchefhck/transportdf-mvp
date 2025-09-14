@@ -126,7 +126,7 @@ export default function PassengerDashboard() {
   const [reportDescription, setReportDescription] = useState('');
   const [responseText, setResponseText] = useState('');
 
-  // Rating states - COM CORREÇÃO COMPLETA PARA RACE CONDITION
+  // Rating states - COM CORREÇÃO FINAL PARA SINCRONIZAÇÃO
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [completedTrip, setCompletedTrip] = useState<Trip | null>(null);
   const [rating, setRating] = useState(5);
@@ -1142,7 +1142,7 @@ export default function PassengerDashboard() {
         </View>
       </Modal>
 
-      {/* Rating Modal COM CORREÇÃO TOTAL PARA RACE CONDITION */}
+      {/* Rating Modal COM CORREÇÃO FINAL PARA SINCRONIZAÇÃO */}
       <Modal visible={showRatingModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
