@@ -90,7 +90,7 @@ export default function AdminApp() {
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
       
       <View style={styles.header}>
-        <Text style={styles.title}>TransportDF</Text>
+        <Text style={styles.title}>IMP - imaping</Text>
         <Text style={styles.subtitle}>Administração</Text>
         
         {currentUser && (
