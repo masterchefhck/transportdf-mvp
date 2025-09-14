@@ -137,6 +137,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTADO COMPLETAMENTE - APIs de usuário funcionando perfeitamente: atualização de localização (coordenadas de Brasília testadas), mudança de status do motorista (online/offline), recuperação de dados do usuário atual via JWT. Todos os endpoints respondendo corretamente."
+      - working: true
+        agent: "testing"
+        comment: "✅ RE-TESTADO PÓS BUG FIX - APIs de usuário e localização funcionando perfeitamente após correção do bug do modal de avaliação. Endpoints de atualização de localização, status do motorista e recuperação de dados do usuário operacionais. Nenhuma regressão detectada."
 
   - task: "APIs de viagens e corridas"
     implemented: true
