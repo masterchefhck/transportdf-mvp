@@ -218,13 +218,19 @@ frontend:
     implemented: true
     working: "NA"
     file: "app/passenger/dashboard.tsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
         comment: "PASSENGER DASHBOARD FINALIZADO! Implementado sistema completo de rating pessoal do passageiro (exibido no header) e sistema de mensagens do admin. Funcionalidades incluem: 1) Exibição do rating atual do passageiro com estrela no header, 2) Botão de notificação para mensagens não lidas do admin, 3) Modal de listagem de mensagens com status de leitura, 4) Sistema de marcar mensagens como lidas automaticamente, 5) Interface responsiva e mobile-first. Integração completa com endpoints backend já testados."
+      - working: false
+        agent: "user"
+        comment: "BUG REPORTADO: Modal de avaliação do motorista aparece em loop após o passageiro avaliar. Mesmo depois de avaliar 1-5 estrelas, a janela de avaliação continua reaparecendo para avaliações já feitas."
+      - working: "NA"
+        agent: "main"
+        comment: "BUG CORRIGIDO: Identificado e corrigido o problema no loop do modal de avaliação. Problemas encontrados: 1) Condição incorreta em checkCurrentTrip() - verificava currentTrip?.status ao invés de verificar se modal já está aberto, 2) Ordem incorreta em submitRating() - marcava trip como avaliada APÓS enviar para backend. CORREÇÕES APLICADAS: 1) Alterada condição para verificar !showRatingModal, evitando abrir múltiplos modais, 2) Movido markTripAsRated() para ANTES do axios.post, prevenindo submissões duplicadas, 3) Mantido markTripAsRated() mesmo em caso de erro de API. Sistema agora funciona corretamente sem loop de avaliação."
 
 metadata:
   created_by: "main_agent"
