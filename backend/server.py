@@ -1051,6 +1051,129 @@ async def bulk_delete_ratings(request: BulkDeleteRequest, current_user: User = D
     result = await db.ratings.delete_many({"id": {"$in": request.ids}})
     return {"message": f"Deleted {result.deleted_count} ratings"}
 
+# ==========================================
+# CHAT ENDPOINTS
+# ==========================================
+
+@api_router.post("/trips/{trip_id}/chat/send")
+async def send_chat_message(trip_id: str, message_data: ChatMessageCreate, current_user: User = Depends(get_current_user)):
+    """Send a chat message during an active trip"""
+    # Verify trip exists and user is participant
+    trip = await db.trips.find_one({"id": trip_id})
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    
+    # Check if user is participant (passenger or driver) or admin
+    if current_user.user_type == UserType.ADMIN:
+        # Admins can send messages to any trip (for moderation)
+        pass
+    elif current_user.id not in [trip["passenger_id"], trip.get("driver_id")]:
+        raise HTTPException(status_code=403, detail="Only trip participants can send messages")
+    
+    # Only allow chat during active trips (accepted or in_progress)
+    if trip["status"] not in [TripStatus.ACCEPTED.value, TripStatus.IN_PROGRESS.value]:
+        raise HTTPException(status_code=400, detail="Chat is only available during active trips")
+    
+    # Create chat message
+    chat_message = ChatMessage(
+        trip_id=trip_id,
+        sender_id=current_user.id,
+        sender_name=current_user.name,
+        sender_type=current_user.user_type,
+        message=message_data.message
+    )
+    
+    await db.chat_messages.insert_one(chat_message.dict())
+    
+    return {"message": "Message sent successfully", "chat_message": chat_message.dict()}
+
+@api_router.get("/trips/{trip_id}/chat/messages")
+async def get_chat_messages(trip_id: str, current_user: User = Depends(get_current_user)):
+    """Get all chat messages for a trip"""
+    # Verify trip exists
+    trip = await db.trips.find_one({"id": trip_id})
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    
+    # Check if user can view messages (participant or admin)
+    if current_user.user_type != UserType.ADMIN and current_user.id not in [trip["passenger_id"], trip.get("driver_id")]:
+        raise HTTPException(status_code=403, detail="Only trip participants or admin can view messages")
+    
+    # Get messages sorted by timestamp (oldest first)
+    messages = await db.chat_messages.find(
+        {"trip_id": trip_id}
+    ).sort("timestamp", 1).to_list(1000)  # Limit to 1000 messages
+    
+    return messages
+
+@api_router.get("/admin/chats")
+async def get_admin_chats(current_user: User = Depends(get_current_user)):
+    """Get aggregated chat history for admin dashboard"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Aggregate trips that have chat messages with user details
+    pipeline = [
+        {"$match": {}},  # All chat messages
+        {"$group": {
+            "_id": "$trip_id",
+            "messages": {"$push": "$$ROOT"},
+            "first_message": {"$min": "$timestamp"},
+            "last_message": {"$max": "$timestamp"},
+            "message_count": {"$sum": 1}
+        }},
+        {"$lookup": {
+            "from": "trips",
+            "localField": "_id",
+            "foreignField": "id",
+            "as": "trip"
+        }},
+        {"$unwind": "$trip"},
+        {"$lookup": {
+            "from": "users",
+            "localField": "trip.passenger_id",
+            "foreignField": "id",
+            "as": "passenger"
+        }},
+        {"$lookup": {
+            "from": "users",
+            "localField": "trip.driver_id", 
+            "foreignField": "id",
+            "as": "driver"
+        }},
+        {"$sort": {"last_message": -1}}  # Most recent conversations first
+    ]
+    
+    chats = await db.chat_messages.aggregate(pipeline).to_list(100)
+    
+    # Process results to include user details
+    result = []
+    for chat in chats:
+        passenger = chat["passenger"][0] if chat["passenger"] else {}
+        driver = chat["driver"][0] if chat["driver"] else {}
+        
+        result.append({
+            "trip_id": chat["_id"],
+            "trip_status": chat["trip"]["status"],
+            "pickup_address": chat["trip"]["pickup_address"],
+            "destination_address": chat["trip"]["destination_address"],
+            "first_message": chat["first_message"],
+            "last_message": chat["last_message"],
+            "message_count": chat["message_count"],
+            "passenger": {
+                "id": passenger.get("id"),
+                "name": passenger.get("name"),
+                "profile_photo": passenger.get("profile_photo")
+            },
+            "driver": {
+                "id": driver.get("id"),
+                "name": driver.get("name"),
+                "profile_photo": driver.get("profile_photo")
+            }
+        })
+    
+    return result
+
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "Transport App Brasília MVP"}
