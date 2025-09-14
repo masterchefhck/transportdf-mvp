@@ -71,6 +71,10 @@ interface Trip {
   estimated_price: number;
   status: string;
   requested_at: string;
+  // Driver info when trip is accepted
+  driver_name?: string;
+  driver_rating?: number;
+  driver_photo?: string;
 }
 
 interface Report {
