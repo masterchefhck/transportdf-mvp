@@ -754,6 +754,103 @@ export default function PassengerDashboard() {
         </View>
       </Modal>
 
+      {/* Admin Messages Panel Modal */}
+      <Modal visible={showMessagesPanel} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Mensagens do Admin</Text>
+              <TouchableOpacity onPress={() => setShowMessagesPanel(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {adminMessages.length === 0 ? (
+              <View style={styles.noMessagesContainer}>
+                <Ionicons name="chatbubble-outline" size={60} color="#666" />
+                <Text style={styles.noMessagesText}>Nenhuma mensagem</Text>
+                <Text style={styles.noMessagesSubtext}>Você não tem mensagens do administrador</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={adminMessages}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.messageItem,
+                      !item.read && styles.unreadMessage
+                    ]}
+                    onPress={() => handleViewMessage(item)}
+                  >
+                    <View style={styles.messageHeader}>
+                      <View style={styles.messageInfo}>
+                        <Ionicons 
+                          name={item.read ? "mail-open" : "mail"} 
+                          size={20} 
+                          color={item.read ? "#888" : "#4CAF50"} 
+                        />
+                        <Text style={[
+                          styles.messageDate,
+                          !item.read && styles.unreadText
+                        ]}>
+                          {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                        </Text>
+                      </View>
+                      {!item.read && <View style={styles.unreadIndicator} />}
+                    </View>
+                    
+                    <Text 
+                      style={[
+                        styles.messagePreview,
+                        !item.read && styles.unreadText
+                      ]} 
+                      numberOfLines={2}
+                    >
+                      {item.message}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                showsVerticalScrollIndicator={false}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Message Detail Modal */}
+      <Modal visible={showMessageModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Mensagem do Admin</Text>
+              <TouchableOpacity onPress={() => setShowMessageModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedMessage && (
+              <>
+                <Text style={styles.modalSubtitle}>
+                  {new Date(selectedMessage.created_at).toLocaleString('pt-BR')}
+                </Text>
+                
+                <View style={styles.messageContent}>
+                  <Text style={styles.messageText}>{selectedMessage.message}</Text>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.closeMessageButton} 
+                  onPress={() => setShowMessageModal(false)}
+                >
+                  <Text style={styles.closeMessageButtonText}>Fechar</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       {/* Reports Panel Modal */}
       <Modal visible={showReportsPanel} transparent animationType="slide">
         <View style={styles.modalOverlay}>
