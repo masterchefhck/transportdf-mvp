@@ -1065,6 +1065,14 @@ class TransportDFTester:
             self.log_test("Passenger Get Messages", False, "No passenger token available")
             return
             
+        # Verify token is still valid by checking user info first
+        token_valid, user_data, _ = self.make_request("GET", "/users/me", 
+                                                    auth_token=self.tokens["passenger"])
+        
+        if not token_valid:
+            self.log_test("Passenger Get Messages", False, "Passenger token is invalid or expired")
+            return
+            
         success, data, status_code = self.make_request("GET", "/passengers/messages", 
                                                      auth_token=self.tokens["passenger"])
         
