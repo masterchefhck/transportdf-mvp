@@ -121,6 +121,12 @@ export default function AdminDashboard() {
   const [adminMessage, setAdminMessage] = useState('');
   const [blockReason, setBlockReason] = useState('');
 
+  // Rating states
+  const [ratings, setRatings] = useState<any[]>([]);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [selectedRating, setSelectedRating] = useState<any>(null);
+  const [alertMessage, setAlertMessage] = useState('');
+
   useEffect(() => {
     loadUserData();
     loadData();
