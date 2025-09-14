@@ -374,6 +374,180 @@ export default function AdminDashboard() {
     }
   };
 
+  // Bulk operation functions
+  const handleSelectAllUsers = () => {
+    const adminUsers = users.filter(user => user.user_type !== 'admin').map(user => user.id);
+    if (selectedUsers.length === adminUsers.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(adminUsers);
+    }
+  };
+
+  const handleSelectAllTrips = () => {
+    const tripIds = trips.map(trip => trip.id);
+    if (selectedTrips.length === tripIds.length) {
+      setSelectedTrips([]);
+    } else {
+      setSelectedTrips(tripIds);
+    }
+  };
+
+  const handleSelectAllReports = () => {
+    const reportIds = reports.map(report => report.id);
+    if (selectedReports.length === reportIds.length) {
+      setSelectedReports([]);
+    } else {
+      setSelectedReports(reportIds);
+    }
+  };
+
+  const handleSelectAllRatings = () => {
+    const ratingIds = ratings.map(rating => rating.id);
+    if (selectedRatings.length === ratingIds.length) {
+      setSelectedRatings([]);
+    } else {
+      setSelectedRatings(ratingIds);
+    }
+  };
+
+  const handleBulkDeleteUsers = async () => {
+    if (selectedUsers.length === 0) return;
+    
+    showConfirm(
+      'Deletar Usuários',
+      `Tem certeza que deseja deletar ${selectedUsers.length} usuário(s)? Esta ação não pode ser desfeita.`,
+      async () => {
+        setBulkOperationLoading(true);
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/users/bulk-delete`,
+            { ids: selectedUsers },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', `${selectedUsers.length} usuário(s) deletado(s) com sucesso!`);
+          setSelectedUsers([]);
+          loadData();
+        } catch (error) {
+          console.error('Error bulk deleting users:', error);
+          showAlert('Erro', 'Erro ao deletar usuários');
+        } finally {
+          setBulkOperationLoading(false);
+        }
+      }
+    );
+  };
+
+  const handleBulkDeleteTrips = async () => {
+    if (selectedTrips.length === 0) return;
+    
+    showConfirm(
+      'Deletar Viagens',
+      `Tem certeza que deseja deletar ${selectedTrips.length} viagem(ns)? Esta ação não pode ser desfeita.`,
+      async () => {
+        setBulkOperationLoading(true);
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/trips/bulk-delete`,
+            { ids: selectedTrips },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', `${selectedTrips.length} viagem(ns) deletada(s) com sucesso!`);
+          setSelectedTrips([]);
+          loadData();
+        } catch (error) {
+          console.error('Error bulk deleting trips:', error);
+          showAlert('Erro', 'Erro ao deletar viagens');
+        } finally {
+          setBulkOperationLoading(false);
+        }
+      }
+    );
+  };
+
+  const handleBulkDeleteReports = async () => {
+    if (selectedReports.length === 0) return;
+    
+    showConfirm(
+      'Deletar Reports',
+      `Tem certeza que deseja deletar ${selectedReports.length} report(s)? Esta ação não pode ser desfeita.`,
+      async () => {
+        setBulkOperationLoading(true);
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/reports/bulk-delete`,
+            { ids: selectedReports },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', `${selectedReports.length} report(s) deletado(s) com sucesso!`);
+          setSelectedReports([]);
+          loadData();
+        } catch (error) {
+          console.error('Error bulk deleting reports:', error);
+          showAlert('Erro', 'Erro ao deletar reports');
+        } finally {
+          setBulkOperationLoading(false);
+        }
+      }
+    );
+  };
+
+  const handleBulkDeleteRatings = async () => {
+    if (selectedRatings.length === 0) return;
+    
+    showConfirm(
+      'Deletar Avaliações',
+      `Tem certeza que deseja deletar ${selectedRatings.length} avaliação(ões)? Esta ação não pode ser desfeita.`,
+      async () => {
+        setBulkOperationLoading(true);
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/ratings/bulk-delete`,
+            { ids: selectedRatings },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', `${selectedRatings.length} avaliação(ões) deletada(s) com sucesso!`);
+          setSelectedRatings([]);
+          loadData();
+        } catch (error) {
+          console.error('Error bulk deleting ratings:', error);
+          showAlert('Erro', 'Erro ao deletar avaliações');
+        } finally {
+          setBulkOperationLoading(false);
+        }
+      }
+    );
+  };
+
+  const handleSendPassengerMessage = async () => {
+    if (!passengerMessage.trim() || !selectedPassenger) return;
+    
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/admin/messages/send`,
+        { user_id: selectedPassenger.id, message: passengerMessage },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      showAlert('Sucesso', 'Mensagem enviada ao passageiro com sucesso!');
+      setShowPassengerMessageModal(false);
+      setPassengerMessage('');
+      setSelectedPassenger(null);
+    } catch (error) {
+      console.error('Error sending passenger message:', error);
+      showAlert('Erro', 'Erro ao enviar mensagem');
+    }
+  };
+
   const renderStats = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
