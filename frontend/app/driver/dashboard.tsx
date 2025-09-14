@@ -104,6 +104,7 @@ export default function DriverDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [currentRating, setCurrentRating] = useState<number>(5.0);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   
   // Report states
   const [myReports, setMyReports] = useState<Report[]>([]);
