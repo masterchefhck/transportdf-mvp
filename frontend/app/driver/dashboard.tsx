@@ -205,6 +205,12 @@ export default function DriverDashboard() {
     }
   };
 
+  const handleViewPhoto = (photoUrl: string, userName: string) => {
+    setSelectedPhotoUrl(photoUrl);
+    setSelectedPhotoUser(userName);
+    setShowPhotoModal(true);
+  };
+
   const pickImage = async () => {
     // Request permission
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
