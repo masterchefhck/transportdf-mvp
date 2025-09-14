@@ -234,10 +234,22 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Passenger Information in Driver Trip Responses"
+    - "Chat Endpoints Implementation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+
+  - task: "Chat Endpoints Implementation"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎯 CHAT ENDPOINTS COMPLETAMENTE TESTADOS E APROVADOS! Executei 11 testes específicos dos novos endpoints de chat com taxa de sucesso de 100% (11/11 testes passaram). FUNCIONALIDADES TESTADAS: ✅ POST /api/trips/{trip_id}/chat/send - Passageiro e motorista enviam mensagens com sucesso, ✅ Validação de limite de 250 caracteres funcionando corretamente, ✅ Controle de acesso - apenas participantes da viagem podem enviar mensagens (admin corretamente negado), ✅ Restrição para viagens ativas - chat disponível apenas para trips 'accepted'/'in_progress', ✅ GET /api/trips/{trip_id}/chat/messages - Recuperação de mensagens funcionando para passageiro, motorista e admin, ✅ Mensagens ordenadas cronologicamente (mais antigas primeiro), ✅ Estrutura de dados correta com todos os campos obrigatórios (id, trip_id, sender_id, sender_name, sender_type, message, timestamp), ✅ GET /api/admin/chats - Agregação de conversas por viagem funcionando perfeitamente, ✅ Dados completos dos usuários (passageiro e motorista) incluídos na agregação, ✅ GET /api/admin/trips - Endpoint melhorado retornando dados completos dos usuários (nome, email, telefone, foto, rating), ✅ Validação de trip inexistente (404) funcionando corretamente. CENÁRIO COMPLETO TESTADO: trip criada → motorista aceita → ambos enviam mensagens → admin visualiza conversa → dados completos verificados. Sistema production-ready!"
 
   - task: "Sistema de Avaliações"
     implemented: true
