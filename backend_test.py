@@ -1578,6 +1578,322 @@ class TransportDFTester:
         else:
             self.log_test("Driver Info Completeness", False, "Failed to retrieve passenger trips")
 
+    # NEW CHAT ENDPOINTS TESTS - CURRENT REVIEW REQUEST
+    def test_chat_send_message_passenger(self):
+        """Test 55: POST /api/trips/{trip_id}/chat/send - Passenger sends message"""
+        
+        if "passenger" not in self.tokens or "driver" not in self.tokens:
+            self.log_test("Chat Send Message - Passenger", False, "Missing passenger or driver tokens")
+            return
+            
+        # Create and accept a trip for chat testing
+        trip_data = {
+            "passenger_id": self.users.get("passenger", {}).get("id", ""),
+            "pickup_latitude": -15.7633,
+            "pickup_longitude": -47.8719,
+            "pickup_address": "SQN 308, Asa Norte, Brasília - DF",
+            "destination_latitude": -15.8267,
+            "destination_longitude": -47.8978,
+            "destination_address": "SQS 116, Asa Sul, Brasília - DF",
+            "estimated_price": 15.50
+        }
+        
+        success, trip_response, _ = self.make_request("POST", "/trips/request", 
+                                                    trip_data, auth_token=self.tokens["passenger"])
+        
+        if not success:
+            self.log_test("Chat Send Message - Passenger", False, "Failed to create test trip")
+            return
+            
+        trip_id = trip_response["id"]
+        self.trips["chat_test"] = trip_response
+        
+        # Accept trip to make it active
+        self.make_request("PUT", f"/trips/{trip_id}/accept", auth_token=self.tokens["driver"])
+        
+        # Send chat message as passenger
+        message_data = {
+            "message": "Olá motorista! Estou aguardando no local combinado. Obrigada!"
+        }
+        
+        success, data, status_code = self.make_request("POST", f"/trips/{trip_id}/chat/send", 
+                                                     message_data, auth_token=self.tokens["passenger"])
+        
+        if success and "message sent" in str(data).lower():
+            self.log_test("Chat Send Message - Passenger", True, "Passenger successfully sent chat message")
+        else:
+            self.log_test("Chat Send Message - Passenger", False, f"Failed to send message (status: {status_code})", data)
+
+    def test_chat_send_message_driver(self):
+        """Test 56: POST /api/trips/{trip_id}/chat/send - Driver sends message"""
+        
+        if "driver" not in self.tokens or "chat_test" not in self.trips:
+            self.log_test("Chat Send Message - Driver", False, "No driver token or chat test trip available")
+            return
+            
+        trip_id = self.trips["chat_test"]["id"]
+        
+        # Send chat message as driver
+        message_data = {
+            "message": "Oi! Estou chegando em 2 minutos. Aguarde por favor!"
+        }
+        
+        success, data, status_code = self.make_request("POST", f"/trips/{trip_id}/chat/send", 
+                                                     message_data, auth_token=self.tokens["driver"])
+        
+        if success and "message sent" in str(data).lower():
+            self.log_test("Chat Send Message - Driver", True, "Driver successfully sent chat message")
+        else:
+            self.log_test("Chat Send Message - Driver", False, f"Failed to send message (status: {status_code})", data)
+
+    def test_chat_message_character_limit(self):
+        """Test 57: Chat message 250 character limit validation"""
+        
+        if "passenger" not in self.tokens or "chat_test" not in self.trips:
+            self.log_test("Chat Message Character Limit", False, "No passenger token or chat test trip available")
+            return
+            
+        trip_id = self.trips["chat_test"]["id"]
+        
+        # Create message with exactly 251 characters (should fail)
+        long_message = "A" * 251
+        message_data = {"message": long_message}
+        
+        success, data, status_code = self.make_request("POST", f"/trips/{trip_id}/chat/send", 
+                                                     message_data, auth_token=self.tokens["passenger"])
+        
+        if not success and (status_code == 400 or status_code == 422):
+            self.log_test("Chat Message Character Limit", True, "Message over 250 characters correctly rejected")
+        else:
+            self.log_test("Chat Message Character Limit", False, f"Should reject messages over 250 chars (status: {status_code})", data)
+
+    def test_chat_unauthorized_user_access(self):
+        """Test 58: Only trip participants can send messages"""
+        
+        if "admin" not in self.tokens or "chat_test" not in self.trips:
+            self.log_test("Chat Unauthorized Access", False, "No admin token or chat test trip available")
+            return
+            
+        trip_id = self.trips["chat_test"]["id"]
+        
+        # Admin (not part of trip) tries to send message
+        message_data = {"message": "Admin não deveria conseguir enviar esta mensagem"}
+        
+        success, data, status_code = self.make_request("POST", f"/trips/{trip_id}/chat/send", 
+                                                     message_data, auth_token=self.tokens["admin"])
+        
+        if not success and status_code == 403:
+            self.log_test("Chat Unauthorized Access", True, "Unauthorized user correctly denied access to chat")
+        else:
+            self.log_test("Chat Unauthorized Access", False, f"Should deny access to non-participants (status: {status_code})", data)
+
+    def test_chat_inactive_trip_restriction(self):
+        """Test 59: Chat only available for active trips (accepted/in_progress)"""
+        
+        if "passenger" not in self.tokens or "driver" not in self.tokens:
+            self.log_test("Chat Inactive Trip Restriction", False, "Missing passenger or driver tokens")
+            return
+            
+        # Create a trip but don't accept it (status: requested)
+        trip_data = {
+            "passenger_id": self.users.get("passenger", {}).get("id", ""),
+            "pickup_latitude": -15.7800,
+            "pickup_longitude": -47.8900,
+            "pickup_address": "Setor Comercial Sul, Brasília - DF",
+            "destination_latitude": -15.7500,
+            "destination_longitude": -47.8600,
+            "destination_address": "Setor Bancário Norte, Brasília - DF",
+            "estimated_price": 12.00
+        }
+        
+        success, trip_response, _ = self.make_request("POST", "/trips/request", 
+                                                    trip_data, auth_token=self.tokens["passenger"])
+        
+        if not success:
+            self.log_test("Chat Inactive Trip Restriction", False, "Failed to create test trip")
+            return
+            
+        trip_id = trip_response["id"]
+        
+        # Try to send message to requested (not accepted) trip
+        message_data = {"message": "Esta mensagem não deveria ser enviada"}
+        
+        success, data, status_code = self.make_request("POST", f"/trips/{trip_id}/chat/send", 
+                                                     message_data, auth_token=self.tokens["passenger"])
+        
+        if not success and status_code == 400:
+            self.log_test("Chat Inactive Trip Restriction", True, "Chat correctly restricted to active trips only")
+        else:
+            self.log_test("Chat Inactive Trip Restriction", False, f"Should restrict chat to active trips (status: {status_code})", data)
+
+    def test_chat_get_messages_passenger(self):
+        """Test 60: GET /api/trips/{trip_id}/chat/messages - Passenger retrieves messages"""
+        
+        if "passenger" not in self.tokens or "chat_test" not in self.trips:
+            self.log_test("Chat Get Messages - Passenger", False, "No passenger token or chat test trip available")
+            return
+            
+        trip_id = self.trips["chat_test"]["id"]
+        
+        success, data, status_code = self.make_request("GET", f"/trips/{trip_id}/chat/messages", 
+                                                     auth_token=self.tokens["passenger"])
+        
+        if success and isinstance(data, list):
+            message_count = len(data)
+            self.log_test("Chat Get Messages - Passenger", True, f"Passenger retrieved {message_count} chat messages")
+            
+            # Verify message structure and chronological order
+            if data:
+                message = data[0]
+                required_fields = ["id", "trip_id", "sender_id", "sender_name", "sender_type", "message", "timestamp"]
+                missing_fields = [field for field in required_fields if field not in message]
+                
+                if not missing_fields:
+                    self.log_test("Chat Message Structure", True, "Chat messages have correct structure")
+                    
+                    # Check chronological order (oldest first)
+                    if len(data) > 1:
+                        timestamps_ordered = all(data[i]["timestamp"] <= data[i+1]["timestamp"] for i in range(len(data)-1))
+                        if timestamps_ordered:
+                            self.log_test("Chat Messages Chronological Order", True, "Messages correctly ordered chronologically")
+                        else:
+                            self.log_test("Chat Messages Chronological Order", False, "Messages not in chronological order")
+                else:
+                    self.log_test("Chat Message Structure", False, f"Missing fields in message: {missing_fields}")
+        else:
+            self.log_test("Chat Get Messages - Passenger", False, f"Failed to get messages (status: {status_code})", data)
+
+    def test_chat_get_messages_driver(self):
+        """Test 61: GET /api/trips/{trip_id}/chat/messages - Driver retrieves messages"""
+        
+        if "driver" not in self.tokens or "chat_test" not in self.trips:
+            self.log_test("Chat Get Messages - Driver", False, "No driver token or chat test trip available")
+            return
+            
+        trip_id = self.trips["chat_test"]["id"]
+        
+        success, data, status_code = self.make_request("GET", f"/trips/{trip_id}/chat/messages", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if success and isinstance(data, list):
+            message_count = len(data)
+            self.log_test("Chat Get Messages - Driver", True, f"Driver retrieved {message_count} chat messages")
+        else:
+            self.log_test("Chat Get Messages - Driver", False, f"Failed to get messages (status: {status_code})", data)
+
+    def test_chat_get_messages_admin_access(self):
+        """Test 62: GET /api/trips/{trip_id}/chat/messages - Admin can view any chat"""
+        
+        if "admin" not in self.tokens or "chat_test" not in self.trips:
+            self.log_test("Chat Get Messages - Admin Access", False, "No admin token or chat test trip available")
+            return
+            
+        trip_id = self.trips["chat_test"]["id"]
+        
+        success, data, status_code = self.make_request("GET", f"/trips/{trip_id}/chat/messages", 
+                                                     auth_token=self.tokens["admin"])
+        
+        if success and isinstance(data, list):
+            message_count = len(data)
+            self.log_test("Chat Get Messages - Admin Access", True, f"Admin successfully accessed chat with {message_count} messages")
+        else:
+            self.log_test("Chat Get Messages - Admin Access", False, f"Admin failed to access chat (status: {status_code})", data)
+
+    def test_admin_chats_aggregation(self):
+        """Test 63: GET /api/admin/chats - Admin view all chat conversations"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Admin Chats Aggregation", False, "No admin token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/admin/chats", 
+                                                     auth_token=self.tokens["admin"])
+        
+        if success and isinstance(data, list):
+            chat_count = len(data)
+            self.log_test("Admin Chats Aggregation", True, f"Admin retrieved {chat_count} chat conversations")
+            
+            # Verify chat aggregation structure
+            if data:
+                chat = data[0]
+                required_fields = ["trip_id", "trip_status", "pickup_address", "destination_address", 
+                                 "passenger_name", "driver_name", "message_count", "last_message", "last_timestamp"]
+                missing_fields = [field for field in required_fields if field not in chat]
+                
+                if not missing_fields:
+                    self.log_test("Admin Chats Structure", True, "Chat aggregation has correct structure with user data")
+                else:
+                    self.log_test("Admin Chats Structure", False, f"Missing fields in chat aggregation: {missing_fields}")
+        else:
+            self.log_test("Admin Chats Aggregation", False, f"Failed to get chat aggregation (status: {status_code})", data)
+
+    def test_admin_trips_complete_user_data(self):
+        """Test 64: GET /api/admin/trips - Enhanced endpoint with complete user data"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Admin Trips Complete User Data", False, "No admin token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/admin/trips", 
+                                                     auth_token=self.tokens["admin"])
+        
+        if success and isinstance(data, list):
+            trip_count = len(data)
+            self.log_test("Admin Trips Complete User Data", True, f"Admin retrieved {trip_count} trips with user data")
+            
+            # Verify complete user data structure
+            if data:
+                trip = data[0]
+                
+                # Check passenger data completeness
+                passenger_fields = ["passenger_name", "passenger_email", "passenger_phone", "passenger_photo", "passenger_rating"]
+                missing_passenger_fields = [field for field in passenger_fields if field not in trip]
+                
+                # Check driver data completeness (if trip has driver)
+                driver_fields = ["driver_name", "driver_email", "driver_phone", "driver_photo", "driver_rating"]
+                missing_driver_fields = [field for field in driver_fields if field not in trip]
+                
+                if not missing_passenger_fields:
+                    self.log_test("Admin Trips - Passenger Data Complete", True, "Complete passenger data included in admin trips")
+                else:
+                    self.log_test("Admin Trips - Passenger Data Complete", False, f"Missing passenger fields: {missing_passenger_fields}")
+                
+                if not missing_driver_fields:
+                    self.log_test("Admin Trips - Driver Data Complete", True, "Complete driver data included in admin trips")
+                else:
+                    self.log_test("Admin Trips - Driver Data Complete", False, f"Missing driver fields: {missing_driver_fields}")
+        else:
+            self.log_test("Admin Trips Complete User Data", False, f"Failed to get admin trips (status: {status_code})", data)
+
+    def test_chat_nonexistent_trip(self):
+        """Test 65: Chat endpoints with non-existent trip ID"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Chat Non-existent Trip", False, "No passenger token available")
+            return
+            
+        fake_trip_id = "non-existent-trip-id-12345"
+        
+        # Test sending message to non-existent trip
+        message_data = {"message": "Esta mensagem não deveria ser enviada"}
+        
+        success, data, status_code = self.make_request("POST", f"/trips/{fake_trip_id}/chat/send", 
+                                                     message_data, auth_token=self.tokens["passenger"])
+        
+        if not success and status_code == 404:
+            self.log_test("Chat Non-existent Trip - Send", True, "Correctly returned 404 for non-existent trip")
+        else:
+            self.log_test("Chat Non-existent Trip - Send", False, f"Should return 404 for non-existent trip (status: {status_code})", data)
+        
+        # Test getting messages from non-existent trip
+        success, data, status_code = self.make_request("GET", f"/trips/{fake_trip_id}/chat/messages", 
+                                                     auth_token=self.tokens["passenger"])
+        
+        if not success and status_code == 404:
+            self.log_test("Chat Non-existent Trip - Get Messages", True, "Correctly returned 404 for non-existent trip")
+        else:
+            self.log_test("Chat Non-existent Trip - Get Messages", False, f"Should return 404 for non-existent trip (status: {status_code})", data)
+
     def run_all_tests(self):
         """Run all backend tests in sequence"""
         print("=" * 80)
