@@ -105,6 +105,12 @@ export default function PassengerDashboard() {
   const [reportDescription, setReportDescription] = useState('');
   const [responseText, setResponseText] = useState('');
 
+  // Rating states
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [completedTrip, setCompletedTrip] = useState<Trip | null>(null);
+  const [rating, setRating] = useState(5);
+  const [ratingReason, setRatingReason] = useState('');
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
