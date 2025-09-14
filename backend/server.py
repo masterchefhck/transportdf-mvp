@@ -870,7 +870,7 @@ async def get_driver_alerts(current_user: User = Depends(get_current_user)):
 # Basic health check
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "Transport App Brasília MVP"}
+    return {"status": "healthy", "service": "SkyCab Brasília MVP"}
 
 # Include router
 app.include_router(api_router)
