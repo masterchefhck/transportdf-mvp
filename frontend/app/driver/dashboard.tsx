@@ -1156,6 +1156,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  chatButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  chatButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
   availableTripsContainer: {
     flex: 1,
   },
