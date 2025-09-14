@@ -375,6 +375,8 @@ export default function DriverDashboard() {
           
           // Reload available trips
           loadAvailableTrips();
+          // Reload rating in case passenger rated the driver
+          setTimeout(() => loadCurrentRating(), 2000); // Wait 2 seconds for rating to be processed
         } catch (error) {
           console.error('Error completing trip:', error);
           showAlert('Erro', 'Erro ao finalizar viagem. Tente novamente.');
