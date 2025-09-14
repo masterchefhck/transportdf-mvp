@@ -1146,7 +1146,6 @@ export default function PassengerDashboard() {
                 <Text style={styles.submitButtonText}>Enviar Avaliação</Text>
               </TouchableOpacity>
             </View>
-            </View>
           </View>
         </View>
       </Modal>
