@@ -1279,6 +1279,35 @@ export default function AdminDashboard() {
         </View>
       </Modal>
 
+      {/* Passenger Message Modal */}
+      <Modal visible={showPassengerMessageModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Enviar Mensagem ao Passageiro</Text>
+              <TouchableOpacity onPress={() => setShowPassengerMessageModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Enviar para: {selectedPassenger?.name} ({selectedPassenger?.email})
+            </Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Digite sua mensagem para o passageiro..."
+              placeholderTextColor="#666"
+              value={passengerMessage}
+              onChangeText={setPassengerMessage}
+              multiline
+              numberOfLines={4}
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={handleSendPassengerMessage}>
+              <Text style={styles.sendButtonText}>Enviar Mensagem</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Alert Modal */}
       <Modal visible={showAlertModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
