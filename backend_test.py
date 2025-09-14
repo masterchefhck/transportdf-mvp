@@ -68,11 +68,14 @@ class ChatEndpointsTestSuite:
         
     async def register_user(self, user_type, name, email):
         """Register a test user"""
+        import time
+        timestamp = str(int(time.time()))[-4:]  # Last 4 digits
+        
         user_data = {
             "name": name,
             "email": email,
-            "phone": f"+55619{user_type[:4]}1234",
-            "cpf": f"123.456.789-{user_type[:2]}",
+            "phone": f"+55619{user_type[:4]}{timestamp}",
+            "cpf": f"123.456.{timestamp[:3]}-{timestamp[3:]}",
             "user_type": user_type,
             "password": "testpass123"
         }
