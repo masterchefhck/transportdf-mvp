@@ -1311,6 +1311,37 @@ export default function AdminDashboard() {
         </View>
       </Modal>
 
+      {/* Photo Viewer Modal */}
+      <Modal visible={showPhotoModal} transparent animationType="fade">
+        <View style={styles.photoModalOverlay}>
+          <TouchableOpacity 
+            style={styles.photoModalBackground} 
+            onPress={() => setShowPhotoModal(false)}
+            activeOpacity={1}
+          >
+            <View style={styles.photoModalContent}>
+              <View style={styles.photoModalHeader}>
+                <Text style={styles.photoModalTitle}>Foto de {selectedPhotoUser}</Text>
+                <TouchableOpacity 
+                  style={styles.photoModalCloseButton}
+                  onPress={() => setShowPhotoModal(false)}
+                >
+                  <Ionicons name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              
+              {selectedPhotoUrl && (
+                <Image 
+                  source={{ uri: selectedPhotoUrl }} 
+                  style={styles.photoModalImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
       {/* Passenger Message Modal */}
       <Modal visible={showPassengerMessageModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
