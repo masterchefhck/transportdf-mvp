@@ -111,7 +111,14 @@ export default function AdminDashboard() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'trips' | 'reports' | 'ratings'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'trips' | 'reports' | 'ratings' | 'messages'>('stats');
+  
+  // Bulk operations state
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedTrips, setSelectedTrips] = useState<string[]>([]);
+  const [selectedReports, setSelectedReports] = useState<string[]>([]);
+  const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
+  const [bulkOperationLoading, setBulkOperationLoading] = useState(false);
   
   // Modal states
   const [showMessageModal, setShowMessageModal] = useState(false);
