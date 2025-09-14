@@ -517,7 +517,7 @@ async def complete_trip(trip_id: str, current_user: User = Depends(get_current_u
     
     return {"message": "Trip completed"}
 
-@api_router.get("/trips/my", response_model=List[Trip])
+@api_router.get("/trips/my")
 async def get_my_trips(current_user: User = Depends(get_current_user)):
     if current_user.user_type == UserType.PASSENGER:
         trips = await db.trips.find({"passenger_id": current_user.id}).sort("requested_at", -1).to_list(50)
