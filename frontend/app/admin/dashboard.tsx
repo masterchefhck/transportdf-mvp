@@ -327,6 +327,27 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSendAlert = async () => {
+    if (!alertMessage.trim() || !selectedRating) return;
+    
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/admin/ratings/${selectedRating.id}/alert`,
+        { rating_id: selectedRating.id, message: alertMessage },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      showAlert('Sucesso', 'Alerta enviado ao motorista com sucesso!');
+      setShowAlertModal(false);
+      setAlertMessage('');
+      setSelectedRating(null);
+    } catch (error) {
+      console.error('Error sending alert:', error);
+      showAlert('Erro', 'Erro ao enviar alerta');
+    }
+  };
+
   const getUserTypeColor = (userType: string) => {
     switch (userType) {
       case 'passenger': return '#4CAF50';
