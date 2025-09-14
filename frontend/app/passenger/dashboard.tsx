@@ -1590,6 +1590,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
+  ratingModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   skipButton: {
     backgroundColor: '#666',
     paddingVertical: 12,
