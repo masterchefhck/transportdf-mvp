@@ -155,6 +155,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTADO COMPLETAMENTE - Sistema de viagens 100% funcional: solicitação de viagem pelo passageiro (Asa Norte → Asa Sul testada), listagem de viagens disponíveis para motorista, aceitação de viagem, início da viagem, finalização da viagem, histórico de viagens para passageiro e motorista. Cálculo automático de preço baseado em distância funcionando. Status de motorista atualizado corretamente (busy durante viagem, online após completar)."
+      - working: true
+        agent: "testing"
+        comment: "✅ RE-TESTADO PÓS BUG FIX - Sistema completo de viagens funcionando perfeitamente após correção do bug do modal de avaliação. Fluxo completo testado: solicitação → aceitação → início → finalização da viagem. Todos os endpoints operacionais (request, accept, start, complete). Cálculo de preço e atualização de status funcionando corretamente. Nenhuma regressão detectada."
 
   - task: "APIs administrativas"
     implemented: true
