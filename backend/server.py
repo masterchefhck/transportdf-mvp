@@ -73,6 +73,18 @@ class UserCreate(BaseModel):
     user_type: UserType
     password: str
 
+class ChatMessage(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    trip_id: str
+    sender_id: str
+    sender_name: str
+    sender_type: UserType  # passenger or driver
+    message: str = Field(max_length=250)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    
+class ChatMessageCreate(BaseModel):
+    message: str = Field(max_length=250)
+
 class UserLogin(BaseModel):
     email: str
     password: str
