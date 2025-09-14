@@ -885,6 +885,16 @@ export default function DriverDashboard() {
                       Por favor, revise suas práticas para melhorar o atendimento aos passageiros.
                     </Text>
                   </View>
+
+                  {!item.read && (
+                    <TouchableOpacity
+                      style={styles.understoodButton}
+                      onPress={() => markAlertAsRead(item.id)}
+                    >
+                      <Ionicons name="checkmark" size={16} color="#fff" />
+                      <Text style={styles.understoodButtonText}>Ok, entendido</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
               showsVerticalScrollIndicator={false}
