@@ -126,6 +126,9 @@ export default function DriverDashboard() {
   const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
   const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
 
+  // Chat states
+  const [showChatModal, setShowChatModal] = useState(false);
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
