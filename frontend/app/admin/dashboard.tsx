@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import ChatComponent from '../../components/ChatComponent';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
