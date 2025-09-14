@@ -237,8 +237,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Sistema de Avaliações"
-    - "Dashboard do passageiro"
+    - "Bulk Delete Operations Backend"
+    - "Admin Messages to Passengers Backend"
     - "Dashboard administrativo"
   stuck_tasks: []
   test_all: false
