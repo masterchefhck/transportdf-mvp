@@ -571,13 +571,18 @@ export default function DriverDashboard() {
       {item.passenger_name && (
         <View style={styles.passengerInfo}>
           <View style={styles.passengerDetails}>
-            {item.passenger_photo ? (
-              <Image source={{ uri: item.passenger_photo }} style={styles.passengerPhoto} />
-            ) : (
-              <View style={styles.defaultPassengerPhoto}>
-                <Ionicons name="person" size={20} color="#666" />
-              </View>
-            )}
+            <TouchableOpacity
+              onPress={() => handleViewPhoto(item.passenger_photo, item.passenger_name)}
+              disabled={!item.passenger_photo}
+            >
+              {item.passenger_photo ? (
+                <Image source={{ uri: item.passenger_photo }} style={styles.passengerPhoto} />
+              ) : (
+                <View style={styles.defaultPassengerPhoto}>
+                  <Ionicons name="person" size={20} color="#666" />
+                </View>
+              )}
+            </TouchableOpacity>
             <View style={styles.passengerTextInfo}>
               <Text style={styles.passengerName}>{item.passenger_name}</Text>
               <View style={styles.passengerRating}>
