@@ -40,6 +40,10 @@ interface Trip {
   status: string;
   requested_at: string;
   distance_km?: number;
+  // New fields for passenger info
+  passenger_name?: string;
+  passenger_rating?: number;
+  passenger_photo?: string;
 }
 
 interface Report {
