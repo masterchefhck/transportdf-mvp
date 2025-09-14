@@ -1253,4 +1253,98 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  // Rating styles
+  ratingCard: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  ratingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingValue: {
+    color: '#FF9800',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  ratingDate: {
+    color: '#888',
+    fontSize: 12,
+  },
+  ratingDetails: {
+    marginBottom: 12,
+  },
+  ratingDriverName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  ratingPassengerName: {
+    color: '#888',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  ratingTrip: {
+    color: '#888',
+    fontSize: 14,
+  },
+  ratingReasonContainer: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  ratingReasonLabel: {
+    color: '#FF9800',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  ratingReasonText: {
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  alertButton: {
+    backgroundColor: '#FF9800',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  noDataContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  noDataText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  noDataSubtext: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
 });
