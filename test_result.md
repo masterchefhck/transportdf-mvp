@@ -225,6 +225,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Painel admin implementado com estatísticas, usuários e viagens"
+      - working: "NA"
+        agent: "main"
+        comment: "MAJOR UPDATE: Implementado operações em massa (bulk operations) com checkboxes e Select All para usuários, viagens, reports e avaliações. Adicionada nova aba 'Mensagens' para envio de mensagens diretas do admin para passageiros. Funcionalidades incluem: seleção individual e bulk com checkboxes, botões de bulk delete com confirmação, nova interface de messaging para passageiros ativos."
 
 metadata:
   created_by: "main_agent"
