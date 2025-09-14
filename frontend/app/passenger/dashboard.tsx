@@ -1204,6 +1204,22 @@ const styles = StyleSheet.create({
   },
   tripActions: {
     marginTop: 16,
+    gap: 12,
+  },
+  chatButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  chatButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   reportButton: {
     backgroundColor: '#FF9800',
