@@ -1340,4 +1340,20 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
+  understoodButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginTop: 12,
+    gap: 6,
+  },
+  understoodButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });
