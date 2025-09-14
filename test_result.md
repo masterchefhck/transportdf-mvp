@@ -241,8 +241,22 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Sistema de Avaliações"
+    implemented: true
+    working: "NA"
+    file: "server.py, app/passenger/dashboard.tsx, app/admin/dashboard.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado sistema completo de avaliações de 1-5 estrelas com reset a cada 100 viagens, modal de avaliação no passenger, nova aba Avaliações no admin para ratings < 5 estrelas com envio de alertas"
+
 agent_communication:
   - agent: "main"
     message: "MVP do TransportDF implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
   - agent: "testing"
     message: "🎉 BACKEND COMPLETAMENTE TESTADO E APROVADO! Executei 21 testes abrangentes cobrindo todos os aspectos críticos: Health Check ✅, Autenticação completa (registro/login para passageiro/motorista/admin) ✅, APIs de usuário e localização ✅, Sistema completo de viagens (solicitar→aceitar→iniciar→finalizar) ✅, APIs administrativas ✅. Taxa de sucesso: 100% (21/21 testes passaram). Fluxo completo simulado: passageiro solicitou viagem Asa Norte→Asa Sul, motorista aceitou e completou, admin visualizou estatísticas. Validação de CPF, cálculo de preço por distância, permissões por tipo de usuário, consistência de dados - tudo funcionando perfeitamente. Backend está production-ready!"
+  - agent: "main"
+    message: "✅ SISTEMA DE AVALIAÇÕES IMPLEMENTADO! Funcionalidades completas: 1) Backend: novos modelos Rating/AdminAlert, endpoints para criar avaliação, buscar ratings < 5, enviar alertas, cálculo automático de rating médio com reset a cada 100 viagens. 2) Passenger Dashboard: modal de avaliação após viagem concluída, avaliação 1-5 estrelas, campo motivo obrigatório para < 5 estrelas. 3) Admin Dashboard: nova aba 'Avaliações' listando apenas ratings < 5 estrelas com motivos, botão para enviar alerta ao motorista (sem necessidade de resposta). Sistema completo pronto para testes!"
