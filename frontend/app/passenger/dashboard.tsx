@@ -1109,6 +1109,17 @@ export default function PassengerDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Chat Component */}
+      {currentTrip && (
+        <ChatComponent
+          tripId={currentTrip.id}
+          currentUserId={user?.id || ''}
+          currentUserType="passenger"
+          visible={showChatModal}
+          onClose={() => setShowChatModal(false)}
+        />
+      )}
     </SafeAreaView>
   );
 }
