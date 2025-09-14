@@ -95,7 +95,7 @@ export default function Index() {
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
       
       <View style={styles.header}>
-        <Text style={styles.title}>TransportDF</Text>
+        <Text style={styles.title}>SkyCab</Text>
         <Text style={styles.subtitle}>Transporte inteligente em Brasília</Text>
         
         {currentUser && (
