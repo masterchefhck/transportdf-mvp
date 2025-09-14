@@ -1150,4 +1150,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  starContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+    gap: 10,
+  },
+  starButton: {
+    padding: 5,
+  },
+  ratingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FF9800',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  reasonContainer: {
+    marginBottom: 20,
+  },
+  reasonLabel: {
+    fontSize: 14,
+    color: '#FF9800',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  ratingButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  skipButton: {
+    backgroundColor: '#666',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+  skipButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
