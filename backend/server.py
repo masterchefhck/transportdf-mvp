@@ -92,6 +92,9 @@ class User(BaseModel):
     vehicle_info: Optional[dict] = None
     driver_status: Optional[DriverStatus] = DriverStatus.OFFLINE
     current_location: Optional[dict] = None
+    
+    # Rating field (for drivers and passengers)
+    rating: Optional[float] = 5.0
 
 class LocationUpdate(BaseModel):
     latitude: float
