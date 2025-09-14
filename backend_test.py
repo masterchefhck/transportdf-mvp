@@ -818,6 +818,16 @@ class TransportDFTester:
         self.test_driver_alerts_endpoint()
         self.test_driver_alerts_access_control()
         
+        # New Dashboard Endpoints Tests - REVIEW REQUEST
+        print("\n" + "=" * 50)
+        print("🎯 TESTING NEW DASHBOARD ENDPOINTS - REVIEW REQUEST")
+        print("=" * 50)
+        self.test_user_rating_endpoint()
+        self.test_driver_alerts_read_field()
+        self.test_mark_alert_as_read()
+        self.test_mark_alert_as_read_not_found()
+        self.test_mark_alert_as_read_access_control()
+        
         # Summary
         print("=" * 80)
         print("📊 TEST SUMMARY")
