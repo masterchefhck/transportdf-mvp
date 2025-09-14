@@ -19,7 +19,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
-import ChatComponent from '../../components/ChatComponent';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -72,10 +71,6 @@ interface Trip {
   estimated_price: number;
   status: string;
   requested_at: string;
-  // Driver info when trip is accepted
-  driver_name?: string;
-  driver_rating?: number;
-  driver_photo?: string;
 }
 
 interface Report {
@@ -105,11 +100,6 @@ export default function PassengerDashboard() {
   const [currentRating, setCurrentRating] = useState<number>(5.0);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   
-  // Photo modal states
-  const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
-  const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
-  
   // Admin Messages states
   const [adminMessages, setAdminMessages] = useState<any[]>([]);
   const [showMessagesPanel, setShowMessagesPanel] = useState(false);
@@ -126,61 +116,20 @@ export default function PassengerDashboard() {
   const [reportDescription, setReportDescription] = useState('');
   const [responseText, setResponseText] = useState('');
 
-  // Rating states - COM CORREÇÃO FINAL PARA SINCRONIZAÇÃO
+  // Rating states
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [completedTrip, setCompletedTrip] = useState<Trip | null>(null);
   const [rating, setRating] = useState(5);
   const [ratingReason, setRatingReason] = useState('');
-  const [ratedTrips, setRatedTrips] = useState<Set<string>>(new Set());
-
-  // Chat states
-  const [showChatModal, setShowChatModal] = useState(false);
 
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
-    loadRatedTrips();
+    checkCurrentTrip();
     loadMyReports();
     loadCurrentRating();
     loadAdminMessages();
-    
-    // Set up interval to check trip status
-    const interval = setInterval(() => {
-      checkCurrentTrip();
-    }, 5000);
-    
-    // Initial check
-    checkCurrentTrip();
-    
-    return () => clearInterval(interval);
   }, []);
-
-  const loadRatedTrips = async () => {
-    try {
-      const ratedTripsData = await AsyncStorage.getItem('rated_trips');
-      if (ratedTripsData) {
-        setRatedTrips(new Set(JSON.parse(ratedTripsData)));
-      }
-    } catch (error) {
-      console.log('Error loading rated trips:', error);
-    }
-  };
-
-  // FUNÇÃO CORRIGIDA - Atualização IMEDIATA do estado local (síncrona)
-  const markTripAsRated = async (tripId: string) => {
-    try {
-      // Atualização IMEDIATA do estado local primeiro (síncrona)
-      const newRatedTrips = new Set(ratedTrips);
-      newRatedTrips.add(tripId);
-      setRatedTrips(newRatedTrips);
-      
-      // Depois salva no AsyncStorage (assíncrona)
-      await AsyncStorage.setItem('rated_trips', JSON.stringify(Array.from(newRatedTrips)));
-      console.log('Trip marked as rated:', tripId, 'Total rated trips:', newRatedTrips.size);
-    } catch (error) {
-      console.log('Error saving rated trip:', error);
-    }
-  };
 
   const loadUserData = async () => {
     try {
@@ -256,7 +205,90 @@ export default function PassengerDashboard() {
     }
   };
 
-  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Lógica mais defensiva e com logs
+  const handleViewMessage = (message: any) => {
+    setSelectedMessage(message);
+    setShowMessageModal(true);
+    
+    // Mark as read if not already read
+    if (!message.read) {
+      markMessageAsRead(message.id);
+    }
+  };
+
+  const pickImage = async () => {
+    // Request permission
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      showAlert('Permissão negada', 'É necessário permitir acesso à galeria de fotos');
+      return;
+    }
+
+    // Pick image
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      uploadProfilePhoto(result.assets[0].base64);
+    }
+  };
+
+  const uploadProfilePhoto = async (base64Image: string) => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('access_token');
+      
+      await axios.put(
+        `${API_URL}/api/users/profile-photo`,
+        { profile_photo: `data:image/jpeg;base64,${base64Image}` },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setProfilePhoto(`data:image/jpeg;base64,${base64Image}`);
+      showAlert('Sucesso', 'Foto de perfil atualizada com sucesso!');
+    } catch (error) {
+      console.log('Error uploading photo:', error);
+      showAlert('Erro', 'Erro ao fazer upload da foto');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const requestLocationPermission = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert('Erro', 'Permissão de localização necessária');
+        return;
+      }
+
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      setLocation(currentLocation);
+
+      // Update user location on server
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.put(
+        `${API_URL}/api/users/location`,
+        {
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    } catch (error) {
+      console.log('Error getting location:', error);
+    }
+  };
+
   const checkCurrentTrip = async () => {
     try {
       const token = await AsyncStorage.getItem('access_token');
@@ -270,45 +302,25 @@ export default function PassengerDashboard() {
 
       // Check for recently completed trips that need rating
       const recentlyCompleted = response.data.find(
-        (trip: Trip) => trip.status === 'completed' && !ratedTrips.has(trip.id) && trip.driver_id
+        (trip: Trip) => trip.status === 'completed' && !trip.rated
       );
-
-      console.log('checkCurrentTrip - Status:', {
-        activeTrip: activeTrip?.id || 'none',
-        recentlyCompleted: recentlyCompleted?.id || 'none',
-        showRatingModal,
-        completedTrip: completedTrip?.id || 'none',
-        ratedTripsCount: ratedTrips.size,
-        ratedTripsArray: Array.from(ratedTrips)
-      });
 
       if (activeTrip) {
         setCurrentTrip(activeTrip);
-        // Se há viagem ativa, fecha qualquer modal de avaliação que possa estar aberto
-        if (showRatingModal) {
-          console.log('Closing rating modal due to active trip');
-          setShowRatingModal(false);
-          setCompletedTrip(null);
-        }
-      } else if (recentlyCompleted && !showRatingModal && !completedTrip) {
-        // Tripla verificação antes de mostrar modal:
-        // 1. Viagem completada existe
-        // 2. Modal não está aberto
-        // 3. Não há trip sendo processada
-        console.log('Showing rating modal for trip:', recentlyCompleted.id);
+      } else if (recentlyCompleted && currentTrip?.status !== 'completed') {
+        // Trip just completed, show rating modal
         setCompletedTrip(recentlyCompleted);
         setShowRatingModal(true);
         setCurrentTrip(null);
-      } else if (!recentlyCompleted && !activeTrip) {
+      } else {
         setCurrentTrip(null);
-        // Não fecha o modal aqui se completedTrip existe (trip sendo avaliada)
       }
     } catch (error) {
       console.log('Error checking current trip:', error);
     }
   };
 
-  const calculateEstimatePrice = () => {
+  const calculateEstimatePrice = () => {  
     // Simulate price calculation (in real app, would use Google Maps Distance Matrix)
     const basePrice = 5.0;
     const randomDistance = Math.random() * 20 + 2; // 2-22 km
@@ -402,21 +414,6 @@ export default function PassengerDashboard() {
     }
   };
 
-  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Proteção total com logs
-  const skipRating = async () => {
-    if (completedTrip) {
-      console.log('Skipping rating for trip:', completedTrip.id);
-      // CORREÇÃO: Marcar como avaliada para prevenir loop
-      await markTripAsRated(completedTrip.id);
-    }
-    // Atualização imediata do estado para prevenir race condition
-    setCompletedTrip(null);
-    setShowRatingModal(false);
-    setRating(5);
-    setRatingReason('');
-    console.log('Rating modal closed (skipped)');
-  };
-
   const handleRespondToReport = (report: Report) => {
     setSelectedReport(report);
     setShowResponseModal(true);
@@ -448,7 +445,6 @@ export default function PassengerDashboard() {
     }
   };
 
-  // FUNÇÃO CORRIGIDA - Ordem correta de execução
   const submitRating = async () => {
     if (!completedTrip) {
       showAlert('Erro', 'Viagem não encontrada');
@@ -460,29 +456,13 @@ export default function PassengerDashboard() {
       return;
     }
 
-    // Verifica se a trip já foi avaliada antes de tentar enviar
-    if (ratedTrips.has(completedTrip.id)) {
-      console.log('Trip already rated, closing modal:', completedTrip.id);
-      setCompletedTrip(null);
-      setShowRatingModal(false);
-      setRating(5);
-      setRatingReason('');
-      return;
-    }
-
     try {
-      console.log('Submitting rating for trip:', completedTrip.id);
-      
-      const tripId = completedTrip.id;
-      const driverId = completedTrip.driver_id;
-      
-      // PASSO 1: Tentar enviar para o backend PRIMEIRO
       const token = await AsyncStorage.getItem('access_token');
       await axios.post(
         `${API_URL}/api/ratings/create`,
         {
-          trip_id: tripId,
-          rated_user_id: driverId,
+          trip_id: completedTrip.id,
+          rated_user_id: completedTrip.driver_id,
           rating: rating,
           reason: rating < 5 ? ratingReason : null
         },
@@ -490,120 +470,15 @@ export default function PassengerDashboard() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      
-      console.log('Rating submitted successfully for trip:', tripId);
-      
-      // PASSO 2: APENAS após sucesso, marcar como avaliada e limpar estados
-      await markTripAsRated(completedTrip.id);
-      setCompletedTrip(null);
-      setShowRatingModal(false);
-      
+
       showAlert('Sucesso', 'Avaliação enviada com sucesso!');
+      setShowRatingModal(false);
       setRating(5);
       setRatingReason('');
+      setCompletedTrip(null);
     } catch (error) {
       console.error('Error submitting rating:', error);
-      // Se der erro 400 (já existe), marcar como avaliada e continuar
-      if (error.response?.status === 400) {
-        console.log('Rating already exists, marking as rated and continuing');
-        await markTripAsRated(completedTrip.id);
-        setCompletedTrip(null);
-        setShowRatingModal(false);
-        setRating(5);
-        setRatingReason('');
-      } else {
-        showAlert('Erro', 'Erro ao enviar avaliação');
-      }
-    }
-  };
-
-  const handleViewMessage = (message: any) => {
-    setSelectedMessage(message);
-    setShowMessageModal(true);
-    
-    // Mark as read if not already read
-    if (!message.read) {
-      markMessageAsRead(message.id);
-    }
-  };
-
-  const handleViewPhoto = (photoUrl: string, userName: string) => {
-    setSelectedPhotoUrl(photoUrl);
-    setSelectedPhotoUser(userName);
-    setShowPhotoModal(true);
-  };
-
-  const pickImage = async () => {
-    // Request permission
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (permissionResult.granted === false) {
-      showAlert('Permissão negada', 'É necessário permitir acesso à galeria de fotos');
-      return;
-    }
-
-    // Pick image
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
-    });
-
-    if (!result.canceled && result.assets[0].base64) {
-      uploadProfilePhoto(result.assets[0].base64);
-    }
-  };
-
-  const uploadProfilePhoto = async (base64Image: string) => {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('access_token');
-      
-      await axios.put(
-        `${API_URL}/api/users/profile-photo`,
-        { profile_photo: `data:image/jpeg;base64,${base64Image}` },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      setProfilePhoto(`data:image/jpeg;base64,${base64Image}`);
-      showAlert('Sucesso', 'Foto de perfil atualizada com sucesso!');
-    } catch (error) {
-      console.log('Error uploading photo:', error);
-      showAlert('Erro', 'Erro ao fazer upload da foto');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const requestLocationPermission = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        showAlert('Erro', 'Permissão de localização necessária');
-        return;
-      }
-
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      setLocation(currentLocation);
-
-      // Update user location on server
-      const token = await AsyncStorage.getItem('access_token');
-      await axios.put(
-        `${API_URL}/api/users/location`,
-        {
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-    } catch (error) {
-      console.log('Error getting location:', error);
+      showAlert('Erro', 'Erro ao enviar avaliação');
     }
   };
 
@@ -742,36 +617,6 @@ export default function PassengerDashboard() {
               </View>
             </View>
 
-            {/* Driver Info Section */}
-            {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_name && (
-              <View style={styles.driverInfo}>
-                <Text style={styles.driverInfoTitle}>Motorista</Text>
-                <View style={styles.driverDetails}>
-                  <TouchableOpacity
-                    onPress={() => currentTrip.driver_photo && handleViewPhoto(currentTrip.driver_photo, currentTrip.driver_name || 'Motorista')}
-                    disabled={!currentTrip.driver_photo}
-                  >
-                    {currentTrip.driver_photo ? (
-                      <Image source={{ uri: currentTrip.driver_photo }} style={styles.driverPhoto} />
-                    ) : (
-                      <View style={styles.defaultDriverPhoto}>
-                        <Ionicons name="person" size={20} color="#666" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                  <View style={styles.driverTextInfo}>
-                    <Text style={styles.driverName}>{currentTrip.driver_name}</Text>
-                    <View style={styles.driverRating}>
-                      <Ionicons name="star" size={14} color="#FF9800" />
-                      <Text style={styles.driverRatingText}>
-                        {currentTrip.driver_rating ? currentTrip.driver_rating.toFixed(1) : '5.0'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            )}
-
             <View style={styles.tripStatus}>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(currentTrip.status) }]}>
                 <Text style={styles.statusText}>{getStatusText(currentTrip.status)}</Text>
@@ -779,17 +624,9 @@ export default function PassengerDashboard() {
               <Text style={styles.priceText}>R$ {currentTrip.estimated_price.toFixed(2)}</Text>
             </View>
 
-            {/* Action Buttons */}
+            {/* Report Driver Button */}
             {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_id && (
               <View style={styles.tripActions}>
-                <TouchableOpacity
-                  style={styles.chatButton}
-                  onPress={() => setShowChatModal(true)}
-                >
-                  <Ionicons name="chatbubble" size={16} color="#fff" />
-                  <Text style={styles.chatButtonText}>Chat</Text>
-                </TouchableOpacity>
-                
                 <TouchableOpacity
                   style={styles.reportButton}
                   onPress={handleReportDriver}
@@ -833,26 +670,6 @@ export default function PassengerDashboard() {
           <Text style={styles.actionText}>Ajuda</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Photo Modal */}
-      <Modal visible={showPhotoModal} transparent animationType="fade">
-        <View style={styles.photoModalOverlay}>
-          <View style={styles.photoModalContent}>
-            <View style={styles.photoModalHeader}>
-              <Text style={styles.photoModalTitle}>{selectedPhotoUser}</Text>
-              <TouchableOpacity
-                onPress={() => setShowPhotoModal(false)}
-                style={styles.photoModalCloseButton}
-              >
-                <Ionicons name="close" size={28} color="#fff" />
-              </TouchableOpacity>
-            </View>
-            {selectedPhotoUrl && (
-              <Image source={{ uri: selectedPhotoUrl }} style={styles.fullSizePhoto} />
-            )}
-          </View>
-        </View>
-      </Modal>
 
       {/* Request Trip Modal */}
       <Modal
@@ -1142,7 +959,7 @@ export default function PassengerDashboard() {
         </View>
       </Modal>
 
-      {/* Rating Modal COM CORREÇÃO FINAL PARA SINCRONIZAÇÃO */}
+      {/* Rating Modal */}
       <Modal visible={showRatingModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -1171,7 +988,7 @@ export default function PassengerDashboard() {
               ))}
             </View>
             
-            <Text style={styles.ratingDisplayText}>
+            <Text style={styles.ratingText}>
               {rating === 5 ? "Excelente!" : 
                rating === 4 ? "Muito bom!" :
                rating === 3 ? "Bom" :
@@ -1195,8 +1012,16 @@ export default function PassengerDashboard() {
               </View>
             )}
             
-            <View style={styles.ratingModalButtons}>
-              <TouchableOpacity style={styles.skipButton} onPress={skipRating}>
+            <View style={styles.ratingButtons}>
+              <TouchableOpacity 
+                style={styles.skipButton} 
+                onPress={() => {
+                  setShowRatingModal(false);
+                  setRating(5);
+                  setRatingReason('');
+                  setCompletedTrip(null);
+                }}
+              >
                 <Text style={styles.skipButtonText}>Pular</Text>
               </TouchableOpacity>
               
@@ -1207,17 +1032,6 @@ export default function PassengerDashboard() {
           </View>
         </View>
       </Modal>
-
-      {/* Chat Component */}
-      {currentTrip && (
-        <ChatComponent
-          tripId={currentTrip.id}
-          currentUserId={user?.id || ''}
-          currentUserType="passenger"
-          visible={showChatModal}
-          onClose={() => setShowChatModal(false)}
-        />
-      )}
     </SafeAreaView>
   );
 }
@@ -1368,24 +1182,6 @@ const styles = StyleSheet.create({
   },
   tripActions: {
     marginTop: 16,
-    flexDirection: 'row',
-    gap: 12,
-  },
-  chatButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  chatButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   reportButton: {
     backgroundColor: '#FF9800',
@@ -1396,7 +1192,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    flex: 1,
   },
   reportButtonText: {
     fontSize: 14,
@@ -1627,7 +1422,7 @@ const styles = StyleSheet.create({
   starButton: {
     padding: 5,
   },
-  ratingDisplayText: {
+  ratingText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FF9800',
@@ -1643,7 +1438,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  ratingModalButtons: {
+  ratingButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
@@ -1761,91 +1556,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  // Driver info styles in trip cards
-  driverInfo: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  driverInfoTitle: {
-    color: '#4CAF50',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  driverDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  driverPhoto: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  defaultDriverPhoto: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  driverTextInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  driverName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  driverRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  driverRatingText: {
-    color: '#FF9800',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 4,
-  },
-  // Photo modal styles
-  photoModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoModalContent: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 16,
-    padding: 20,
-    width: '90%',
-    maxWidth: 350,
-    alignItems: 'center',
-  },
-  photoModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
-  },
-  photoModalTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  photoModalCloseButton: {
-    padding: 4,
-  },
-  fullSizePhoto: {
-    width: 300,
-    height: 400,
-    borderRadius: 12,
-    resizeMode: 'cover',
   },
 });
