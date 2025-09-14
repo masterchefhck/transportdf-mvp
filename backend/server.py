@@ -192,6 +192,23 @@ class AdminAlertCreate(BaseModel):
     rating_id: str
     message: str
 
+# Admin Message Models
+class AdminMessageToUser(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    admin_id: str
+    message: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    read: bool = False
+
+class AdminMessageCreate(BaseModel):
+    user_id: str
+    message: str
+
+# Bulk Delete Models
+class BulkDeleteRequest(BaseModel):
+    ids: List[str]
+
 # Utility functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
