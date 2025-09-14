@@ -255,7 +255,7 @@ export default function PassengerDashboard() {
     }
   };
 
-  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Lógica de exibição mais estrita
+  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Lógica mais defensiva e com logs
   const checkCurrentTrip = async () => {
     try {
       const token = await AsyncStorage.getItem('access_token');
@@ -272,15 +272,35 @@ export default function PassengerDashboard() {
         (trip: Trip) => trip.status === 'completed' && !ratedTrips.has(trip.id) && trip.driver_id
       );
 
+      console.log('checkCurrentTrip - Status:', {
+        activeTrip: activeTrip?.id || 'none',
+        recentlyCompleted: recentlyCompleted?.id || 'none',
+        showRatingModal,
+        completedTrip: completedTrip?.id || 'none',
+        ratedTripsCount: ratedTrips.size,
+        ratedTripsArray: Array.from(ratedTrips)
+      });
+
       if (activeTrip) {
         setCurrentTrip(activeTrip);
+        // Se há viagem ativa, fecha qualquer modal de avaliação que possa estar aberto
+        if (showRatingModal) {
+          console.log('Closing rating modal due to active trip');
+          setShowRatingModal(false);
+          setCompletedTrip(null);
+        }
       } else if (recentlyCompleted && !showRatingModal && !completedTrip) {
-        // Condição mais estrita: só mostra modal se não há modal aberto E não há trip sendo processada
+        // Tripla verificação antes de mostrar modal:
+        // 1. Viagem completada existe
+        // 2. Modal não está aberto
+        // 3. Não há trip sendo processada
+        console.log('Showing rating modal for trip:', recentlyCompleted.id);
         setCompletedTrip(recentlyCompleted);
         setShowRatingModal(true);
         setCurrentTrip(null);
-      } else if (!recentlyCompleted) {
+      } else if (!recentlyCompleted && !activeTrip) {
         setCurrentTrip(null);
+        // Não fecha o modal aqui se completedTrip existe (trip sendo avaliada)
       }
     } catch (error) {
       console.log('Error checking current trip:', error);
