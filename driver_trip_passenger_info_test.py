@@ -70,11 +70,11 @@ class DriverTripPassengerInfoTester:
         """Setup test users (passenger and driver)"""
         print("🔧 Setting up test users...")
         
-        # Test data with realistic Brazilian information
+        # Test data with realistic Brazilian information - using existing users
         test_users = [
             {
                 "name": "Maria Silva Santos",
-                "email": "maria.passenger.test@email.com",
+                "email": "maria.santos@email.com",
                 "phone": "(61) 99999-1234",
                 "cpf": "123.456.789-01",
                 "user_type": "passenger",
@@ -82,7 +82,7 @@ class DriverTripPassengerInfoTester:
             },
             {
                 "name": "João Carlos Oliveira",
-                "email": "joao.driver.test@email.com", 
+                "email": "joao.motorista@email.com", 
                 "phone": "(61) 98888-5678",
                 "cpf": "987.654.321-09",
                 "user_type": "driver",
