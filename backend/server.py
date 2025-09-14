@@ -1102,11 +1102,8 @@ async def send_chat_message(trip_id: str, message_data: ChatMessageCreate, curre
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
     
-    # Check if user is participant (passenger or driver) or admin
-    if current_user.user_type == UserType.ADMIN:
-        # Admins can send messages to any trip (for moderation)
-        pass
-    elif current_user.id not in [trip["passenger_id"], trip.get("driver_id")]:
+    # Check if user is participant (passenger or driver) - only participants can send messages
+    if current_user.id not in [trip["passenger_id"], trip.get("driver_id")]:
         raise HTTPException(status_code=403, detail="Only trip participants can send messages")
     
     # Only allow chat during active trips (accepted or in_progress)
