@@ -521,12 +521,30 @@ async def complete_trip(trip_id: str, current_user: User = Depends(get_current_u
 async def get_my_trips(current_user: User = Depends(get_current_user)):
     if current_user.user_type == UserType.PASSENGER:
         trips = await db.trips.find({"passenger_id": current_user.id}).sort("requested_at", -1).to_list(50)
+        
+        # Enrich trips with driver information when available
+        enriched_trips = []
+        for trip in trips:
+            trip_data = Trip(**trip)
+            trip_dict = trip_data.dict()
+            
+            # Add driver info if trip has a driver assigned
+            if trip.get("driver_id") and trip.get("status") in [TripStatus.ACCEPTED, TripStatus.IN_PROGRESS, TripStatus.COMPLETED]:
+                driver = await db.users.find_one({"id": trip["driver_id"]})
+                if driver:
+                    trip_dict["driver_name"] = driver["name"]
+                    trip_dict["driver_rating"] = driver.get("rating", 5.0)
+                    trip_dict["driver_photo"] = driver.get("profile_photo")
+            
+            enriched_trips.append(trip_dict)
+        
+        return enriched_trips
+        
     elif current_user.user_type == UserType.DRIVER:
         trips = await db.trips.find({"driver_id": current_user.id}).sort("requested_at", -1).to_list(50)
+        return [Trip(**trip) for trip in trips]
     else:
         raise HTTPException(status_code=403, detail="Invalid user type")
-    
-    return [Trip(**trip) for trip in trips]
 
 # Report endpoints
 @api_router.post("/reports/create")
