@@ -94,6 +94,13 @@ export default function PassengerDashboard() {
   const [estimatedPrice, setEstimatedPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [currentRating, setCurrentRating] = useState<number>(5.0);
+  
+  // Admin Messages states
+  const [adminMessages, setAdminMessages] = useState<any[]>([]);
+  const [showMessagesPanel, setShowMessagesPanel] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
   
   // Report states
   const [myReports, setMyReports] = useState<Report[]>([]);
