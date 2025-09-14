@@ -150,6 +150,60 @@ export default function PassengerDashboard() {
     }
   };
 
+  const loadCurrentRating = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/users/rating`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCurrentRating(response.data.rating || 5.0);
+    } catch (error) {
+      console.log('Error loading current rating:', error);
+    }
+  };
+
+  const loadAdminMessages = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/passengers/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAdminMessages(response.data || []);
+    } catch (error) {
+      console.log('Error loading admin messages:', error);
+    }
+  };
+
+  const markMessageAsRead = async (messageId: string) => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/passengers/messages/${messageId}/read`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Update local state
+      setAdminMessages(messages => 
+        messages.map(msg => 
+          msg.id === messageId ? { ...msg, read: true } : msg
+        )
+      );
+    } catch (error) {
+      console.log('Error marking message as read:', error);
+    }
+  };
+
+  const handleViewMessage = (message: any) => {
+    setSelectedMessage(message);
+    setShowMessageModal(true);
+    
+    // Mark as read if not already read
+    if (!message.read) {
+      markMessageAsRead(message.id);
+    }
+  };
+
   const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
