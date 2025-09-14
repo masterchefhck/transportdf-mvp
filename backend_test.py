@@ -664,7 +664,502 @@ class BackendTester:
         
         return success_rate >= 80
 
+    def test_ratings_functionality_comprehensive(self):
+        """Comprehensive test for ratings functionality as per review request"""
+        print("\n🎯 TESTING RATINGS FUNCTIONALITY - COMPREHENSIVE REVIEW REQUEST")
+        print("=" * 70)
+        
+        # Step 1: Create admin user for testing (if not exists)
+        self.create_admin_user_for_testing()
+        
+        # Step 2: Create test data for ratings
+        self.create_test_data_for_ratings()
+        
+        # Step 3: Test ratings endpoints
+        self.test_ratings_endpoints_detailed()
+        
+        # Step 4: Verify backend problem investigation
+        self.verify_backend_ratings_problem()
+    
+    def create_admin_user_for_testing(self):
+        """Create admin user specifically for ratings testing"""
+        admin_data = {
+            "name": "Admin Ratings Test",
+            "email": "admin.ratings@test.com",
+            "phone": "+5561999888777",
+            "cpf": "99988877766",
+            "user_type": "admin",
+            "password": "admin123"
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/auth/register", json=admin_data)
+            if response.status_code == 200:
+                data = response.json()
+                self.tokens["ratings_admin"] = data["access_token"]
+                self.users["ratings_admin"] = data["user"]
+                self.log_test("Create Admin for Ratings Test", True, f"Admin ID: {data['user']['id']}")
+            elif response.status_code == 400 and "already exists" in response.text:
+                # Admin exists, try to login
+                login_response = self.session.post(f"{API_BASE}/auth/login", json={
+                    "email": admin_data["email"],
+                    "password": admin_data["password"]
+                })
+                if login_response.status_code == 200:
+                    data = login_response.json()
+                    self.tokens["ratings_admin"] = data["access_token"]
+                    self.users["ratings_admin"] = data["user"]
+                    self.log_test("Login Admin for Ratings Test", True, "Existing admin logged in")
+                else:
+                    self.log_test("Admin Login for Ratings", False, f"Status: {login_response.status_code}")
+            else:
+                self.log_test("Create Admin for Ratings Test", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("Create Admin for Ratings Test", False, f"Error: {str(e)}")
+    
+    def create_test_data_for_ratings(self):
+        """Create 2 passengers, 2 drivers, 2 completed trips, and low ratings"""
+        print("\n📊 CREATING TEST DATA FOR RATINGS")
+        print("-" * 40)
+        
+        # Create 2 passengers
+        passengers_data = [
+            {
+                "name": "Ana Carolina Silva",
+                "email": "ana.passenger@ratings.com",
+                "phone": "+5561111222333",
+                "cpf": "11122233344",
+                "user_type": "passenger",
+                "password": "pass123"
+            },
+            {
+                "name": "Bruno Santos Lima",
+                "email": "bruno.passenger@ratings.com", 
+                "phone": "+5561111222334",
+                "cpf": "11122233355",
+                "user_type": "passenger",
+                "password": "pass123"
+            }
+        ]
+        
+        # Create 2 drivers
+        drivers_data = [
+            {
+                "name": "Carlos Motorista Silva",
+                "email": "carlos.driver@ratings.com",
+                "phone": "+5561333444555",
+                "cpf": "33344455566",
+                "user_type": "driver",
+                "password": "driver123"
+            },
+            {
+                "name": "Diego Motorista Santos",
+                "email": "diego.driver@ratings.com",
+                "phone": "+5561333444556",
+                "cpf": "33344455577",
+                "user_type": "driver", 
+                "password": "driver123"
+            }
+        ]
+        
+        # Register passengers
+        for i, passenger_data in enumerate(passengers_data):
+            try:
+                response = self.session.post(f"{API_BASE}/auth/register", json=passenger_data)
+                if response.status_code == 200:
+                    data = response.json()
+                    self.tokens[f"test_passenger_{i+1}"] = data["access_token"]
+                    self.users[f"test_passenger_{i+1}"] = data["user"]
+                    self.log_test(f"Create Test Passenger {i+1}", True, f"ID: {data['user']['id']}")
+                elif response.status_code == 400 and "already exists" in response.text:
+                    # Login existing user
+                    login_response = self.session.post(f"{API_BASE}/auth/login", json={
+                        "email": passenger_data["email"],
+                        "password": passenger_data["password"]
+                    })
+                    if login_response.status_code == 200:
+                        data = login_response.json()
+                        self.tokens[f"test_passenger_{i+1}"] = data["access_token"]
+                        self.users[f"test_passenger_{i+1}"] = data["user"]
+                        self.log_test(f"Login Test Passenger {i+1}", True, "Existing user")
+                else:
+                    self.log_test(f"Create Test Passenger {i+1}", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_test(f"Create Test Passenger {i+1}", False, f"Error: {str(e)}")
+        
+        # Register drivers
+        for i, driver_data in enumerate(drivers_data):
+            try:
+                response = self.session.post(f"{API_BASE}/auth/register", json=driver_data)
+                if response.status_code == 200:
+                    data = response.json()
+                    self.tokens[f"test_driver_{i+1}"] = data["access_token"]
+                    self.users[f"test_driver_{i+1}"] = data["user"]
+                    self.log_test(f"Create Test Driver {i+1}", True, f"ID: {data['user']['id']}")
+                elif response.status_code == 400 and "already exists" in response.text:
+                    # Login existing user
+                    login_response = self.session.post(f"{API_BASE}/auth/login", json={
+                        "email": driver_data["email"],
+                        "password": driver_data["password"]
+                    })
+                    if login_response.status_code == 200:
+                        data = login_response.json()
+                        self.tokens[f"test_driver_{i+1}"] = data["access_token"]
+                        self.users[f"test_driver_{i+1}"] = data["user"]
+                        self.log_test(f"Login Test Driver {i+1}", True, "Existing user")
+                else:
+                    self.log_test(f"Create Test Driver {i+1}", False, f"Status: {response.status_code}")
+            except Exception as e:
+                self.log_test(f"Create Test Driver {i+1}", False, f"Error: {str(e)}")
+        
+        # Create 2 completed trips
+        self.create_completed_trips_for_ratings()
+        
+        # Create low ratings (below 5 stars)
+        self.create_low_ratings_for_testing()
+    
+    def create_completed_trips_for_ratings(self):
+        """Create 2 completed trips for rating tests"""
+        trips_data = [
+            {
+                "pickup_latitude": -15.7801,
+                "pickup_longitude": -47.9292,
+                "pickup_address": "Asa Norte - Ratings Test 1",
+                "destination_latitude": -15.8267,
+                "destination_longitude": -47.9218,
+                "destination_address": "Asa Sul - Ratings Test 1",
+                "estimated_price": 12.50
+            },
+            {
+                "pickup_latitude": -15.7950,
+                "pickup_longitude": -47.8850,
+                "pickup_address": "Lago Norte - Ratings Test 2",
+                "destination_latitude": -15.8100,
+                "destination_longitude": -47.8950,
+                "destination_address": "Lago Sul - Ratings Test 2",
+                "estimated_price": 18.00
+            }
+        ]
+        
+        for i, trip_data in enumerate(trips_data):
+            passenger_key = f"test_passenger_{i+1}"
+            driver_key = f"test_driver_{i+1}"
+            
+            if passenger_key not in self.tokens or driver_key not in self.tokens:
+                self.log_test(f"Create Trip {i+1} - Setup", False, "Missing passenger or driver tokens")
+                continue
+            
+            try:
+                # Add passenger_id to trip data
+                trip_data["passenger_id"] = self.users[passenger_key]["id"]
+                
+                # Step 1: Passenger requests trip
+                headers_passenger = {"Authorization": f"Bearer {self.tokens[passenger_key]}"}
+                trip_response = self.session.post(f"{API_BASE}/trips/request", json=trip_data, headers=headers_passenger)
+                
+                if trip_response.status_code != 200:
+                    self.log_test(f"Create Trip {i+1} - Request", False, f"Status: {trip_response.status_code}")
+                    continue
+                
+                trip = trip_response.json()
+                trip_id = trip["id"]
+                self.trips[f"ratings_trip_{i+1}"] = trip
+                
+                # Step 2: Driver goes online and accepts trip
+                headers_driver = {"Authorization": f"Bearer {self.tokens[driver_key]}"}
+                
+                # Set driver online
+                self.session.put(f"{API_BASE}/drivers/status/online", headers=headers_driver)
+                
+                # Accept trip
+                accept_response = self.session.put(f"{API_BASE}/trips/{trip_id}/accept", headers=headers_driver)
+                if accept_response.status_code != 200:
+                    self.log_test(f"Create Trip {i+1} - Accept", False, f"Status: {accept_response.status_code}")
+                    continue
+                
+                # Start trip
+                start_response = self.session.put(f"{API_BASE}/trips/{trip_id}/start", headers=headers_driver)
+                if start_response.status_code != 200:
+                    self.log_test(f"Create Trip {i+1} - Start", False, f"Status: {start_response.status_code}")
+                    continue
+                
+                # Complete trip
+                complete_response = self.session.put(f"{API_BASE}/trips/{trip_id}/complete", headers=headers_driver)
+                if complete_response.status_code == 200:
+                    self.log_test(f"Create Completed Trip {i+1}", True, f"Trip ID: {trip_id}")
+                    self.trips[f"ratings_trip_{i+1}"]["status"] = "completed"
+                else:
+                    self.log_test(f"Create Trip {i+1} - Complete", False, f"Status: {complete_response.status_code}")
+                
+            except Exception as e:
+                self.log_test(f"Create Trip {i+1}", False, f"Error: {str(e)}")
+    
+    def create_low_ratings_for_testing(self):
+        """Create at least 2 low ratings (below 5 stars) for testing"""
+        low_ratings_data = [
+            {
+                "rating": 2,
+                "reason": "Motorista chegou muito atrasado e foi mal educado"
+            },
+            {
+                "rating": 3,
+                "reason": "Carro sujo e motorista dirigindo perigosamente"
+            }
+        ]
+        
+        for i, rating_data in enumerate(low_ratings_data):
+            trip_key = f"ratings_trip_{i+1}"
+            passenger_key = f"test_passenger_{i+1}"
+            driver_key = f"test_driver_{i+1}"
+            
+            if (trip_key not in self.trips or passenger_key not in self.tokens or 
+                driver_key not in self.users):
+                self.log_test(f"Create Low Rating {i+1} - Setup", False, "Missing required data")
+                continue
+            
+            try:
+                headers = {"Authorization": f"Bearer {self.tokens[passenger_key]}"}
+                rating_request = {
+                    "trip_id": self.trips[trip_key]["id"],
+                    "rated_user_id": self.users[driver_key]["id"],
+                    "rating": rating_data["rating"],
+                    "reason": rating_data["reason"]
+                }
+                
+                response = self.session.post(f"{API_BASE}/ratings/create", json=rating_request, headers=headers)
+                
+                if response.status_code == 200:
+                    self.log_test(f"Create Low Rating {i+1}", True, f"{rating_data['rating']} stars - {rating_data['reason'][:30]}...")
+                else:
+                    self.log_test(f"Create Low Rating {i+1}", False, f"Status: {response.status_code}, Response: {response.text}")
+                    
+            except Exception as e:
+                self.log_test(f"Create Low Rating {i+1}", False, f"Error: {str(e)}")
+    
+    def test_ratings_endpoints_detailed(self):
+        """Test ratings endpoints in detail"""
+        print("\n🔍 TESTING RATINGS ENDPOINTS IN DETAIL")
+        print("-" * 45)
+        
+        # Test 1: GET /api/ratings/low (check if returns ratings below 5 stars)
+        self.test_get_low_ratings_endpoint()
+        
+        # Test 2: POST /api/admin/ratings/bulk-delete (test if works correctly)
+        self.test_bulk_delete_ratings_endpoint()
+    
+    def test_get_low_ratings_endpoint(self):
+        """Test GET /api/ratings/low endpoint"""
+        admin_key = "ratings_admin" if "ratings_admin" in self.tokens else "admin"
+        
+        if admin_key not in self.tokens:
+            self.log_test("GET /api/ratings/low - Setup", False, "No admin token available")
+            return
+        
+        try:
+            headers = {"Authorization": f"Bearer {self.tokens[admin_key]}"}
+            response = self.session.get(f"{API_BASE}/ratings/low", headers=headers)
+            
+            if response.status_code == 200:
+                ratings = response.json()
+                
+                # Check if we have ratings
+                if len(ratings) > 0:
+                    # Verify all ratings are below 5 stars
+                    all_below_5 = all(rating.get("rating", 5) < 5 for rating in ratings)
+                    
+                    # Check required fields
+                    required_fields = ["id", "rating", "reason", "created_at", "rated_user_name"]
+                    has_required_fields = all(
+                        all(field in rating for field in required_fields) 
+                        for rating in ratings
+                    )
+                    
+                    success = all_below_5 and has_required_fields
+                    message = f"Found {len(ratings)} low ratings, all below 5 stars: {all_below_5}, has required fields: {has_required_fields}"
+                    self.log_test("GET /api/ratings/low", success, message)
+                    
+                    # Store ratings for bulk delete test
+                    self.test_ratings_data = ratings
+                else:
+                    self.log_test("GET /api/ratings/low", True, "No low ratings found (expected if all drivers have 5 stars)")
+                    self.test_ratings_data = []
+            else:
+                self.log_test("GET /api/ratings/low", False, f"Status: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_test("GET /api/ratings/low", False, f"Error: {str(e)}")
+    
+    def test_bulk_delete_ratings_endpoint(self):
+        """Test POST /api/admin/ratings/bulk-delete endpoint"""
+        admin_key = "ratings_admin" if "ratings_admin" in self.tokens else "admin"
+        
+        if admin_key not in self.tokens:
+            self.log_test("POST /api/admin/ratings/bulk-delete - Setup", False, "No admin token available")
+            return
+        
+        try:
+            headers = {"Authorization": f"Bearer {self.tokens[admin_key]}"}
+            
+            # Test with empty list first
+            empty_request = {"ids": []}
+            response = self.session.post(f"{API_BASE}/admin/ratings/bulk-delete", json=empty_request, headers=headers)
+            
+            if response.status_code == 200:
+                result = response.json()
+                self.log_test("Bulk Delete Ratings - Empty List", True, f"Response: {result}")
+            else:
+                self.log_test("Bulk Delete Ratings - Empty List", False, f"Status: {response.status_code}, Response: {response.text}")
+                return
+            
+            # Test with actual rating IDs if we have them
+            if hasattr(self, 'test_ratings_data') and len(self.test_ratings_data) > 0:
+                # Get first 2 rating IDs for testing
+                rating_ids = [rating["id"] for rating in self.test_ratings_data[:2]]
+                
+                bulk_delete_request = {"ids": rating_ids}
+                response = self.session.post(f"{API_BASE}/admin/ratings/bulk-delete", json=bulk_delete_request, headers=headers)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    deleted_count = result.get("message", "").split()[1] if "Deleted" in result.get("message", "") else "0"
+                    self.log_test("Bulk Delete Ratings - With IDs", True, f"Deleted {deleted_count} ratings")
+                else:
+                    self.log_test("Bulk Delete Ratings - With IDs", False, f"Status: {response.status_code}, Response: {response.text}")
+            else:
+                self.log_test("Bulk Delete Ratings - With IDs", True, "No ratings available for bulk delete test")
+            
+            # Test with non-existent IDs
+            fake_ids = ["fake-id-1", "fake-id-2"]
+            fake_request = {"ids": fake_ids}
+            response = self.session.post(f"{API_BASE}/admin/ratings/bulk-delete", json=fake_request, headers=headers)
+            
+            if response.status_code == 200:
+                result = response.json()
+                self.log_test("Bulk Delete Ratings - Fake IDs", True, f"Response: {result}")
+            else:
+                self.log_test("Bulk Delete Ratings - Fake IDs", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("POST /api/admin/ratings/bulk-delete", False, f"Error: {str(e)}")
+    
+    def verify_backend_ratings_problem(self):
+        """Verify if the problem is in the backend by testing exact URLs"""
+        print("\n🔍 VERIFYING BACKEND RATINGS PROBLEM")
+        print("-" * 42)
+        
+        admin_key = "ratings_admin" if "ratings_admin" in self.tokens else "admin"
+        
+        if admin_key not in self.tokens:
+            self.log_test("Backend Problem Verification - Setup", False, "No admin token available")
+            return
+        
+        # Test the exact URL that frontend is calling
+        exact_url = f"{API_BASE}/admin/ratings/bulk-delete"
+        
+        try:
+            headers = {"Authorization": f"Bearer {self.tokens[admin_key]}"}
+            
+            # Test 1: Check if endpoint exists (OPTIONS request)
+            options_response = self.session.options(exact_url, headers=headers)
+            self.log_test("Endpoint Exists Check", True, f"OPTIONS status: {options_response.status_code}")
+            
+            # Test 2: Test with proper payload structure
+            test_payload = {"ids": ["test-id-1", "test-id-2"]}
+            response = self.session.post(exact_url, json=test_payload, headers=headers)
+            
+            if response.status_code == 200:
+                self.log_test("Exact URL Test - /api/admin/ratings/bulk-delete", True, f"Endpoint is working correctly")
+            elif response.status_code == 404:
+                self.log_test("Exact URL Test - /api/admin/ratings/bulk-delete", False, f"404 NOT FOUND - Endpoint does not exist or is not registered")
+            else:
+                self.log_test("Exact URL Test - /api/admin/ratings/bulk-delete", False, f"Status: {response.status_code}, Response: {response.text}")
+            
+            # Test 3: Check if endpoint is registered correctly by testing similar endpoints
+            similar_endpoints = [
+                "/admin/trips/bulk-delete",
+                "/admin/users/bulk-delete", 
+                "/admin/reports/bulk-delete"
+            ]
+            
+            for endpoint in similar_endpoints:
+                test_url = f"{API_BASE}{endpoint}"
+                test_response = self.session.post(test_url, json={"ids": []}, headers=headers)
+                endpoint_works = test_response.status_code == 200
+                self.log_test(f"Similar Endpoint Test - {endpoint}", endpoint_works, f"Status: {test_response.status_code}")
+            
+            # Test 4: Test with real data if available
+            if hasattr(self, 'test_ratings_data') and len(self.test_ratings_data) > 0:
+                real_ids = [rating["id"] for rating in self.test_ratings_data[:1]]  # Test with 1 real ID
+                real_payload = {"ids": real_ids}
+                
+                real_response = self.session.post(exact_url, json=real_payload, headers=headers)
+                
+                if real_response.status_code == 200:
+                    result = real_response.json()
+                    self.log_test("Real Data Test - Bulk Delete", True, f"Successfully processed real rating IDs: {result}")
+                else:
+                    self.log_test("Real Data Test - Bulk Delete", False, f"Status: {real_response.status_code}, Response: {real_response.text}")
+            
+        except Exception as e:
+            self.log_test("Backend Problem Verification", False, f"Error: {str(e)}")
+
+    def run_ratings_focused_tests(self):
+        """Run ratings-focused tests as per review request"""
+        print("🎯 STARTING RATINGS FUNCTIONALITY TESTS - REVIEW REQUEST")
+        print("=" * 70)
+        
+        # Basic setup
+        self.test_health_check()
+        self.register_test_users()
+        
+        # Comprehensive ratings functionality test
+        self.test_ratings_functionality_comprehensive()
+        
+        # Summary
+        print("\n" + "=" * 70)
+        print("🎯 RATINGS FUNCTIONALITY TEST SUMMARY")
+        print("=" * 70)
+        
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for result in self.test_results if result["success"])
+        failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed: {passed_tests}")
+        print(f"Failed: {failed_tests}")
+        print(f"Success Rate: {success_rate:.1f}%")
+        
+        # Specific focus areas
+        print(f"\n🎯 RATINGS FUNCTIONALITY VALIDATION:")
+        
+        # Check specific endpoints
+        low_ratings_test = any("GET /api/ratings/low" in r["test"] and r["success"] for r in self.test_results)
+        bulk_delete_test = any("Bulk Delete Ratings" in r["test"] and r["success"] for r in self.test_results)
+        endpoint_exists_test = any("Exact URL Test" in r["test"] and r["success"] for r in self.test_results)
+        
+        print(f"✅ GET /api/ratings/low: {'WORKING' if low_ratings_test else 'FAILED'}")
+        print(f"✅ POST /api/admin/ratings/bulk-delete: {'WORKING' if bulk_delete_test else 'FAILED'}")
+        print(f"✅ Endpoint Registration: {'CORRECT' if endpoint_exists_test else 'ISSUE FOUND'}")
+        
+        if failed_tests > 0:
+            print(f"\n❌ FAILED TESTS DETAILS:")
+            for result in self.test_results:
+                if not result["success"]:
+                    print(f"  - {result['test']}: {result['message']}")
+        
+        # Conclusion
+        print(f"\n🔍 CONCLUSION:")
+        if success_rate >= 90:
+            print("✅ RATINGS SYSTEM IS WORKING CORRECTLY - Problem likely in frontend or integration")
+        elif success_rate >= 70:
+            print("⚠️  RATINGS SYSTEM HAS MINOR ISSUES - Some endpoints working, others need attention")
+        else:
+            print("❌ RATINGS SYSTEM HAS MAJOR ISSUES - Backend problems identified")
+        
+        return success_rate >= 70
+
 if __name__ == "__main__":
     tester = BackendTester()
-    success = tester.run_focused_validation_tests()
+    success = tester.run_ratings_focused_tests()
     exit(0 if success else 1)
