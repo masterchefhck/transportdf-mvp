@@ -1171,6 +1171,188 @@ class TransportDFTester:
         else:
             self.log_test("Passenger Mark Message Access Control", False, f"Driver should not have access (status: {status_code})", data)
 
+    def test_profile_photo_upload_valid(self):
+        """Test 45: Valid profile photo upload for authenticated user"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Profile Photo Upload - Valid", False, "No passenger token available")
+            return
+            
+        # Simulate base64 image data (JPEG)
+        photo_data = {
+            "profile_photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+        }
+        
+        success, data, status_code = self.make_request("PUT", "/users/profile-photo", 
+                                                     photo_data, auth_token=self.tokens["passenger"])
+        
+        if success and "profile photo updated" in str(data).lower():
+            self.log_test("Profile Photo Upload - Valid", True, "Profile photo uploaded successfully for authenticated user")
+        else:
+            self.log_test("Profile Photo Upload - Valid", False, f"Profile photo upload failed (status: {status_code})", data)
+
+    def test_profile_photo_upload_no_auth(self):
+        """Test 46: Profile photo upload without authentication token"""
+        
+        photo_data = {
+            "profile_photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+        }
+        
+        success, data, status_code = self.make_request("PUT", "/users/profile-photo", photo_data)
+        
+        if not success and status_code == 401:
+            self.log_test("Profile Photo Upload - No Auth", True, "Correctly denied access without authentication token")
+        else:
+            self.log_test("Profile Photo Upload - No Auth", False, f"Should require authentication (status: {status_code})", data)
+
+    def test_profile_photo_upload_invalid_payload(self):
+        """Test 47: Profile photo upload with invalid payload"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Profile Photo Upload - Invalid Payload", False, "No passenger token available")
+            return
+            
+        # Test with empty payload
+        success, data, status_code = self.make_request("PUT", "/users/profile-photo", 
+                                                     {}, auth_token=self.tokens["passenger"])
+        
+        if not success and (status_code == 400 or status_code == 422):
+            self.log_test("Profile Photo Upload - Empty Payload", True, "Correctly rejected empty payload")
+        else:
+            self.log_test("Profile Photo Upload - Empty Payload", False, f"Should reject empty payload (status: {status_code})", data)
+            
+        # Test with invalid data structure
+        invalid_data = {"invalid_field": "some_value"}
+        success, data, status_code = self.make_request("PUT", "/users/profile-photo", 
+                                                     invalid_data, auth_token=self.tokens["passenger"])
+        
+        if not success and (status_code == 400 or status_code == 422):
+            self.log_test("Profile Photo Upload - Invalid Structure", True, "Correctly rejected invalid data structure")
+        else:
+            self.log_test("Profile Photo Upload - Invalid Structure", False, f"Should reject invalid structure (status: {status_code})", data)
+
+    def test_profile_photo_retrieval_via_users_me(self):
+        """Test 48: Verify profile photo is saved and retrievable via GET /users/me"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Profile Photo Retrieval via /users/me", False, "No passenger token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/users/me", 
+                                                     auth_token=self.tokens["passenger"])
+        
+        if success and "profile_photo" in data:
+            if data["profile_photo"] and data["profile_photo"].startswith("data:image/"):
+                self.log_test("Profile Photo Retrieval via /users/me", True, "Profile photo correctly saved and retrieved from user profile")
+            else:
+                self.log_test("Profile Photo Retrieval via /users/me", False, f"Profile photo field exists but invalid format: {data.get('profile_photo', 'None')[:50]}...")
+        else:
+            self.log_test("Profile Photo Retrieval via /users/me", False, f"Failed to retrieve user profile or profile_photo field missing (status: {status_code})", data)
+
+    def test_profile_photo_overwrite_existing(self):
+        """Test 49: Overwrite existing profile photo"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("Profile Photo Overwrite", False, "No driver token available")
+            return
+            
+        # Upload first photo
+        first_photo = {
+            "profile_photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+        }
+        
+        success1, data1, _ = self.make_request("PUT", "/users/profile-photo", 
+                                             first_photo, auth_token=self.tokens["driver"])
+        
+        if not success1:
+            self.log_test("Profile Photo Overwrite", False, "Failed to upload first photo")
+            return
+            
+        # Upload second photo (different base64)
+        second_photo = {
+            "profile_photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAGA4nEKtAAAAABJRU5ErkJggg=="
+        }
+        
+        success2, data2, status_code = self.make_request("PUT", "/users/profile-photo", 
+                                                        second_photo, auth_token=self.tokens["driver"])
+        
+        if success2 and "profile photo updated" in str(data2).lower():
+            # Verify the photo was actually updated
+            success3, user_data, _ = self.make_request("GET", "/users/me", 
+                                                     auth_token=self.tokens["driver"])
+            
+            if success3 and user_data.get("profile_photo") == second_photo["profile_photo"]:
+                self.log_test("Profile Photo Overwrite", True, "Successfully overwrote existing profile photo")
+            else:
+                self.log_test("Profile Photo Overwrite", False, "Photo upload succeeded but photo was not updated in database")
+        else:
+            self.log_test("Profile Photo Overwrite", False, f"Failed to overwrite existing photo (status: {status_code})", data2)
+
+    def test_profile_photo_in_available_trips(self):
+        """Test 50: Verify profile photo appears in GET /trips/available with passenger info"""
+        
+        if "driver" not in self.tokens or "passenger" not in self.tokens:
+            self.log_test("Profile Photo in Available Trips", False, "Driver or passenger token not available")
+            return
+            
+        # First ensure passenger has a profile photo
+        passenger_photo = {
+            "profile_photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+        }
+        
+        self.make_request("PUT", "/users/profile-photo", 
+                         passenger_photo, auth_token=self.tokens["passenger"])
+        
+        # Create a new trip request
+        trip_data = {
+            "passenger_id": self.users.get("passenger", {}).get("id", ""),
+            "pickup_latitude": -15.7800,
+            "pickup_longitude": -47.8900,
+            "pickup_address": "Setor Comercial Sul, Brasília - DF",
+            "destination_latitude": -15.7500,
+            "destination_longitude": -47.8600,
+            "destination_address": "Setor Bancário Norte, Brasília - DF",
+            "estimated_price": 12.00
+        }
+        
+        trip_success, trip_response, _ = self.make_request("POST", "/trips/request", 
+                                                         trip_data, auth_token=self.tokens["passenger"])
+        
+        if not trip_success:
+            self.log_test("Profile Photo in Available Trips", False, "Failed to create test trip")
+            return
+            
+        # Now check available trips as driver
+        success, data, status_code = self.make_request("GET", "/trips/available", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if success and isinstance(data, list) and data:
+            # Find our trip and check if it has passenger photo
+            test_trip = None
+            for trip in data:
+                if trip.get("id") == trip_response.get("id"):
+                    test_trip = trip
+                    break
+            
+            if test_trip:
+                required_fields = ["passenger_name", "passenger_rating", "passenger_photo"]
+                missing_fields = [field for field in required_fields if field not in test_trip]
+                
+                if not missing_fields:
+                    if test_trip["passenger_photo"] and test_trip["passenger_photo"].startswith("data:image/"):
+                        self.log_test("Profile Photo in Available Trips", True, 
+                                    f"Available trips correctly include passenger info: name='{test_trip['passenger_name']}', rating={test_trip['passenger_rating']}, photo=present")
+                    else:
+                        self.log_test("Profile Photo in Available Trips", False, 
+                                    f"Passenger photo field present but invalid: {test_trip.get('passenger_photo', 'None')[:50]}...")
+                else:
+                    self.log_test("Profile Photo in Available Trips", False, 
+                                f"Missing passenger fields in available trips: {missing_fields}")
+            else:
+                self.log_test("Profile Photo in Available Trips", False, "Test trip not found in available trips")
+        else:
+            self.log_test("Profile Photo in Available Trips", False, f"Failed to get available trips (status: {status_code})", data)
+
     def run_all_tests(self):
         """Run all backend tests in sequence"""
         print("=" * 80)
