@@ -945,6 +945,17 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 2,
   },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  ratingText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF9800',
+    marginLeft: 4,
+  },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
