@@ -1371,4 +1371,105 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  // Rating display styles
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  userRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  ratingText: {
+    color: '#FF9800',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  // Messages styles
+  noMessagesContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  noMessagesText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  noMessagesSubtext: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  messageItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  unreadMessage: {
+    backgroundColor: '#2a3a2a',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  messageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  messageInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  messageDate: {
+    color: '#888',
+    fontSize: 12,
+  },
+  unreadText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  unreadIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+  },
+  messagePreview: {
+    color: '#888',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  messageContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  messageText: {
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  closeMessageButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeMessageButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
