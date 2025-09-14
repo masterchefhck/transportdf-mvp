@@ -1,103 +1,97 @@
 <analysis>
-The previous AI engineer diligently built a ride-sharing MVP, TransportDF, later renamed SkyCab. The initial phase tackled environment setup with Docker for MongoDB and Uvicorn, and resolved cross-platform UI issues, specifically for alerts. Core features like a comprehensive reporting and user blocking system were implemented across the backend and all three dashboards (admin, driver, passenger). This involved new API endpoints, UI elements, and complex logic for report creation, admin intervention, and user responses. Passenger quick action buttons were also made functional. A significant recent addition was a 5-star rating system, allowing passengers to rate drivers post-trip, requiring a reason for low ratings. The admin dashboard gained a dedicated tab to manage these low ratings and send alerts to drivers. Drivers were also equipped to receive and view these admin alerts. The project's name change to SkyCab was executed across key files. However, the trajectory concludes with the user reporting that the admin dashboard is now messed up and gave an error after these updates, indicating a critical stability issue that requires immediate attention, potentially by reintegrating user-provided original code.
+This trajectory details the seamless transition of a ride-sharing MVP, TransportDF, from an AI engineer to myself. The initial phase focused on restoring the codebase to a stable, pre-error state after the previous AI's SkyCab renaming efforts led to a broken admin dashboard. I diligently re-integrated original , , , and  files, ensuring the application reverted to Transport App Brasília MVP as per user instruction. Post-restoration, the system successfully passed initial frontend tests. Subsequently, I implemented two key enhancements to the driver dashboard: real-time rating display and an Ok, entendido button for alerts, which involved both backend and frontend modifications. The project concluded with a new, multi-faceted user request focusing on passenger dashboard rating display, admin-to-passenger messaging, and comprehensive bulk deletion capabilities across the admin panel, which I've begun to address with initial backend updates.
 </analysis>
 
 <product_requirements>
-The user initially requested a ride-sharing application, TransportDF (later renamed SkyCab), similar to Uber/99, for Brasília/DF, targeting Android and iOS. The MVP's core features included:
-*   **Passenger**: Registration, interactive map, trip request, tracking.
-*   **Driver**: Registration, online/offline toggle, trip management.
-*   **Admin**: Dashboard for system oversight, user, and trip monitoring.
+The initial request was to build a ride-sharing MVP named TransportDF (later briefly SkyCab, then reverted to Transport App Brasília MVP) for Brasília/DF, targeting Android and iOS, similar to Uber/99. Key features included passenger registration, trip requests, and tracking; driver registration, online/offline toggling, and trip management; and an admin dashboard for system oversight.
 
-User requests evolved to include:
-1.  **Backend Setup**: Resolve environment issues related to  and .
-2.  **Frontend Accessibility**: Ensure web accessibility and dedicated login pages for each user type (, , ).
-3.  **Cross-Platform UI**: Replace  with cross-platform  and . Implement correct logout redirection to respective login pages.
-4.  **Reporting System**: Enable passengers to report drivers and drivers to report passengers, including title and description.
-5.  **Admin Management**: View all reports on the admin dashboard, send messages to reported users (one response allowed), and block/unblock users.
-6.  **Passenger Dashboard Quick Actions**: Activate Histórico, Pagamento, and Ajuda buttons with placeholder functionalities.
-7.  **Rating System**: Implement a 5-star rating system (1-5, initial 5.0, resets every 100 trips) for passengers to rate drivers post-trip. For ratings below 5 stars, a motivo (reason) field is mandatory.
-8.  **Admin Rating Management**: Add an Avaliações de Motoristas tab to the admin dashboard, showing only ratings below 5 stars with their reasons. Admins should be able to send alerts to drivers with low ratings without requiring a response.
-9.  **Driver Alert Display**: Drivers must be able to view alerts sent by administrators.
-10. **Admin Alert Button State**: The Enviar Alerta button on the admin dashboard should be disabled and display Alerta Enviado (in light gray) if an alert for that specific rating has already been sent.
-11. **Project Renaming**: Change the project name from TransportDF to SkyCab across the application.
+The user's explicit requests and implemented features evolved:
+1.  **Backend Setup**: Resolution of  and  environment issues.
+2.  **Frontend Accessibility**: Dedicated login pages for passenger, driver, and admin, and cross-platform UI for alerts (, ).
+3.  **Reporting System**: Passengers report drivers, drivers report passengers (title, description).
+4.  **Admin Management**: View all reports, send messages (one response allowed), block/unblock users.
+5.  **Passenger Quick Actions**: Activate Histórico, Pagamento, and Ajuda buttons with placeholder alerts.
+6.  **Rating System**: 5-star rating for passengers to rate drivers post-trip (mandatory reason for < 5 stars, resets every 100 trips).
+7.  **Admin Rating Management**: Avaliações de Motoristas tab for ratings < 5, sending alerts to drivers (no response needed).
+8.  **Driver Alert Display**: Drivers view admin alerts.
+9.  **Admin Alert Button State**: Enviar Alerta button disabled/grayed out if alert already sent.
+10. **Project Renaming**: Initially to SkyCab, then reverted to Transport App Brasília MVP due to issues.
+11. **Driver Dashboard Enhancements (Recently Implemented)**:
+    *   Display driver's real-time rating, dynamically synchronized.
+    *   Add Ok, entendido button for driver alerts to mark them as read.
+12. **Pending Enhancements (Currently Being Worked On)**:
+    *   Passenger dashboard: Display rating and read admin messages.
+    *   Admin dashboard: Add Mensagem para Passageiro menu item, allowing selection of passengers for direct messaging.
+    *   Admin dashboard: Implement bulk deletion for trips, users, reports, and ratings.
 </product_requirements>
 
 <key_technical_concepts>
--   **Frontend**: React Native, Expo, Expo Router (file-based routing), AsyncStorage, axios, expo-location,  (cross-platform logic), Ionicons (UI icons).
--   **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT (authentication), , , Pydantic (data models).
--   **Core Features**: User authentication, location tracking, trip lifecycle management, user/report/rating/alert management, user blocking.
+-   **Frontend**: React Native, Expo, Expo Router (file-based routing), AsyncStorage, axios, expo-location,  (cross-platform UI), Ionicons (icons).
+-   **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT (authentication), Pydantic (data models), , .
+-   **Core Features**: User authentication/authorization, real-time location tracking, comprehensive trip lifecycle management, user/report/rating/admin message/alert management, user blocking/unblocking.
 </key_technical_concepts>
 
 <code_architecture>
-The application employs a full-stack architecture, featuring an Expo React Native frontend, a FastAPI backend, and a MongoDB database. The project is organized into  and  directories.
+The application uses a full-stack architecture with an Expo React Native frontend, a FastAPI backend, and a MongoDB database. The project is organized into  and  directories.
 
 
 
--   ****: The core FastAPI application, defining API endpoints for user authentication, management, trip lifecycle, reporting, and a newly integrated comprehensive rating and admin alert system. It connects to MongoDB.
+-   ****: The core FastAPI application, handling API endpoints for all user types. It defines Pydantic models for users, trips, reports, ratings, and admin alerts. It connects to MongoDB and manages JWT authentication.
     -   **Summary of Changes**:
-        *   Added , , , ,  Enums.
-        *   Introduced , , , ,  Pydantic models.
-        *   New rating models: , , , .
-        *    model updated to include .
-        *   Implemented  for average rating calculation and reset every 100 trips.
-        *   Added new endpoints for report creation, user-specific reports, report responses, admin report management (message, resolve, dismiss), and user blocking/unblocking.
-        *   Integrated rating endpoints (, , , ). The  endpoint was modified to include an  flag.
-        *   Added  endpoint for drivers to fetch their alerts.
-        *   Renamed TransportDF to SkyCab in FastAPI title, health check, and JWT secret key.
--   ****: Stores .
--   ****: Expo application configuration file.
-    -   **Summary of Changes**: Updated , ,  to SkyCab. Crucially, the  plugin's  message was restored to ensure correct location permission handling.
--   ****: Lists frontend Node.js dependencies.
-    -   **Summary of Changes**: Project  updated to skycab-mvp.
--   ****: The main entry point of the Expo Router application.
-    -   **Summary of Changes**: Refactored to redirect users to type-specific login pages (, , ) upon session check. Application title updated to SkyCab.
--   ****: The main interface for passengers.
+        *   **Restoration**: Reverted to Transport App Brasília MVP for app title, health check, and JWT secret key.
+        *   **Driver Dashboard Enhancements**:
+            *   Added  to  model to track if an alert has been seen.
+            *   Modified  to include the  status.
+            *   Added new endpoint  to allow drivers to mark specific alerts as read.
+            *    endpoint to fetch a user's current average rating.
+        *   **Upcoming Changes (Backend Phase 1)**: Initial steps to add endpoints for:
+            *   Admin-to-passenger messages.
+            *   Bulk deletion of trips, users, reports, and ratings.
+-   ****: The administrative control panel, displaying statistics, users, trips, reports, and low ratings.
     -   **Summary of Changes**:
-        *   Integrated cross-platform  and  utilities.
-        *   Updated  to redirect to .
-        *   Added a Reportar Motorista button with a modal for submitting reports on active trips.
-        *   Implemented a notification system and modal to view/respond to reports against the passenger.
-        *   Added  handlers for Histórico, Pagamento, and Ajuda quick action buttons (with placeholder alerts).
-        *   Implemented a post-trip rating modal, triggered by  for completed unrated trips, allowing 1-5 star ratings with a mandatory motivo (reason) for ratings below 5 stars. Includes new states and styles for the rating system.
--   ****: The main interface for drivers.
+        *   **Restoration**: Reverted to original  code, restoring the initial state of the admin dashboard which was previously reported as messed up. This includes tabs for 'stats', 'users', 'trips', 'reports', 'ratings'. It supports messaging, blocking/unblocking users, and sending alerts for low ratings with a disabled state for already sent alerts.
+-   ****: The main interface for passengers, supporting trip requests, report submission, and viewing responses to reports.
     -   **Summary of Changes**:
-        *   Integrated cross-platform  and  utilities.
-        *   Fixed local state synchronization for online/offline status, persisting it in .
-        *   Corrected  logic and added loading indicators.
-        *   Updated  to redirect to .
-        *   Added a Reportar Passageiro button with a modal for active trips.
-        *   Implemented a notification system and modal to view/respond to reports against the driver.
-        *   Added states (, ) and a  function to fetch alerts from the admin.
-        *   Integrated a notification button and badge for alerts in the header, and a modal to display admin alerts (including rating, reason, and admin message).
--   ****: The administrative control panel.
+        *   **Restoration**: Reverted to original  code. It includes trip request/tracking, reporting drivers, viewing/responding to reports against the passenger, quick action buttons, and a post-trip rating modal.
+-   ****: The main interface for drivers, managing online/offline status, available trips, and current trips.
     -   **Summary of Changes**:
-        *   Integrated cross-platform  and  utilities.
-        *   Updated  to redirect to .
-        *   Added a new Reports tab to display all reports, with functionalities to send messages to reported users, resolve, dismiss reports, and block/unblock users.
-        *   Added a new Avaliações tab to display only ratings below 5 stars, showing details like driver, rater, trip info, and reason.
-        *   Implemented an Enviar Alerta button for low ratings, which dynamically changes to Alerta Enviado (disabled and gray) once an alert has been sent, with updated icon.
-        *    was updated to fetch low ratings data.
-        *   Added a modal for sending custom alerts to drivers based on low ratings.
-        *   Modified  to reload data after sending an alert to update the button state.
+        *   **Restoration**: Reverted to original  code, restoring functionality for status toggling, trip acceptance, starting, and completion, and reporting passengers.
+        *   **Driver Dashboard Enhancements**:
+            *   Introduced  state to display the driver's average rating.
+            *   Implemented  function to fetch the rating from the backend.
+            *    updated to load  on component mount.
+            *    function updated to reload  after a trip is finalized.
+            *   Rating displayed prominently in the header area.
+            *    function implemented to call the new backend endpoint.
+            *   Alert notification badge now filters to show only unread alerts.
+            *   Added an Ok, entendido button within the alert modal to mark individual alerts as read.
+            *   Introduced new CSS styles to support the rating display and alert button.
+-   ****: The root of the Expo Router application.
+    -   **Summary of Changes**: No direct edits in the current trajectory, but it was noted in the initial setup description that it was refactored to redirect to type-specific logins and the app title was updated to SkyCab, which was then implicitly reverted to TransportDF during the general code restoration.
+-   ****: Stores . No changes to the content, but its role in API calls is critical.
 </code_architecture>
 
 <pending_tasks>
 -   Integrate fully with Google Maps API for accurate distance matrix, routing, and real-time map display.
--   Implement an advanced payment system (e.g., Stripe, PagSeguro) beyond basic PIX/Cash.
+-   Implement an advanced payment system (e.g., Stripe, PagSeguro).
 -   Expand geographical coverage beyond Brasília/DF.
 -   Implement real-time features like chat and live updates using WebSockets/Socket.io.
 -   Add push notifications (e.g., Firebase Cloud Messaging).
--   Develop detailed KYC (Know Your Customer) and background check processes for drivers.
+-   Develop detailed KYC and background check processes for drivers.
+-   **Implement Passenger Dashboard rating display and admin message reading functionality.**
+-   **Admin Dashboard: Add Mensagem para Passageiro menu item and functionality to send messages to selected passengers.**
+-   **Admin Dashboard: Implement bulk deletion for trips, users, reports, and ratings.**
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer completed the project renaming from TransportDF to SkyCab, updating relevant strings in  (FastAPI title, health check, JWT secret),  (main title),  (app name, slug, scheme), and  (project name).
+Immediately prior to this summary request, the user provided a new set of requirements for further enhancements. The current focus is on implementing these, starting with backend modifications. I have already begun this by updating  to support these new features. Specifically, I have made initial modifications to the  file to include:
 
-Following the renaming, the user identified a critical omission in the  file provided by the AI: the  property for the  plugin was missing. The AI corrected this by referencing an original backup file and re-integrating the complete  configuration while retaining the SkyCab name.
+1.  **New endpoints for sending messages from the admin to specific passengers.** This involves creating the necessary data models and API routes for this communication.
+2.  **New endpoints to handle the bulk deletion of various data entities.** This includes enabling the deletion of one or more selected trips, users, reports, and ratings, which requires careful implementation to ensure data integrity and proper authorization.
 
-The most recent development is a report from the user stating that a dashboard do admin ficou toda bagunçada e deu erro (the admin dashboard is all messed up and gave an error) upon refreshing the page. This indicates a significant regression or bug, potentially introduced during the recent renaming, the  correction, or interactions with the newly implemented rating/alert system. The user has offered to provide the original code files for replacement to help resolve this issue, implying a need for careful diagnosis and potentially partial or full rollback/reintegration.
+These backend changes are the foundational step for the new functionalities requested for the passenger and admin dashboards. I have successfully written the initial backend code snippets in  in three separate tool calls (Chat 72, 74, 76), and the next step is to proceed with the frontend updates for the passenger dashboard.
 </current_work>
 
 <optional_next_step>
-Receive the original code files from the user to diagnose and fix the reported issues with the admin dashboard.
+I will now update the passenger dashboard to implement the rating display and admin message reading functionality.
 </optional_next_step>
