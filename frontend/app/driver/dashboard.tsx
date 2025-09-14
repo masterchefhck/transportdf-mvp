@@ -119,6 +119,11 @@ export default function DriverDashboard() {
   // Alert states
   const [myAlerts, setMyAlerts] = useState<any[]>([]);
   const [showAlertsPanel, setShowAlertsPanel] = useState(false);
+  
+  // Photo modal states
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
+  const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
 
   useEffect(() => {
     loadUserData();
