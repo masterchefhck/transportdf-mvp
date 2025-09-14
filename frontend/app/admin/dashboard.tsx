@@ -677,4 +677,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     maxHeight: '100%',
   },
+  messagePassengerButtonTextDisabled: {
+    color: '#888',
+  },
 });
