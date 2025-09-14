@@ -448,7 +448,7 @@ export default function PassengerDashboard() {
     }
   };
 
-  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Proteção total contra duplicação
+  // FUNÇÃO CORRIGIDA - Ordem correta de execução
   const submitRating = async () => {
     if (!completedTrip) {
       showAlert('Erro', 'Viagem não encontrada');
@@ -473,16 +473,10 @@ export default function PassengerDashboard() {
     try {
       console.log('Submitting rating for trip:', completedTrip.id);
       
-      // PASSO 1: Marcar como avaliada IMEDIATAMENTE (antes de qualquer coisa)
-      await markTripAsRated(completedTrip.id);
-      
-      // PASSO 2: Limpar estados IMEDIATAMENTE para prevenir race condition
       const tripId = completedTrip.id;
       const driverId = completedTrip.driver_id;
-      setCompletedTrip(null);
-      setShowRatingModal(false);
       
-      // PASSO 3: Tentar enviar para o backend (mas não afeta mais o estado local)
+      // PASSO 1: Tentar enviar para o backend PRIMEIRO
       const token = await AsyncStorage.getItem('access_token');
       await axios.post(
         `${API_URL}/api/ratings/create`,
@@ -498,18 +492,28 @@ export default function PassengerDashboard() {
       );
       
       console.log('Rating submitted successfully for trip:', tripId);
+      
+      // PASSO 2: APENAS após sucesso, marcar como avaliada e limpar estados
+      await markTripAsRated(completedTrip.id);
+      setCompletedTrip(null);
+      setShowRatingModal(false);
+      
       showAlert('Sucesso', 'Avaliação enviada com sucesso!');
       setRating(5);
       setRatingReason('');
     } catch (error) {
       console.error('Error submitting rating:', error);
-      // Não mostra o erro se a trip já foi avaliada (400 Bad Request é esperado)
+      // Se der erro 400 (já existe), marcar como avaliada e continuar
       if (error.response?.status === 400) {
-        console.log('Rating already exists (expected), continuing normally');
+        console.log('Rating already exists, marking as rated and continuing');
+        await markTripAsRated(completedTrip.id);
+        setCompletedTrip(null);
+        setShowRatingModal(false);
+        setRating(5);
+        setRatingReason('');
       } else {
         showAlert('Erro', 'Erro ao enviar avaliação');
       }
-      // Estados já foram limpos, não precisa fazer mais nada
     }
   };
 
