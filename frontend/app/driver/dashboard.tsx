@@ -1006,6 +1006,16 @@ export default function DriverDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Chat Modal */}
+      <Modal visible={showChatModal} animationType="slide" presentationStyle="pageSheet">
+        <ChatComponent
+          tripId={currentTrip?.id || ''}
+          currentUserId={user?.id || ''}
+          currentUserType="driver"
+          onClose={() => setShowChatModal(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
