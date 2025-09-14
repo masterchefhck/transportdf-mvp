@@ -529,7 +529,7 @@ async def get_my_trips(current_user: User = Depends(get_current_user)):
             trip_dict = trip_data.dict()
             
             # Add driver info if trip has a driver assigned
-            if trip.get("driver_id") and trip.get("status") in [TripStatus.ACCEPTED, TripStatus.IN_PROGRESS, TripStatus.COMPLETED]:
+            if trip.get("driver_id") and trip.get("status") in ["accepted", "in_progress", "completed"]:
                 driver = await db.users.find_one({"id": trip["driver_id"]})
                 if driver:
                     trip_dict["driver_name"] = driver["name"]
