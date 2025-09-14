@@ -134,6 +134,12 @@ export default function AdminDashboard() {
   const [selectedPassenger, setSelectedPassenger] = useState<User | null>(null);
   const [passengers, setPassengers] = useState<User[]>([]);
 
+  // Rating states
+  const [ratings, setRatings] = useState<any[]>([]);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [selectedRating, setSelectedRating] = useState<any>(null);
+  const [alertMessage, setAlertMessage] = useState('');
+
   useEffect(() => {
     loadUserData();
     loadData();
