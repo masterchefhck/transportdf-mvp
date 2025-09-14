@@ -532,6 +532,17 @@ export default function DriverDashboard() {
               </View>
             </TouchableOpacity>
           )}
+          {myAlerts.length > 0 && (
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => setShowAlertsPanel(true)}
+            >
+              <Ionicons name="warning" size={24} color="#f44336" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>{myAlerts.length}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
             <Ionicons name="log-out-outline" size={24} color="#fff" />
           </TouchableOpacity>
