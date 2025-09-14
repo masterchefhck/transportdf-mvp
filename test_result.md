@@ -283,6 +283,9 @@ test_plan:
       - working: true
         agent: "testing"
         comment: "✅ SISTEMA DE AVALIAÇÕES COMPLETAMENTE TESTADO E APROVADO! Executei 8 testes específicos do sistema de avaliações com 100% de sucesso: 1) Criação de avaliação 5 estrelas sem motivo ✅, 2) Criação de avaliação 3 estrelas com motivo obrigatório ✅, 3) Prevenção de avaliações duplicadas ✅, 4) Validação de motivo obrigatório para ratings < 5 estrelas ✅, 5) Admin buscar avaliações baixas ✅, 6) Admin enviar alerta para motorista ✅, 7) Cálculo correto de rating médio (4.0 calculado corretamente) ✅, 8) Atualização do rating no perfil do usuário ✅. Todas as regras de negócio funcionando: rating inicial 5.0, reset a cada 100 viagens, campo reason obrigatório para < 5 estrelas, apenas uma avaliação por viagem. Sistema production-ready!"
+      - working: true
+        agent: "testing"
+        comment: "✅ RE-TESTADO PÓS BUG FIX - Sistema de avaliações funcionando perfeitamente após correção do bug do modal de avaliação. Testado: criação de avaliação 5 estrelas, prevenção de duplicatas, cálculo de rating do usuário (5.0). Todas as funcionalidades operacionais. O bug do loop do modal foi corrigido no frontend, backend permanece estável e funcional."
 
   - task: "Endpoint de Alertas para Motoristas"
     implemented: true
