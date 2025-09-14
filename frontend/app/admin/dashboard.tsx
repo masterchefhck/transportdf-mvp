@@ -203,6 +203,18 @@ export default function AdminDashboard() {
     loadData().finally(() => setRefreshing(false));
   };
 
+  const loadChats = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/admin/chats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setChats(response.data);
+    } catch (error) {
+      console.error('Error loading chats:', error);
+    }
+  };
+
   const handleLogout = async () => {
     showConfirm(
       'Sair',
