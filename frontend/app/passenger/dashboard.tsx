@@ -543,9 +543,18 @@ export default function PassengerDashboard() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.userInfo}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={24} color="#fff" />
-          </View>
+          <TouchableOpacity onPress={pickImage} style={styles.avatarContainer}>
+            {profilePhoto ? (
+              <Image source={{ uri: profilePhoto }} style={styles.avatar} />
+            ) : (
+              <View style={styles.defaultAvatar}>
+                <Ionicons name="person" size={32} color="#666" />
+              </View>
+            )}
+            <View style={styles.cameraIcon}>
+              <Ionicons name="camera" size={16} color="#fff" />
+            </View>
+          </TouchableOpacity>
           <View style={styles.userDetails}>
             <Text style={styles.welcomeText}>Olá, {user?.name || 'Usuário'}</Text>
             <View style={styles.ratingRow}>
