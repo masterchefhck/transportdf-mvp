@@ -128,11 +128,11 @@ export default function AdminDashboard() {
   const [adminMessage, setAdminMessage] = useState('');
   const [blockReason, setBlockReason] = useState('');
 
-  // Rating states
-  const [ratings, setRatings] = useState<any[]>([]);
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [selectedRating, setSelectedRating] = useState<any>(null);
-  const [alertMessage, setAlertMessage] = useState('');
+  // Admin Message Modal for passenger messaging
+  const [showPassengerMessageModal, setShowPassengerMessageModal] = useState(false);
+  const [passengerMessage, setPassengerMessage] = useState('');
+  const [selectedPassenger, setSelectedPassenger] = useState<User | null>(null);
+  const [passengers, setPassengers] = useState<User[]>([]);
 
   useEffect(() => {
     loadUserData();
