@@ -1672,4 +1672,40 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 4,
   },
+  // Photo modal styles
+  photoModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoModalContent: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 16,
+    padding: 20,
+    width: '90%',
+    maxWidth: 350,
+    alignItems: 'center',
+  },
+  photoModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+  photoModalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  photoModalCloseButton: {
+    padding: 4,
+  },
+  fullSizePhoto: {
+    width: 300,
+    height: 400,
+    borderRadius: 12,
+    resizeMode: 'cover',
+  },
 });
