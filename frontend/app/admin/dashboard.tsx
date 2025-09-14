@@ -111,7 +111,7 @@ export default function AdminDashboard() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'trips' | 'reports'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'trips' | 'reports' | 'ratings'>('stats');
   
   // Modal states
   const [showMessageModal, setShowMessageModal] = useState(false);
