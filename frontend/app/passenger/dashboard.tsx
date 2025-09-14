@@ -523,6 +523,9 @@ export default function PassengerDashboard() {
         }
       );
 
+      // Mark trip as rated to prevent showing modal again
+      await markTripAsRated(completedTrip.id);
+      
       showAlert('Sucesso', 'Avaliação enviada com sucesso!');
       setShowRatingModal(false);
       setRating(5);
