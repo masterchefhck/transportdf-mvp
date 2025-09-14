@@ -942,7 +942,41 @@ export default function AdminDashboard() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Avaliações Abaixo de 5 Estrelas</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Avaliações Abaixo de 5 Estrelas</Text>
+          {ratings.length > 0 && (
+            <View style={styles.bulkActions}>
+              <TouchableOpacity
+                style={styles.selectAllButton}
+                onPress={handleSelectAllRatings}
+              >
+                <Ionicons 
+                  name={selectedRatings.length === ratings.length ? "checkbox" : "square-outline"} 
+                  size={20} 
+                  color="#FF9800" 
+                />
+                <Text style={styles.selectAllText}>Selecionar Todos</Text>
+              </TouchableOpacity>
+              {selectedRatings.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.bulkActionButton, { backgroundColor: '#f44336' }]}
+                  onPress={handleBulkDeleteRatings}
+                  disabled={bulkOperationLoading}
+                >
+                  {bulkOperationLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons name="trash" size={16} color="#fff" />
+                      <Text style={styles.bulkActionText}>Deletar ({selectedRatings.length})</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
+        
         {ratings.length === 0 ? (
           <View style={styles.noDataContainer}>
             <Ionicons name="star" size={60} color="#666" />
@@ -953,16 +987,34 @@ export default function AdminDashboard() {
           ratings.map(rating => (
             <View key={rating.id} style={styles.ratingCard}>
               <View style={styles.ratingHeader}>
-                <View style={styles.starsContainer}>
-                  {[1, 2, 3, 4, 5].map(star => (
+                <View style={styles.ratingHeaderLeft}>
+                  <TouchableOpacity
+                    style={styles.checkbox}
+                    onPress={() => {
+                      if (selectedRatings.includes(rating.id)) {
+                        setSelectedRatings(selectedRatings.filter(id => id !== rating.id));
+                      } else {
+                        setSelectedRatings([...selectedRatings, rating.id]);
+                      }
+                    }}
+                  >
                     <Ionicons
-                      key={star}
-                      name={star <= rating.rating ? "star" : "star-outline"}
+                      name={selectedRatings.includes(rating.id) ? "checkbox" : "square-outline"}
                       size={20}
-                      color={star <= rating.rating ? "#FF9800" : "#666"}
+                      color="#FF9800"
                     />
-                  ))}
-                  <Text style={styles.ratingValue}>({rating.rating})</Text>
+                  </TouchableOpacity>
+                  <View style={styles.starsContainer}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Ionicons
+                        key={star}
+                        name={star <= rating.rating ? "star" : "star-outline"}
+                        size={20}
+                        color={star <= rating.rating ? "#FF9800" : "#666"}
+                      />
+                    ))}
+                    <Text style={styles.ratingValue}>({rating.rating})</Text>
+                  </View>
                 </View>
                 <Text style={styles.ratingDate}>
                   {formatDateTime(rating.created_at)}
