@@ -33,7 +33,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 days
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
-app = FastAPI(title="Transport App Brasília MVP")
+app = FastAPI(title="SkyCab Brasília MVP")
 api_router = APIRouter(prefix="/api")
 
 # Enums
