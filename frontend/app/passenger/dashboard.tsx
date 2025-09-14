@@ -1149,9 +1149,15 @@ export default function PassengerDashboard() {
                 <Text style={styles.skipButtonText}>Pular</Text>
               </TouchableOpacity>
               
+            <View style={styles.ratingModalButtons}>
+              <TouchableOpacity style={styles.skipButton} onPress={skipRating}>
+                <Text style={styles.skipButtonText}>Pular</Text>
+              </TouchableOpacity>
+              
               <TouchableOpacity style={styles.submitButton} onPress={submitRating}>
                 <Text style={styles.submitButtonText}>Enviar Avaliação</Text>
               </TouchableOpacity>
+            </View>
             </View>
           </View>
         </View>
