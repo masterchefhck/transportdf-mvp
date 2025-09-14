@@ -552,6 +552,14 @@ export default function DriverDashboard() {
     });
   };
 
+  const handleViewPhoto = (photoUrl: string, userName: string) => {
+    if (photoUrl) {
+      setSelectedPhotoUrl(photoUrl);
+      setSelectedPhotoUser(userName);
+      setShowPhotoModal(true);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return '#FF9800';
