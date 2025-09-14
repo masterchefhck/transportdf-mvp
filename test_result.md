@@ -338,6 +338,18 @@ test_plan:
         agent: "testing"
         comment: "✅ DRIVER INFO IN TRIP RESPONSES COMPLETAMENTE TESTADO E APROVADO! Executei testes específicos conforme review request com 100% de sucesso (5/5 testes passaram). PROBLEMA IDENTIFICADO E CORRIGIDO: O endpoint GET /api/trips/my estava usando response_model=List[Trip] que filtrava campos adicionais não definidos no modelo Trip. SOLUÇÃO APLICADA: Removido response_model constraint e corrigido comparação de status (enum vs string). TESTES APROVADOS: ✅ Driver profile photo upload funcionando perfeitamente, ✅ Trip flow with driver info - informações do motorista INCLUÍDAS na resposta para passageiro (['driver_name', 'driver_rating', 'driver_photo']), ✅ Trip status updates - GET /api/trips/my retorna driver info para trips 'accepted'/'in_progress', ✅ Driver info completeness - todos os campos presentes (name='João Carlos Oliveira', rating=4.3, photo=True). Sistema production-ready para funcionalidade de informações do motorista em viagens!"
 
+  - task: "Passenger Information in Driver Trip Responses"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎯 PASSENGER INFO IN DRIVER TRIPS COMPLETAMENTE TESTADO E APROVADO! Executei testes específicos conforme review request atual com 100% de sucesso (6/6 testes passaram). FUNCIONALIDADE TESTADA: GET /api/trips/my para motoristas agora retorna informações do passageiro (passenger_name, passenger_rating, passenger_photo) para TODOS os status de viagem, não apenas viagens disponíveis. TESTES APROVADOS: ✅ Driver Trips - Accepted Status: informações do passageiro incluídas (name='Maria Silva Santos', rating=5.0, photo=True), ✅ Driver Trips - In Progress Status: informações do passageiro mantidas durante viagem, ✅ Driver Trips - Completed Status: informações do passageiro preservadas após conclusão, ✅ Consistência entre available trips e my trips: informações idênticas, ✅ Isolamento correto para múltiplas viagens do mesmo passageiro. FLUXO COMPLETO VERIFICADO: motorista vê informações do passageiro durante todo o ciclo de vida da viagem (accepted → in_progress → completed). Sistema production-ready!"
+
 agent_communication:
   - agent: "main"
     message: "MVP do SkyCab implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
