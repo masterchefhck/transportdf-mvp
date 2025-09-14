@@ -1279,6 +1279,7 @@ export default function AdminDashboard() {
         {activeTab === 'ratings' && renderRatings()}
         {activeTab === 'messages' && renderMessages()}
         {activeTab === 'trips' && renderTrips()}
+        {activeTab === 'chats' && renderChats()}
       </View>
 
       {/* Photo Viewer Modal */}
