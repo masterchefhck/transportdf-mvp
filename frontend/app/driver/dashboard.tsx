@@ -1393,6 +1393,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
+  statusText: {
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   reportItemDescription: {
     fontSize: 14,
     color: '#888',
@@ -1540,6 +1545,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
+  },
+  passengerInfoTitle: {
+    fontSize: 16,
+    color: '#4CAF50',
+    marginBottom: 4,
+    fontWeight: 'bold',
   },
   passengerDetails: {
     flexDirection: 'row',
