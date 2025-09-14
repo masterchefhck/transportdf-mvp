@@ -1136,19 +1136,6 @@ export default function PassengerDashboard() {
               </View>
             )}
             
-            <View style={styles.ratingButtons}>
-              <TouchableOpacity 
-                style={styles.skipButton} 
-                onPress={() => {
-                  setShowRatingModal(false);
-                  setRating(5);
-                  setRatingReason('');
-                  setCompletedTrip(null);
-                }}
-              >
-                <Text style={styles.skipButtonText}>Pular</Text>
-              </TouchableOpacity>
-              
             <View style={styles.ratingModalButtons}>
               <TouchableOpacity style={styles.skipButton} onPress={skipRating}>
                 <Text style={styles.skipButtonText}>Pular</Text>
