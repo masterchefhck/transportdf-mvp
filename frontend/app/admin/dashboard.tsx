@@ -124,10 +124,15 @@ export default function AdminDashboard() {
   // Modal states
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [adminMessage, setAdminMessage] = useState('');
   const [blockReason, setBlockReason] = useState('');
+  
+  // Photo popup states
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string>('');
+  const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
 
   // Admin Message Modal for passenger messaging
   const [showPassengerMessageModal, setShowPassengerMessageModal] = useState(false);
