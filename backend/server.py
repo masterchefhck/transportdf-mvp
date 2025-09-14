@@ -386,6 +386,14 @@ async def update_location(location: LocationUpdate, current_user: User = Depends
     )
     return {"message": "Location updated successfully"}
 
+@api_router.put("/users/profile-photo")
+async def update_profile_photo(photo: ProfilePhotoUpdate, current_user: User = Depends(get_current_user)):
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$set": {"profile_photo": photo.profile_photo}}
+    )
+    return {"message": "Profile photo updated successfully"}
+
 @api_router.put("/drivers/status/{status}")
 async def update_driver_status(status: DriverStatus, current_user: User = Depends(get_current_user)):
     if current_user.user_type != UserType.DRIVER:
