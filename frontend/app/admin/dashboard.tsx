@@ -800,6 +800,38 @@ export default function AdminDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Alert Modal */}
+      <Modal visible={showAlertModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Enviar Alerta ao Motorista</Text>
+              <TouchableOpacity onPress={() => setShowAlertModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Motorista: {selectedRating?.rated_user_name}
+            </Text>
+            <Text style={styles.modalSubtitle}>
+              Avaliação: {selectedRating?.rating} estrelas
+            </Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Digite a mensagem de alerta..."
+              placeholderTextColor="#666"
+              value={alertMessage}
+              onChangeText={setAlertMessage}
+              multiline
+              numberOfLines={4}
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={handleSendAlert}>
+              <Text style={styles.sendButtonText}>Enviar Alerta</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
