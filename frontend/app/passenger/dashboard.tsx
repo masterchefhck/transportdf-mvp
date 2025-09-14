@@ -481,10 +481,11 @@ export default function PassengerDashboard() {
       // Mark trip as rated (even if skipped) to prevent showing again
       await markTripAsRated(completedTrip.id);
     }
+    // Close modal immediately
     setShowRatingModal(false);
+    setCompletedTrip(null);
     setRating(5);
     setRatingReason('');
-    setCompletedTrip(null);
   };
 
   const handleRespondToReport = (report: Report) => {
