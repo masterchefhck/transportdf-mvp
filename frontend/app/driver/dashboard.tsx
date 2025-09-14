@@ -116,6 +116,7 @@ export default function DriverDashboard() {
     loadUserData();
     requestLocationPermission();
     loadMyReports();
+    loadMyAlerts();
     if (isOnline) {
       loadAvailableTrips();
       checkCurrentTrip();
