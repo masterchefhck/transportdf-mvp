@@ -222,12 +222,6 @@ export default function AdminDashboard() {
     setShowPhotoModal(true);
   };
 
-  const handleViewPhoto = (photoUrl: string, userName: string) => {
-    setSelectedPhotoUrl(photoUrl);
-    setSelectedPhotoUser(userName);
-    setShowPhotoModal(true);
-  };
-
   // Bulk operation functions
   const handleSelectAllUsers = () => {
     const adminUsers = users.filter(user => user.user_type !== 'admin').map(user => user.id);
