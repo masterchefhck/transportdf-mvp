@@ -367,6 +367,249 @@ class TransportDFTester:
         else:
             self.log_test("Admin Trips List", False, f"Failed to get trips list (status: {status_code})", data)
 
+    def test_rating_5_stars_no_reason(self):
+        """Test 16: Create 5-star rating (no reason required)"""
+        
+        if "passenger" not in self.tokens or "current" not in self.trips:
+            self.log_test("Rating 5 Stars", False, "No passenger token or completed trip available")
+            return
+            
+        # Get driver ID from the completed trip
+        driver_id = self.users.get("driver", {}).get("id", "")
+        trip_id = self.trips["current"]["id"]
+        
+        rating_data = {
+            "trip_id": trip_id,
+            "rated_user_id": driver_id,
+            "rating": 5
+            # No reason field for 5 stars
+        }
+        
+        success, data, status_code = self.make_request("POST", "/ratings/create", 
+                                                     rating_data, auth_token=self.tokens["passenger"])
+        
+        if success and "rating_id" in data:
+            self.trips["rating_5_star"] = data
+            self.log_test("Rating 5 Stars", True, "5-star rating created successfully without reason")
+        else:
+            self.log_test("Rating 5 Stars", False, f"5-star rating creation failed (status: {status_code})", data)
+
+    def test_rating_3_stars_with_reason(self):
+        """Test 17: Create 3-star rating (reason required)"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Rating 3 Stars with Reason", False, "No passenger token available")
+            return
+            
+        # Create another trip for this test
+        trip_data = {
+            "passenger_id": self.users.get("passenger", {}).get("id", ""),
+            "pickup_latitude": -15.7800,
+            "pickup_longitude": -47.8900,
+            "pickup_address": "Setor Comercial Sul, Brasília - DF",
+            "destination_latitude": -15.7500,
+            "destination_longitude": -47.8600,
+            "destination_address": "Setor Bancário Norte, Brasília - DF",
+            "estimated_price": 12.00
+        }
+        
+        # Request trip
+        success, trip_response, _ = self.make_request("POST", "/trips/request", 
+                                                    trip_data, auth_token=self.tokens["passenger"])
+        
+        if not success:
+            self.log_test("Rating 3 Stars with Reason", False, "Failed to create test trip")
+            return
+            
+        trip_id = trip_response["id"]
+        
+        # Accept and complete trip
+        self.make_request("PUT", f"/trips/{trip_id}/accept", auth_token=self.tokens["driver"])
+        self.make_request("PUT", f"/trips/{trip_id}/start", auth_token=self.tokens["driver"])
+        self.make_request("PUT", f"/trips/{trip_id}/complete", auth_token=self.tokens["driver"])
+        
+        # Now create 3-star rating with reason
+        driver_id = self.users.get("driver", {}).get("id", "")
+        rating_data = {
+            "trip_id": trip_id,
+            "rated_user_id": driver_id,
+            "rating": 3,
+            "reason": "Motorista chegou atrasado e dirigiu de forma brusca"
+        }
+        
+        success, data, status_code = self.make_request("POST", "/ratings/create", 
+                                                     rating_data, auth_token=self.tokens["passenger"])
+        
+        if success and "rating_id" in data:
+            self.trips["rating_3_star"] = data
+            self.log_test("Rating 3 Stars with Reason", True, "3-star rating created successfully with reason")
+        else:
+            self.log_test("Rating 3 Stars with Reason", False, f"3-star rating creation failed (status: {status_code})", data)
+
+    def test_rating_duplicate_prevention(self):
+        """Test 18: Prevent duplicate rating for same trip"""
+        
+        if "passenger" not in self.tokens or "current" not in self.trips:
+            self.log_test("Rating Duplicate Prevention", False, "No passenger token or trip available")
+            return
+            
+        # Try to create another rating for the same trip
+        driver_id = self.users.get("driver", {}).get("id", "")
+        trip_id = self.trips["current"]["id"]
+        
+        rating_data = {
+            "trip_id": trip_id,
+            "rated_user_id": driver_id,
+            "rating": 4,
+            "reason": "Segunda tentativa de avaliação"
+        }
+        
+        success, data, status_code = self.make_request("POST", "/ratings/create", 
+                                                     rating_data, auth_token=self.tokens["passenger"])
+        
+        # This should fail with 400 status
+        if not success and status_code == 400 and "already exists" in str(data).lower():
+            self.log_test("Rating Duplicate Prevention", True, "Duplicate rating correctly prevented")
+        else:
+            self.log_test("Rating Duplicate Prevention", False, f"Duplicate rating not prevented (status: {status_code})", data)
+
+    def test_rating_without_reason_validation(self):
+        """Test 19: Require reason for ratings < 5 stars"""
+        
+        if "passenger" not in self.tokens:
+            self.log_test("Rating Reason Validation", False, "No passenger token available")
+            return
+            
+        # Create another trip for this test
+        trip_data = {
+            "passenger_id": self.users.get("passenger", {}).get("id", ""),
+            "pickup_latitude": -15.7600,
+            "pickup_longitude": -47.8700,
+            "pickup_address": "Asa Norte, Brasília - DF",
+            "destination_latitude": -15.8100,
+            "destination_longitude": -47.8800,
+            "destination_address": "Asa Sul, Brasília - DF",
+            "estimated_price": 10.00
+        }
+        
+        # Request, accept and complete trip
+        success, trip_response, _ = self.make_request("POST", "/trips/request", 
+                                                    trip_data, auth_token=self.tokens["passenger"])
+        
+        if not success:
+            self.log_test("Rating Reason Validation", False, "Failed to create test trip")
+            return
+            
+        trip_id = trip_response["id"]
+        self.make_request("PUT", f"/trips/{trip_id}/accept", auth_token=self.tokens["driver"])
+        self.make_request("PUT", f"/trips/{trip_id}/start", auth_token=self.tokens["driver"])
+        self.make_request("PUT", f"/trips/{trip_id}/complete", auth_token=self.tokens["driver"])
+        
+        # Try to create 2-star rating WITHOUT reason
+        driver_id = self.users.get("driver", {}).get("id", "")
+        rating_data = {
+            "trip_id": trip_id,
+            "rated_user_id": driver_id,
+            "rating": 2
+            # No reason field - this should fail
+        }
+        
+        success, data, status_code = self.make_request("POST", "/ratings/create", 
+                                                     rating_data, auth_token=self.tokens["passenger"])
+        
+        # This should fail with 400 status
+        if not success and status_code == 400 and "reason is required" in str(data).lower():
+            self.log_test("Rating Reason Validation", True, "Reason requirement correctly enforced for low ratings")
+        else:
+            self.log_test("Rating Reason Validation", False, f"Reason requirement not enforced (status: {status_code})", data)
+
+    def test_admin_get_low_ratings(self):
+        """Test 20: Admin retrieve low ratings (< 5 stars)"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Admin Get Low Ratings", False, "No admin token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/ratings/low", 
+                                                     auth_token=self.tokens["admin"])
+        
+        if success and isinstance(data, list):
+            # Should contain at least the 3-star rating we created
+            low_ratings = [r for r in data if r.get("rating", 5) < 5]
+            self.log_test("Admin Get Low Ratings", True, f"Retrieved {len(low_ratings)} low ratings")
+        else:
+            self.log_test("Admin Get Low Ratings", False, f"Failed to get low ratings (status: {status_code})", data)
+
+    def test_admin_send_alert(self):
+        """Test 21: Admin send alert to driver with low rating"""
+        
+        if "admin" not in self.tokens:
+            self.log_test("Admin Send Alert", False, "No admin token available")
+            return
+            
+        # First get low ratings to find a rating ID
+        success, ratings_data, _ = self.make_request("GET", "/ratings/low", 
+                                                   auth_token=self.tokens["admin"])
+        
+        if not success or not ratings_data:
+            self.log_test("Admin Send Alert", False, "No low ratings available to send alert")
+            return
+            
+        # Use the first low rating
+        rating_id = ratings_data[0]["id"]
+        
+        alert_data = {
+            "rating_id": rating_id,
+            "message": "Prezado motorista, recebemos uma avaliação baixa sobre seu atendimento. Por favor, revise suas práticas de direção e atendimento ao cliente para melhorar a experiência dos passageiros."
+        }
+        
+        success, data, status_code = self.make_request("POST", f"/admin/ratings/{rating_id}/alert", 
+                                                     alert_data, auth_token=self.tokens["admin"])
+        
+        if success and "alert sent" in str(data).lower():
+            self.log_test("Admin Send Alert", True, "Alert sent to driver successfully")
+        else:
+            self.log_test("Admin Send Alert", False, f"Failed to send alert (status: {status_code})", data)
+
+    def test_user_rating_calculation(self):
+        """Test 22: Verify user rating calculation"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("User Rating Calculation", False, "No driver token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/users/rating", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if success and "rating" in data:
+            rating = data["rating"]
+            # Should be between 1.0 and 5.0
+            if 1.0 <= rating <= 5.0:
+                self.log_test("User Rating Calculation", True, f"Driver rating calculated: {rating}")
+            else:
+                self.log_test("User Rating Calculation", False, f"Invalid rating value: {rating}")
+        else:
+            self.log_test("User Rating Calculation", False, f"Failed to get user rating (status: {status_code})", data)
+
+    def test_user_rating_updated_in_profile(self):
+        """Test 23: Verify user rating is updated in user profile"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("User Rating Profile Update", False, "No driver token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/users/me", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if success and "rating" in data:
+            rating = data["rating"]
+            if rating is not None and 1.0 <= rating <= 5.0:
+                self.log_test("User Rating Profile Update", True, f"User profile rating updated: {rating}")
+            else:
+                self.log_test("User Rating Profile Update", False, f"Invalid or missing rating in profile: {rating}")
+        else:
+            self.log_test("User Rating Profile Update", False, f"Failed to get user profile (status: {status_code})", data)
+
     def run_all_tests(self):
         """Run all backend tests in sequence"""
         print("=" * 80)
