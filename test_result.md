@@ -308,6 +308,18 @@ test_plan:
         agent: "testing"
         comment: "✅ SISTEMA DE MESSAGING ADMIN-TO-PASSENGER COMPLETAMENTE TESTADO E APROVADO! Executei testes abrangentes com 100% de sucesso: 1) POST /api/admin/messages/send funcionando perfeitamente - admin envia mensagem para passageiro específico ✅, 2) Validação correta - admin não pode enviar mensagem para motorista (400 Bad Request) ✅, 3) Validação de usuário inexistente (404 Not Found) ✅, 4) GET /api/passengers/messages funcionando - passageiro recebe suas mensagens com estrutura correta (id, user_id, admin_id, message, created_at, read) ✅, 5) POST /api/passengers/messages/{message_id}/read funcionando - passageiro marca mensagem como lida ✅, 6) Controle de acesso rigoroso - apenas passageiros podem acessar suas mensagens (403 para motoristas/admins) ✅. Fluxo completo testado: admin envia → passageiro recebe → passageiro marca como lida. Sistema production-ready!"
 
+  - task: "Profile Photo Upload Endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "📸 ENDPOINT DE UPLOAD DE FOTO DE PERFIL COMPLETAMENTE TESTADO E APROVADO! Executei 7 testes específicos do endpoint PUT /api/users/profile-photo com 100% de sucesso: 1) Upload válido com autenticação - foto base64 salva corretamente ✅, 2) Validação de autenticação - acesso negado sem token (403) ✅, 3) Validação de payload - payload vazio e estrutura inválida corretamente rejeitados (422) ✅, 4) Recuperação via GET /api/users/me - foto salva no banco e recuperada corretamente ✅, 5) Sobrescrever foto existente - atualização funcionando perfeitamente ✅, 6) Integração com GET /api/trips/available - informações do passageiro (nome, rating, foto) incluídas corretamente nas viagens disponíveis ✅. Todos os cenários do review request testados e funcionando. Sistema production-ready!"
+
 agent_communication:
   - agent: "main"
     message: "MVP do SkyCab implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
