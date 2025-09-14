@@ -327,6 +327,43 @@ export default function PassengerDashboard() {
     }
   };
 
+  const submitRating = async () => {
+    if (!completedTrip) {
+      showAlert('Erro', 'Viagem não encontrada');
+      return;
+    }
+
+    if (rating < 5 && !ratingReason.trim()) {
+      showAlert('Erro', 'Por favor, informe o motivo da avaliação abaixo de 5 estrelas');
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/ratings/create`,
+        {
+          trip_id: completedTrip.id,
+          rated_user_id: completedTrip.driver_id,
+          rating: rating,
+          reason: rating < 5 ? ratingReason : null
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showAlert('Sucesso', 'Avaliação enviada com sucesso!');
+      setShowRatingModal(false);
+      setRating(5);
+      setRatingReason('');
+      setCompletedTrip(null);
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      showAlert('Erro', 'Erro ao enviar avaliação');
+    }
+  };
+
   const handleLogout = async () => {
     showConfirm(
       'Sair',
