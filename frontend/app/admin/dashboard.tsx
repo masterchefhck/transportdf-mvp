@@ -1345,6 +1345,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  alertButtonDisabled: {
+    backgroundColor: '#666',
+    opacity: 0.6,
+  },
+  alertButtonTextDisabled: {
+    color: '#888',
+  },
   noDataContainer: {
     alignItems: 'center',
     padding: 40,
