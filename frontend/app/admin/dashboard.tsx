@@ -554,6 +554,12 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleViewPhoto = (photoUrl: string, userName: string) => {
+    setSelectedPhotoUrl(photoUrl);
+    setSelectedPhotoUser(userName);
+    setShowPhotoModal(true);
+  };
+
   const renderStats = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
