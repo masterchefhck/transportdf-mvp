@@ -149,17 +149,19 @@ export default function AdminDashboard() {
       const token = await AsyncStorage.getItem('access_token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [statsResponse, usersResponse, tripsResponse, reportsResponse] = await Promise.all([
+      const [statsResponse, usersResponse, tripsResponse, reportsResponse, ratingsResponse] = await Promise.all([
         axios.get(`${API_URL}/api/admin/stats`, { headers }),
         axios.get(`${API_URL}/api/admin/users`, { headers }),
         axios.get(`${API_URL}/api/admin/trips`, { headers }),
         axios.get(`${API_URL}/api/admin/reports`, { headers }),
+        axios.get(`${API_URL}/api/ratings/low`, { headers }),
       ]);
 
       setStats(statsResponse.data);
       setUsers(usersResponse.data);
       setTrips(tripsResponse.data.slice(0, 10)); // Last 10 trips
       setReports(reportsResponse.data);
+      setRatings(ratingsResponse.data);
     } catch (error) {
       console.error('Error loading admin data:', error);
       showAlert('Erro', 'Erro ao carregar dados administrativos');
