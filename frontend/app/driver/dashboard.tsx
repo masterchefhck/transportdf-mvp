@@ -1013,15 +1013,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#2196F3',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
   userDetails: {
     flex: 1,
   },
