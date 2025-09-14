@@ -108,6 +108,10 @@ export default function DriverDashboard() {
   const [reportDescription, setReportDescription] = useState('');
   const [responseText, setResponseText] = useState('');
 
+  // Alert states
+  const [myAlerts, setMyAlerts] = useState<any[]>([]);
+  const [showAlertsPanel, setShowAlertsPanel] = useState(false);
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
