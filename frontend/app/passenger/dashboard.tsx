@@ -123,6 +123,8 @@ export default function PassengerDashboard() {
     requestLocationPermission();
     checkCurrentTrip();
     loadMyReports();
+    loadCurrentRating();
+    loadAdminMessages();
   }, []);
 
   const loadUserData = async () => {
