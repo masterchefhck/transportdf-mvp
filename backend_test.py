@@ -669,6 +669,111 @@ class TransportDFTester:
             else:
                 self.log_test("Driver Alerts Access Control - Admin", False, f"Admin should not have access (status: {status_code})", data)
 
+    def test_user_rating_endpoint(self):
+        """Test 26: GET /api/users/rating - NEW ENDPOINT TEST"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("User Rating Endpoint", False, "No driver token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/users/rating", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if success and "rating" in data:
+            rating = data["rating"]
+            # Verify rating is between 1.0 and 5.0
+            if isinstance(rating, (int, float)) and 1.0 <= rating <= 5.0:
+                self.log_test("User Rating Endpoint", True, f"Rating endpoint working - returned {rating}")
+            else:
+                self.log_test("User Rating Endpoint", False, f"Invalid rating value: {rating} (should be 1.0-5.0)")
+        else:
+            self.log_test("User Rating Endpoint", False, f"Failed to get rating (status: {status_code})", data)
+
+    def test_driver_alerts_read_field(self):
+        """Test 27: Verify GET /api/drivers/alerts includes 'read' field"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("Driver Alerts Read Field", False, "No driver token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/drivers/alerts", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if success and isinstance(data, list):
+            if data:  # If there are alerts
+                alert = data[0]
+                if "read" in alert:
+                    read_value = alert["read"]
+                    if isinstance(read_value, bool):
+                        self.log_test("Driver Alerts Read Field", True, f"'read' field present with boolean value: {read_value}")
+                    else:
+                        self.log_test("Driver Alerts Read Field", False, f"'read' field should be boolean, got: {type(read_value)}")
+                else:
+                    self.log_test("Driver Alerts Read Field", False, "'read' field missing from alert data")
+            else:
+                self.log_test("Driver Alerts Read Field", True, "No alerts found - cannot verify 'read' field but endpoint working")
+        else:
+            self.log_test("Driver Alerts Read Field", False, f"Failed to get driver alerts (status: {status_code})", data)
+
+    def test_mark_alert_as_read(self):
+        """Test 28: POST /api/drivers/alerts/{alert_id}/read - NEW ENDPOINT TEST"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("Mark Alert as Read", False, "No driver token available")
+            return
+            
+        # First get alerts to find an alert ID
+        success, alerts_data, _ = self.make_request("GET", "/drivers/alerts", 
+                                                  auth_token=self.tokens["driver"])
+        
+        if not success or not alerts_data:
+            self.log_test("Mark Alert as Read", False, "No alerts available to mark as read")
+            return
+            
+        # Use the first alert
+        alert_id = alerts_data[0]["id"]
+        
+        success, data, status_code = self.make_request("POST", f"/drivers/alerts/{alert_id}/read", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if success and "marked as read" in str(data).lower():
+            self.log_test("Mark Alert as Read", True, "Alert successfully marked as read")
+        else:
+            self.log_test("Mark Alert as Read", False, f"Failed to mark alert as read (status: {status_code})", data)
+
+    def test_mark_alert_as_read_not_found(self):
+        """Test 29: POST /api/drivers/alerts/{alert_id}/read with non-existent alert"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("Mark Alert as Read - Not Found", False, "No driver token available")
+            return
+            
+        # Use a non-existent alert ID
+        fake_alert_id = "non-existent-alert-id-12345"
+        
+        success, data, status_code = self.make_request("POST", f"/drivers/alerts/{fake_alert_id}/read", 
+                                                     auth_token=self.tokens["driver"])
+        
+        # Should return 404
+        if not success and status_code == 404:
+            self.log_test("Mark Alert as Read - Not Found", True, "Correctly returned 404 for non-existent alert")
+        else:
+            self.log_test("Mark Alert as Read - Not Found", False, f"Should return 404 for non-existent alert (status: {status_code})", data)
+
+    def test_mark_alert_as_read_access_control(self):
+        """Test 30: POST /api/drivers/alerts/{alert_id}/read access control"""
+        
+        # Test with passenger token (should fail with 403)
+        if "passenger" in self.tokens:
+            fake_alert_id = "test-alert-id"
+            success, data, status_code = self.make_request("POST", f"/drivers/alerts/{fake_alert_id}/read", 
+                                                         auth_token=self.tokens["passenger"])
+            
+            if not success and status_code == 403:
+                self.log_test("Mark Alert as Read - Access Control", True, "Passenger correctly denied access to mark alerts as read")
+            else:
+                self.log_test("Mark Alert as Read - Access Control", False, f"Passenger should not have access (status: {status_code})", data)
+
     def run_all_tests(self):
         """Run all backend tests in sequence"""
         print("=" * 80)
