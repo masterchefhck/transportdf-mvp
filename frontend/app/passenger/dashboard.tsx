@@ -155,6 +155,28 @@ export default function PassengerDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const loadRatedTrips = async () => {
+    try {
+      const ratedTripsData = await AsyncStorage.getItem('rated_trips');
+      if (ratedTripsData) {
+        setRatedTrips(new Set(JSON.parse(ratedTripsData)));
+      }
+    } catch (error) {
+      console.log('Error loading rated trips:', error);
+    }
+  };
+
+  const markTripAsRated = async (tripId: string) => {
+    try {
+      const newRatedTrips = new Set(ratedTrips);
+      newRatedTrips.add(tripId);
+      setRatedTrips(newRatedTrips);
+      await AsyncStorage.setItem('rated_trips', JSON.stringify(Array.from(newRatedTrips)));
+    } catch (error) {
+      console.log('Error saving rated trip:', error);
+    }
+  };
+
   const loadUserData = async () => {
     try {
       const token = await AsyncStorage.getItem('access_token');
