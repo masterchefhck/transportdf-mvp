@@ -132,12 +132,19 @@ export default function PassengerDashboard() {
 
   const loadUserData = async () => {
     try {
-      const userData = await AsyncStorage.getItem('user');
-      if (userData) {
-        setUser(JSON.parse(userData));
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(response.data);
+      
+      // Load profile photo if exists
+      if (response.data.profile_photo) {
+        setProfilePhoto(response.data.profile_photo);
       }
     } catch (error) {
       console.log('Error loading user data:', error);
+      showAlert('Erro', 'Erro ao carregar dados do usuário');
     }
   };
 
