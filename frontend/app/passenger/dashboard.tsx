@@ -466,6 +466,17 @@ export default function PassengerDashboard() {
     }
   };
 
+  const skipRating = async () => {
+    if (completedTrip) {
+      // Mark trip as rated (even if skipped) to prevent showing again
+      await markTripAsRated(completedTrip.id);
+    }
+    setShowRatingModal(false);
+    setRating(5);
+    setRatingReason('');
+    setCompletedTrip(null);
+  };
+
   const handleRespondToReport = (report: Report) => {
     setSelectedReport(report);
     setShowResponseModal(true);
