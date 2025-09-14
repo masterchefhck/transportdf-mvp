@@ -121,6 +121,9 @@ export default function DriverDashboard() {
   const [myAlerts, setMyAlerts] = useState<any[]>([]);
   const [showAlertsPanel, setShowAlertsPanel] = useState(false);
 
+  // Chat states
+  const [showChatModal, setShowChatModal] = useState(false);
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
