@@ -113,7 +113,7 @@ export default function AdminDashboard() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'trips' | 'reports' | 'ratings' | 'messages' | 'chats'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'trips' | 'reports' | 'ratings' | 'messages'>('stats');
   
   // Bulk operations state
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -168,10 +168,6 @@ export default function AdminDashboard() {
     try {
       const token = await AsyncStorage.getItem('access_token');
       const headers = { Authorization: `Bearer ${token}` };
-      
-      console.log('🔥 DEBUG: Loading admin data');
-      console.log('🔥 DEBUG: API_URL:', API_URL);
-      console.log('🔥 DEBUG: Token exists:', !!token);
 
       const [statsResponse, usersResponse, tripsResponse, reportsResponse, ratingsResponse] = await Promise.all([
         axios.get(`${API_URL}/api/admin/stats`, { headers }),
@@ -180,9 +176,6 @@ export default function AdminDashboard() {
         axios.get(`${API_URL}/api/admin/reports`, { headers }),
         axios.get(`${API_URL}/api/ratings/low`, { headers }),
       ]);
-
-      console.log('🔥 DEBUG: Ratings response:', ratingsResponse.status, ratingsResponse.data);
-      console.log('🔥 DEBUG: Number of low ratings:', ratingsResponse.data.length);
 
       setStats(statsResponse.data);
       setUsers(usersResponse.data);
@@ -528,32 +521,18 @@ export default function AdminDashboard() {
         setBulkOperationLoading(true);
         try {
           const token = await AsyncStorage.getItem('access_token');
-          const url = `${API_URL}/api/admin/ratings/bulk-delete`;
-          console.log('🔥 DEBUG: Attempting to delete ratings');
-          console.log('🔥 DEBUG: URL:', url);
-          console.log('🔥 DEBUG: API_URL:', API_URL);
-          console.log('🔥 DEBUG: Selected ratings:', selectedRatings);
-          console.log('🔥 DEBUG: Token exists:', !!token);
-          
-          const response = await axios.post(
-            url,
+          await axios.post(
+            `${API_URL}/api/admin/ratings/bulk-delete`,
             { ids: selectedRatings },
             { headers: { Authorization: `Bearer ${token}` } }
           );
           
-          console.log('🔥 DEBUG: Delete response:', response.status, response.data);
           showAlert('Sucesso', `${selectedRatings.length} avaliação(ões) deletada(s) com sucesso!`);
           setSelectedRatings([]);
           loadData();
-        } catch (error: any) {
-          console.error('🔥 ERROR bulk deleting ratings:', error);
-          console.error('🔥 ERROR details:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            url: error.config?.url,
-            method: error.config?.method
-          });
-          showAlert('Erro', `Erro ao deletar avaliações: ${error.response?.status || 'Unknown'} - ${error.response?.data?.detail || error.message}`);
+        } catch (error) {
+          console.error('Error bulk deleting ratings:', error);
+          showAlert('Erro', 'Erro ao deletar avaliações');
         } finally {
           setBulkOperationLoading(false);
         }
@@ -969,7 +948,7 @@ export default function AdminDashboard() {
                   </Text>
                 </View>
               </View>
-              <Text style={styles.tripPrice}>R$ {(trip.estimated_price || 0).toFixed(2)}</Text>
+              <Text style={styles.tripPrice}>R$ {trip.estimated_price.toFixed(2)}</Text>
             </View>
 
             <View style={styles.addressRow}>
