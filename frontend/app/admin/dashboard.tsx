@@ -680,6 +680,26 @@ export default function AdminDashboard() {
                 </TouchableOpacity>
               )}
               <View style={[styles.userTypeIndicator, { backgroundColor: getUserTypeColor(user.user_type) }]} />
+              
+              {/* User Avatar/Photo */}
+              <TouchableOpacity
+                style={styles.userPhotoContainer}
+                onPress={() => {
+                  if (user.profile_photo) {
+                    handleViewPhoto(user.profile_photo, user.name);
+                  }
+                }}
+                disabled={!user.profile_photo}
+              >
+                {user.profile_photo ? (
+                  <Image source={{ uri: user.profile_photo }} style={styles.userPhotoThumbnail} />
+                ) : (
+                  <View style={styles.defaultUserPhoto}>
+                    <Ionicons name="person" size={16} color="#666" />
+                  </View>
+                )}
+              </TouchableOpacity>
+              
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{user.name}</Text>
                 <Text style={styles.userEmail}>{user.email}</Text>
