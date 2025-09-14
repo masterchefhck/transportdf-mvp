@@ -445,7 +445,7 @@ export default function PassengerDashboard() {
     }
   };
 
-  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Atualização imediata do estado
+  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Proteção total contra duplicação
   const submitRating = async () => {
     if (!completedTrip) {
       showAlert('Erro', 'Viagem não encontrada');
@@ -457,20 +457,35 @@ export default function PassengerDashboard() {
       return;
     }
 
+    // Verifica se a trip já foi avaliada antes de tentar enviar
+    if (ratedTrips.has(completedTrip.id)) {
+      console.log('Trip already rated, closing modal:', completedTrip.id);
+      setCompletedTrip(null);
+      setShowRatingModal(false);
+      setRating(5);
+      setRatingReason('');
+      return;
+    }
+
     try {
-      // CORREÇÃO: Marcar como avaliada E limpar estados imediatamente para evitar race condition
+      console.log('Submitting rating for trip:', completedTrip.id);
+      
+      // PASSO 1: Marcar como avaliada IMEDIATAMENTE (antes de qualquer coisa)
       await markTripAsRated(completedTrip.id);
       
-      // Atualização imediata do estado para prevenir race condition
+      // PASSO 2: Limpar estados IMEDIATAMENTE para prevenir race condition
+      const tripId = completedTrip.id;
+      const driverId = completedTrip.driver_id;
       setCompletedTrip(null);
       setShowRatingModal(false);
       
+      // PASSO 3: Tentar enviar para o backend (mas não afeta mais o estado local)
       const token = await AsyncStorage.getItem('access_token');
       await axios.post(
         `${API_URL}/api/ratings/create`,
         {
-          trip_id: completedTrip.id,
-          rated_user_id: completedTrip.driver_id,
+          trip_id: tripId,
+          rated_user_id: driverId,
           rating: rating,
           reason: rating < 5 ? ratingReason : null
         },
@@ -479,13 +494,19 @@ export default function PassengerDashboard() {
         }
       );
       
+      console.log('Rating submitted successfully for trip:', tripId);
       showAlert('Sucesso', 'Avaliação enviada com sucesso!');
       setRating(5);
       setRatingReason('');
     } catch (error) {
       console.error('Error submitting rating:', error);
-      showAlert('Erro', 'Erro ao enviar avaliação');
-      // Manter estados limpos mesmo com erro para evitar loop
+      // Não mostra o erro se a trip já foi avaliada (400 Bad Request é esperado)
+      if (error.response?.status === 400) {
+        console.log('Rating already exists (expected), continuing normally');
+      } else {
+        showAlert('Erro', 'Erro ao enviar avaliação');
+      }
+      // Estados já foram limpos, não precisa fazer mais nada
     }
   };
 
