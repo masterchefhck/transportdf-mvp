@@ -521,18 +521,32 @@ export default function AdminDashboard() {
         setBulkOperationLoading(true);
         try {
           const token = await AsyncStorage.getItem('access_token');
-          await axios.post(
-            `${API_URL}/api/admin/ratings/bulk-delete`,
+          const url = `${API_URL}/api/admin/ratings/bulk-delete`;
+          console.log('🔥 DEBUG: Attempting to delete ratings');
+          console.log('🔥 DEBUG: URL:', url);
+          console.log('🔥 DEBUG: API_URL:', API_URL);
+          console.log('🔥 DEBUG: Selected ratings:', selectedRatings);
+          console.log('🔥 DEBUG: Token exists:', !!token);
+          
+          const response = await axios.post(
+            url,
             { ids: selectedRatings },
             { headers: { Authorization: `Bearer ${token}` } }
           );
           
+          console.log('🔥 DEBUG: Delete response:', response.status, response.data);
           showAlert('Sucesso', `${selectedRatings.length} avaliação(ões) deletada(s) com sucesso!`);
           setSelectedRatings([]);
           loadData();
-        } catch (error) {
-          console.error('Error bulk deleting ratings:', error);
-          showAlert('Erro', 'Erro ao deletar avaliações');
+        } catch (error: any) {
+          console.error('🔥 ERROR bulk deleting ratings:', error);
+          console.error('🔥 ERROR details:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            url: error.config?.url,
+            method: error.config?.method
+          });
+          showAlert('Erro', `Erro ao deletar avaliações: ${error.response?.status || 'Unknown'} - ${error.response?.data?.detail || error.message}`);
         } finally {
           setBulkOperationLoading(false);
         }
