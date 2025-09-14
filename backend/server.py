@@ -235,6 +235,54 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     """Calculate distance between two points in kilometers"""
     return geodesic((lat1, lon1), (lat2, lon2)).kilometers
 
+async def calculate_user_rating(user_id: str) -> float:
+    """Calculate average rating for a user and handle reset after 100 trips"""
+    # Count total trips for this user (as driver)
+    total_trips = await db.trips.count_documents({
+        "driver_id": user_id, 
+        "status": TripStatus.COMPLETED
+    })
+    
+    # Reset rating every 100 trips
+    if total_trips > 0 and total_trips % 100 == 0:
+        # Check if we already reset for this 100-trip milestone
+        reset_count = total_trips // 100
+        existing_reset = await db.rating_resets.find_one({
+            "user_id": user_id,
+            "reset_number": reset_count
+        })
+        
+        if not existing_reset:
+            # Mark this reset as done
+            await db.rating_resets.insert_one({
+                "user_id": user_id,
+                "reset_number": reset_count,
+                "reset_at": datetime.utcnow()
+            })
+            return 5.0  # Reset to perfect rating
+    
+    # Get all ratings for this user since last reset
+    last_reset = await db.rating_resets.find_one(
+        {"user_id": user_id}, 
+        sort=[("reset_number", -1)]
+    )
+    
+    query_filter = {"rated_user_id": user_id}
+    if last_reset:
+        # Only get ratings after last reset
+        query_filter["created_at"] = {"$gt": last_reset["reset_at"]}
+    
+    ratings = await db.ratings.find(query_filter).to_list(None)
+    
+    if not ratings:
+        return 5.0  # Default perfect rating
+    
+    # Calculate weighted average (5-star ratings maintain 5.0, others lower it proportionally)
+    total_ratings = len(ratings)
+    sum_ratings = sum(r["rating"] for r in ratings)
+    
+    return round(sum_ratings / total_ratings, 1)
+
 # Authentication endpoints
 @api_router.post("/auth/register", response_model=Token)
 async def register(user_data: UserCreate):
