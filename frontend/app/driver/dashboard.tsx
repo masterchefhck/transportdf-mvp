@@ -148,6 +148,18 @@ export default function DriverDashboard() {
     }
   };
 
+  const loadMyAlerts = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/drivers/alerts`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMyAlerts(response.data);
+    } catch (error) {
+      console.log('Error loading alerts:', error);
+    }
+  };
+
   const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
