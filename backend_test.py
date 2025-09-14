@@ -1667,6 +1667,15 @@ class TransportDFTester:
         self.test_profile_photo_overwrite_existing()
         self.test_profile_photo_in_available_trips()
         
+        # Driver Information in Trips Tests - CURRENT REVIEW REQUEST
+        print("\n" + "=" * 50)
+        print("🚗 TESTING DRIVER INFO IN TRIPS - CURRENT REVIEW REQUEST")
+        print("=" * 50)
+        self.test_driver_profile_photo_upload()
+        self.test_trip_with_driver_info_flow()
+        self.test_trip_status_updates_with_driver_info()
+        self.test_driver_info_completeness()
+        
         # Summary
         print("=" * 80)
         print("📊 TEST SUMMARY")
