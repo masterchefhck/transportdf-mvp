@@ -547,6 +547,10 @@ export default function DriverDashboard() {
             <Text style={styles.locationText}>
               📍 {location ? 'Brasília, DF' : 'Obtendo localização...'}
             </Text>
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={16} color="#FF9800" />
+              <Text style={styles.ratingText}>{currentRating.toFixed(1)}</Text>
+            </View>
           </View>
         </View>
         <View style={styles.headerActions}>
