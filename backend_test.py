@@ -1353,6 +1353,231 @@ class TransportDFTester:
         else:
             self.log_test("Profile Photo in Available Trips", False, f"Failed to get available trips (status: {status_code})", data)
 
+    def test_driver_profile_photo_upload(self):
+        """Test 51: Driver profile photo upload functionality"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("Driver Profile Photo Upload", False, "No driver token available")
+            return
+            
+        # Upload profile photo for driver
+        photo_data = {
+            "profile_photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+        }
+        
+        success, data, status_code = self.make_request("PUT", "/users/profile-photo", 
+                                                     photo_data, auth_token=self.tokens["driver"])
+        
+        if success and "profile photo updated" in str(data).lower():
+            self.log_test("Driver Profile Photo Upload", True, "Driver profile photo uploaded successfully")
+        else:
+            self.log_test("Driver Profile Photo Upload", False, f"Driver profile photo upload failed (status: {status_code})", data)
+
+    def test_trip_with_driver_info_flow(self):
+        """Test 52: Complete trip flow with driver information verification"""
+        
+        if "passenger" not in self.tokens or "driver" not in self.tokens:
+            self.log_test("Trip Flow with Driver Info", False, "Missing passenger or driver tokens")
+            return
+            
+        # Step 1: Passenger requests a trip
+        trip_data = {
+            "passenger_id": self.users.get("passenger", {}).get("id", ""),
+            "pickup_latitude": -15.7633,
+            "pickup_longitude": -47.8719,
+            "pickup_address": "SQN 308, Asa Norte, Brasília - DF",
+            "destination_latitude": -15.8267,
+            "destination_longitude": -47.8978,
+            "destination_address": "SQS 116, Asa Sul, Brasília - DF",
+            "estimated_price": 15.50
+        }
+        
+        success, trip_response, _ = self.make_request("POST", "/trips/request", 
+                                                    trip_data, auth_token=self.tokens["passenger"])
+        
+        if not success:
+            self.log_test("Trip Flow with Driver Info", False, "Failed to request trip")
+            return
+            
+        trip_id = trip_response["id"]
+        
+        # Step 2: Driver accepts the trip
+        success, accept_response, _ = self.make_request("PUT", f"/trips/{trip_id}/accept", 
+                                                      auth_token=self.tokens["driver"])
+        
+        if not success:
+            self.log_test("Trip Flow with Driver Info", False, "Failed to accept trip")
+            return
+            
+        # Step 3: Check passenger's trip list for driver information
+        success, passenger_trips, status_code = self.make_request("GET", "/trips/my", 
+                                                                auth_token=self.tokens["passenger"])
+        
+        if success and isinstance(passenger_trips, list) and passenger_trips:
+            # Find the accepted trip
+            accepted_trip = next((t for t in passenger_trips if t.get("id") == trip_id), None)
+            
+            if accepted_trip:
+                # Check if driver information is included
+                has_driver_info = any([
+                    "driver_name" in accepted_trip,
+                    "driver_rating" in accepted_trip,
+                    "driver_photo" in accepted_trip
+                ])
+                
+                if has_driver_info:
+                    driver_fields = [k for k in accepted_trip.keys() if k.startswith("driver_")]
+                    self.log_test("Trip Flow with Driver Info", True, f"Driver information included in passenger trip: {driver_fields}")
+                else:
+                    self.log_test("Trip Flow with Driver Info", False, "Driver information NOT included in passenger trip response")
+            else:
+                self.log_test("Trip Flow with Driver Info", False, "Accepted trip not found in passenger's trip list")
+        else:
+            self.log_test("Trip Flow with Driver Info", False, f"Failed to get passenger trips (status: {status_code})", passenger_trips)
+
+    def test_trip_status_updates_with_driver_info(self):
+        """Test 53: Verify GET /api/trips/my returns driver info for accepted/in_progress trips"""
+        
+        if "passenger" not in self.tokens or "driver" not in self.tokens:
+            self.log_test("Trip Status Updates with Driver Info", False, "Missing passenger or driver tokens")
+            return
+            
+        # Create a new trip for this test
+        trip_data = {
+            "passenger_id": self.users.get("passenger", {}).get("id", ""),
+            "pickup_latitude": -15.7800,
+            "pickup_longitude": -47.8900,
+            "pickup_address": "Setor Comercial Sul, Brasília - DF",
+            "destination_latitude": -15.7500,
+            "destination_longitude": -47.8600,
+            "destination_address": "Setor Bancário Norte, Brasília - DF",
+            "estimated_price": 12.00
+        }
+        
+        # Request trip
+        success, trip_response, _ = self.make_request("POST", "/trips/request", 
+                                                    trip_data, auth_token=self.tokens["passenger"])
+        
+        if not success:
+            self.log_test("Trip Status Updates with Driver Info", False, "Failed to create test trip")
+            return
+            
+        trip_id = trip_response["id"]
+        
+        # Accept trip
+        self.make_request("PUT", f"/trips/{trip_id}/accept", auth_token=self.tokens["driver"])
+        
+        # Test 1: Check driver info when trip is 'accepted'
+        success, passenger_trips, _ = self.make_request("GET", "/trips/my", 
+                                                      auth_token=self.tokens["passenger"])
+        
+        if success and passenger_trips:
+            accepted_trip = next((t for t in passenger_trips if t.get("id") == trip_id), None)
+            if accepted_trip and accepted_trip.get("status") == "accepted":
+                has_driver_info = any([
+                    "driver_name" in accepted_trip,
+                    "driver_rating" in accepted_trip,
+                    "driver_photo" in accepted_trip
+                ])
+                
+                if has_driver_info:
+                    self.log_test("Trip Status - Accepted with Driver Info", True, "Driver info included for accepted trip")
+                else:
+                    self.log_test("Trip Status - Accepted with Driver Info", False, "Driver info missing for accepted trip")
+            else:
+                self.log_test("Trip Status - Accepted with Driver Info", False, "Trip not found or status incorrect")
+        
+        # Start trip
+        self.make_request("PUT", f"/trips/{trip_id}/start", auth_token=self.tokens["driver"])
+        
+        # Test 2: Check driver info when trip is 'in_progress'
+        success, passenger_trips, _ = self.make_request("GET", "/trips/my", 
+                                                      auth_token=self.tokens["passenger"])
+        
+        if success and passenger_trips:
+            in_progress_trip = next((t for t in passenger_trips if t.get("id") == trip_id), None)
+            if in_progress_trip and in_progress_trip.get("status") == "in_progress":
+                has_driver_info = any([
+                    "driver_name" in in_progress_trip,
+                    "driver_rating" in in_progress_trip,
+                    "driver_photo" in in_progress_trip
+                ])
+                
+                if has_driver_info:
+                    self.log_test("Trip Status - In Progress with Driver Info", True, "Driver info included for in_progress trip")
+                else:
+                    self.log_test("Trip Status - In Progress with Driver Info", False, "Driver info missing for in_progress trip")
+            else:
+                self.log_test("Trip Status - In Progress with Driver Info", False, "Trip not found or status incorrect")
+
+    def test_driver_info_completeness(self):
+        """Test 54: Verify driver information completeness (name, rating, photo)"""
+        
+        if "passenger" not in self.tokens or "driver" not in self.tokens:
+            self.log_test("Driver Info Completeness", False, "Missing passenger or driver tokens")
+            return
+            
+        # Ensure driver has profile photo
+        photo_data = {
+            "profile_photo": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+        }
+        self.make_request("PUT", "/users/profile-photo", photo_data, auth_token=self.tokens["driver"])
+        
+        # Create and accept a trip
+        trip_data = {
+            "passenger_id": self.users.get("passenger", {}).get("id", ""),
+            "pickup_latitude": -15.7600,
+            "pickup_longitude": -47.8700,
+            "pickup_address": "Asa Norte, Brasília - DF",
+            "destination_latitude": -15.8100,
+            "destination_longitude": -47.8800,
+            "destination_address": "Asa Sul, Brasília - DF",
+            "estimated_price": 10.00
+        }
+        
+        success, trip_response, _ = self.make_request("POST", "/trips/request", 
+                                                    trip_data, auth_token=self.tokens["passenger"])
+        
+        if not success:
+            self.log_test("Driver Info Completeness", False, "Failed to create test trip")
+            return
+            
+        trip_id = trip_response["id"]
+        self.make_request("PUT", f"/trips/{trip_id}/accept", auth_token=self.tokens["driver"])
+        
+        # Check passenger's trip for complete driver information
+        success, passenger_trips, _ = self.make_request("GET", "/trips/my", 
+                                                      auth_token=self.tokens["passenger"])
+        
+        if success and passenger_trips:
+            trip = next((t for t in passenger_trips if t.get("id") == trip_id), None)
+            if trip:
+                # Check for all three required driver info fields
+                has_name = "driver_name" in trip and trip["driver_name"]
+                has_rating = "driver_rating" in trip and trip["driver_rating"] is not None
+                has_photo = "driver_photo" in trip
+                
+                missing_fields = []
+                if not has_name:
+                    missing_fields.append("driver_name")
+                if not has_rating:
+                    missing_fields.append("driver_rating")
+                if not has_photo:
+                    missing_fields.append("driver_photo")
+                
+                if not missing_fields:
+                    driver_name = trip.get("driver_name", "Unknown")
+                    driver_rating = trip.get("driver_rating", "N/A")
+                    has_photo_data = bool(trip.get("driver_photo"))
+                    self.log_test("Driver Info Completeness", True, 
+                                f"Complete driver info: name='{driver_name}', rating={driver_rating}, photo={has_photo_data}")
+                else:
+                    self.log_test("Driver Info Completeness", False, f"Missing driver info fields: {missing_fields}")
+            else:
+                self.log_test("Driver Info Completeness", False, "Trip not found in passenger's trip list")
+        else:
+            self.log_test("Driver Info Completeness", False, "Failed to retrieve passenger trips")
+
     def run_all_tests(self):
         """Run all backend tests in sequence"""
         print("=" * 80)
