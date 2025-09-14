@@ -628,13 +628,54 @@ async def get_all_users(current_user: User = Depends(get_current_user)):
     users = await db.users.find({}).to_list(1000)
     return [User(**user) for user in users]
 
-@api_router.get("/admin/trips", response_model=List[Trip])
+@api_router.get("/admin/trips")
 async def get_all_trips(current_user: User = Depends(get_current_user)):
     if current_user.user_type != UserType.ADMIN:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     trips = await db.trips.find({}).sort("requested_at", -1).to_list(1000)
-    return [Trip(**trip) for trip in trips]
+    
+    # Enrich trips with complete user details
+    enriched_trips = []
+    for trip in trips:
+        # Get passenger details
+        passenger = await db.users.find_one({"id": trip["passenger_id"]})
+        passenger_data = {
+            "passenger_name": passenger.get("name", "Unknown") if passenger else "Unknown",
+            "passenger_email": passenger.get("email", "Unknown") if passenger else "Unknown", 
+            "passenger_phone": passenger.get("phone", "Unknown") if passenger else "Unknown",
+            "passenger_photo": passenger.get("profile_photo") if passenger else None,
+            "passenger_rating": passenger.get("rating", 5.0) if passenger else 5.0
+        }
+        
+        # Get driver details if trip has been accepted
+        driver_data = {
+            "driver_name": "Não atribuído",
+            "driver_email": "N/A",
+            "driver_phone": "N/A", 
+            "driver_photo": None,
+            "driver_rating": 5.0
+        }
+        
+        if trip.get("driver_id"):
+            driver = await db.users.find_one({"id": trip["driver_id"]})
+            if driver:
+                driver_data = {
+                    "driver_name": driver.get("name", "Unknown"),
+                    "driver_email": driver.get("email", "Unknown"),
+                    "driver_phone": driver.get("phone", "Unknown"),
+                    "driver_photo": driver.get("profile_photo"),
+                    "driver_rating": driver.get("rating", 5.0)
+                }
+        
+        # Combine trip data with user details
+        trip_data = Trip(**trip).dict()
+        trip_data.update(passenger_data)
+        trip_data.update(driver_data)
+        
+        enriched_trips.append(trip_data)
+    
+    return enriched_trips
 
 @api_router.get("/admin/stats")
 async def get_stats(current_user: User = Depends(get_current_user)):
