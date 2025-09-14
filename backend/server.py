@@ -103,6 +103,9 @@ class LocationUpdate(BaseModel):
     latitude: float
     longitude: float
 
+class ProfilePhotoUpdate(BaseModel):
+    profile_photo: str  # base64 encoded image
+
 class TripRequest(BaseModel):
     passenger_id: str
     pickup_latitude: float
