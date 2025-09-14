@@ -533,11 +533,16 @@ export default function PassengerDashboard() {
       // Mark trip as rated FIRST - prevents duplicate submissions
       await markTripAsRated(completedTrip.id);
       
+      // Close modal immediately to prevent re-opening
+      setShowRatingModal(false);
+      const tripId = completedTrip.id;
+      setCompletedTrip(null);
+      
       const token = await AsyncStorage.getItem('access_token');
       await axios.post(
         `${API_URL}/api/ratings/create`,
         {
-          trip_id: completedTrip.id,
+          trip_id: tripId,
           rated_user_id: completedTrip.driver_id,
           rating: rating,
           reason: rating < 5 ? ratingReason : null
@@ -548,14 +553,12 @@ export default function PassengerDashboard() {
       );
       
       showAlert('Sucesso', 'Avaliação enviada com sucesso!');
-      setShowRatingModal(false);
       setRating(5);
       setRatingReason('');
-      setCompletedTrip(null);
     } catch (error) {
       console.error('Error submitting rating:', error);
       showAlert('Erro', 'Erro ao enviar avaliação');
-      // Even if submission fails, keep trip marked as rated to prevent loop
+      // Even if submission fails, keep trip marked as rated and modal closed to prevent loop
     }
   };
 
