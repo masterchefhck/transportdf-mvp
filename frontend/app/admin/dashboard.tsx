@@ -719,17 +719,67 @@ export default function AdminDashboard() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Reports do Sistema</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Reports do Sistema</Text>
+          <View style={styles.bulkActions}>
+            <TouchableOpacity
+              style={styles.selectAllButton}
+              onPress={handleSelectAllReports}
+            >
+              <Ionicons 
+                name={selectedReports.length === reports.length ? "checkbox" : "square-outline"} 
+                size={20} 
+                color="#FF9800" 
+              />
+              <Text style={styles.selectAllText}>Selecionar Todos</Text>
+            </TouchableOpacity>
+            {selectedReports.length > 0 && (
+              <TouchableOpacity
+                style={[styles.bulkActionButton, { backgroundColor: '#f44336' }]}
+                onPress={handleBulkDeleteReports}
+                disabled={bulkOperationLoading}
+              >
+                {bulkOperationLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="trash" size={16} color="#fff" />
+                    <Text style={styles.bulkActionText}>Deletar ({selectedReports.length})</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+        
         {reports.map(report => (
           <View key={report.id} style={styles.reportCard}>
             <View style={styles.reportHeader}>
-              <View style={[styles.reportStatusBadge, { backgroundColor: getStatusColor(report.status) }]}>
-                <Text style={styles.reportStatusText}>
-                  {report.status === 'pending' ? 'Pendente' :
-                   report.status === 'under_review' ? 'Em Análise' :
-                   report.status === 'resolved' ? 'Resolvido' :
-                   report.status === 'dismissed' ? 'Descartado' : report.status}
-                </Text>
+              <View style={styles.reportHeaderLeft}>
+                <TouchableOpacity
+                  style={styles.checkbox}
+                  onPress={() => {
+                    if (selectedReports.includes(report.id)) {
+                      setSelectedReports(selectedReports.filter(id => id !== report.id));
+                    } else {
+                      setSelectedReports([...selectedReports, report.id]);
+                    }
+                  }}
+                >
+                  <Ionicons
+                    name={selectedReports.includes(report.id) ? "checkbox" : "square-outline"}
+                    size={20}
+                    color="#FF9800"
+                  />
+                </TouchableOpacity>
+                <View style={[styles.reportStatusBadge, { backgroundColor: getStatusColor(report.status) }]}>
+                  <Text style={styles.reportStatusText}>
+                    {report.status === 'pending' ? 'Pendente' :
+                     report.status === 'under_review' ? 'Em Análise' :
+                     report.status === 'resolved' ? 'Resolvido' :
+                     report.status === 'dismissed' ? 'Descartado' : report.status}
+                  </Text>
+                </View>
               </View>
               <Text style={styles.reportDate}>{formatDateTime(report.created_at)}</Text>
             </View>
