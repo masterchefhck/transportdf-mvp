@@ -174,12 +174,13 @@ export default function AdminDashboard() {
       const token = await AsyncStorage.getItem('access_token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [statsResponse, usersResponse, tripsResponse, reportsResponse, ratingsResponse] = await Promise.all([
+      const [statsResponse, usersResponse, tripsResponse, reportsResponse, ratingsResponse, chatsResponse] = await Promise.all([
         axios.get(`${API_URL}/api/admin/stats`, { headers }),
         axios.get(`${API_URL}/api/admin/users`, { headers }),
         axios.get(`${API_URL}/api/admin/trips`, { headers }),
         axios.get(`${API_URL}/api/admin/reports`, { headers }),
         axios.get(`${API_URL}/api/ratings/low`, { headers }),
+        axios.get(`${API_URL}/api/admin/chats`, { headers }),
       ]);
 
       setStats(statsResponse.data);
@@ -187,6 +188,7 @@ export default function AdminDashboard() {
       setTrips(tripsResponse.data.slice(0, 10)); // Last 10 trips
       setReports(reportsResponse.data);
       setRatings(ratingsResponse.data);
+      setChats(chatsResponse.data);
       
       // Set passengers for messaging
       setPassengers(usersResponse.data.filter((user: User) => user.user_type === 'passenger'));
