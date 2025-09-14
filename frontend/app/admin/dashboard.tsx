@@ -2228,4 +2228,101 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     maxHeight: '100%',
   },
+  // Chat styles
+  chatCard: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  chatUsers: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  chatUser: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  chatUserAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#1a1a1a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    borderWidth: 2,
+    borderColor: '#666',
+  },
+  chatUserPhoto: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  chatUserName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  chatUserType: {
+    fontSize: 12,
+    color: '#888',
+  },
+  chatSeparator: {
+    marginHorizontal: 16,
+    alignItems: 'center',
+  },
+  viewChatButton: {
+    backgroundColor: '#FF9800',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  viewChatButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  chatInfo: {
+    marginTop: 8,
+  },
+  chatRoute: {
+    fontSize: 14,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  chatStats: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 4,
+  },
+  chatDates: {
+    fontSize: 12,
+    color: '#666',
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyStateText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  emptyStateSubtext: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
 });
