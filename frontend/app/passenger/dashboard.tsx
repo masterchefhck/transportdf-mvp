@@ -131,6 +131,7 @@ export default function PassengerDashboard() {
   const [completedTrip, setCompletedTrip] = useState<Trip | null>(null);
   const [rating, setRating] = useState(5);
   const [ratingReason, setRatingReason] = useState('');
+  const [ratedTrips, setRatedTrips] = useState<Set<string>>(new Set());
 
   // Chat states
   const [showChatModal, setShowChatModal] = useState(false);
