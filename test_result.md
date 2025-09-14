@@ -268,6 +268,18 @@ test_plan:
         agent: "testing"
         comment: "✅ NOVO ENDPOINT /api/drivers/alerts TESTADO COM SUCESSO TOTAL! Executei 5 testes específicos com 100% de aprovação: 1) Endpoint funcionando corretamente - retornou 2 alertas ✅, 2) Estrutura de dados correta com todos os campos obrigatórios (id, admin_message, created_at, rating_stars, rating_reason, rating_date) ✅, 3) Ordenação por data funcionando (mais recentes primeiro) ✅, 4) Controle de acesso - passageiro corretamente negado (403) ✅, 5) Controle de acesso - admin corretamente negado (403) ✅. Endpoint production-ready e seguindo todas as especificações!"
 
+  - task: "Novos Endpoints Dashboard Motorista"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎯 NOVOS ENDPOINTS DASHBOARD MOTORISTA TESTADOS COM SUCESSO TOTAL! Executei 39 testes (36 passaram, 3 falhas esperadas de usuários existentes) com taxa de sucesso de 92.3%. FOCO NOS NOVOS ENDPOINTS: ✅ GET /api/users/rating funcionando perfeitamente - retorna rating entre 1.0-5.0 (testado: 4.0), ✅ POST /api/drivers/alerts/{alert_id}/read funcionando - marca alerta como lido com sucesso, retorna 404 para alerta inexistente, controle de acesso correto (403 para não-motoristas), ✅ GET /api/drivers/alerts inclui campo 'read' (boolean) e ordenação por data (mais recentes primeiro). Todos os 3 endpoints solicitados estão production-ready e atendendo perfeitamente às especificações!"
+
 agent_communication:
   - agent: "main"
     message: "MVP do SkyCab implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
@@ -279,3 +291,5 @@ agent_communication:
     message: "🌟 SISTEMA DE AVALIAÇÕES TESTADO COM SUCESSO TOTAL! Executei 29 testes (21 existentes + 8 novos do sistema de avaliações) com taxa de sucesso de 89.7% (26/29 passaram). Os 3 falhas foram apenas tentativas de registro de usuários já existentes - comportamento esperado. TODOS os 8 testes críticos do sistema de avaliações passaram: ✅ Avaliação 5 estrelas sem motivo, ✅ Avaliação 3 estrelas com motivo obrigatório, ✅ Prevenção de duplicatas, ✅ Validação de motivo para ratings baixos, ✅ Admin buscar avaliações < 5 estrelas, ✅ Admin enviar alertas, ✅ Cálculo correto de rating médio (4.0), ✅ Atualização no perfil do usuário. Sistema completo e production-ready!"
   - agent: "testing"
     message: "🚨 NOVO ENDPOINT /api/drivers/alerts TESTADO E APROVADO! Executei 34 testes totais (31 passaram, 3 falhas esperadas de usuários existentes) com taxa de sucesso de 91.2%. FOCO NO NOVO ENDPOINT: ✅ GET /api/drivers/alerts funcionando perfeitamente, ✅ Retorna alertas com estrutura correta (id, admin_message, created_at, rating_stars, rating_reason, rating_date), ✅ Ordenação por data (mais recentes primeiro), ✅ Controle de acesso rigoroso (apenas motoristas podem acessar - passageiros e admins recebem 403), ✅ Integração com sistema de avaliações funcionando. Endpoint production-ready e atendendo todas as especificações do cenário de teste!"
+  - agent: "testing"
+    message: "🎯 NOVOS ENDPOINTS DASHBOARD MOTORISTA TESTADOS COM SUCESSO TOTAL! Executei 39 testes (36 passaram, 3 falhas esperadas de usuários existentes) com taxa de sucesso de 92.3%. FOCO NOS NOVOS ENDPOINTS: ✅ GET /api/users/rating funcionando perfeitamente - retorna rating entre 1.0-5.0 (testado: 4.0), ✅ POST /api/drivers/alerts/{alert_id}/read funcionando - marca alerta como lido com sucesso, retorna 404 para alerta inexistente, controle de acesso correto (403 para não-motoristas), ✅ GET /api/drivers/alerts inclui campo 'read' (boolean) e ordenação por data (mais recentes primeiro). Todos os 3 endpoints solicitados estão production-ready e atendendo perfeitamente às especificações!"
