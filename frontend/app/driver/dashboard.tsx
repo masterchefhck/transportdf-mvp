@@ -134,14 +134,20 @@ export default function DriverDashboard() {
 
   const loadUserData = async () => {
     try {
-      const userData = await AsyncStorage.getItem('user');
-      if (userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsOnline(parsedUser.driver_status === 'online');
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(response.data);
+      setIsOnline(response.data.driver_status === 'online');
+      
+      // Load profile photo if exists
+      if (response.data.profile_photo) {
+        setProfilePhoto(response.data.profile_photo);
       }
     } catch (error) {
       console.log('Error loading user data:', error);
+      showAlert('Erro', 'Erro ao carregar dados do usuário');
     }
   };
 
