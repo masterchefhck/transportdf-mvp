@@ -706,6 +706,13 @@ class TransportDFTester:
         self.test_user_rating_calculation()
         self.test_user_rating_updated_in_profile()
         
+        # Driver Alerts Tests - NEW ENDPOINT
+        print("\n" + "=" * 50)
+        print("🚨 TESTING DRIVER ALERTS ENDPOINT - NEW FEATURE")
+        print("=" * 50)
+        self.test_driver_alerts_endpoint()
+        self.test_driver_alerts_access_control()
+        
         # Summary
         print("=" * 80)
         print("📊 TEST SUMMARY")
