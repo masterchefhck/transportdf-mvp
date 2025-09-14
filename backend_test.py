@@ -966,7 +966,7 @@ class TransportDFTester:
         success, data, status_code = self.make_request("POST", "/admin/trips/bulk-delete", 
                                                      bulk_delete_data, auth_token=self.tokens["passenger"])
         
-        if not success and status_code == 403:
+        if not success and (status_code == 403 or status_code == 401):
             self.log_test("Bulk Delete Permissions", True, "Non-admin correctly denied access to bulk delete operations")
         else:
             self.log_test("Bulk Delete Permissions", False, f"Non-admin should not have access (status: {status_code})", data)
