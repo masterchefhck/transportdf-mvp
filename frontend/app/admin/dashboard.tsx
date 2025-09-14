@@ -802,18 +802,68 @@ export default function AdminDashboard() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Viagens Recentes</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Viagens Recentes</Text>
+          <View style={styles.bulkActions}>
+            <TouchableOpacity
+              style={styles.selectAllButton}
+              onPress={handleSelectAllTrips}
+            >
+              <Ionicons 
+                name={selectedTrips.length === trips.length ? "checkbox" : "square-outline"} 
+                size={20} 
+                color="#FF9800" 
+              />
+              <Text style={styles.selectAllText}>Selecionar Todos</Text>
+            </TouchableOpacity>
+            {selectedTrips.length > 0 && (
+              <TouchableOpacity
+                style={[styles.bulkActionButton, { backgroundColor: '#f44336' }]}
+                onPress={handleBulkDeleteTrips}
+                disabled={bulkOperationLoading}
+              >
+                {bulkOperationLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="trash" size={16} color="#fff" />
+                    <Text style={styles.bulkActionText}>Deletar ({selectedTrips.length})</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+        
         {trips.map(trip => (
           <View key={trip.id} style={styles.tripCard}>
             <View style={styles.tripHeader}>
-              <View style={[styles.tripStatusBadge, { backgroundColor: getStatusColor(trip.status) }]}>
-                <Text style={styles.tripStatusText}>
-                  {trip.status === 'requested' ? 'Solicitada' :
-                   trip.status === 'accepted' ? 'Aceita' :
-                   trip.status === 'in_progress' ? 'Em andamento' :
-                   trip.status === 'completed' ? 'Concluída' :
-                   trip.status === 'cancelled' ? 'Cancelada' : trip.status}
-                </Text>
+              <View style={styles.tripHeaderLeft}>
+                <TouchableOpacity
+                  style={styles.checkbox}
+                  onPress={() => {
+                    if (selectedTrips.includes(trip.id)) {
+                      setSelectedTrips(selectedTrips.filter(id => id !== trip.id));
+                    } else {
+                      setSelectedTrips([...selectedTrips, trip.id]);
+                    }
+                  }}
+                >
+                  <Ionicons
+                    name={selectedTrips.includes(trip.id) ? "checkbox" : "square-outline"}
+                    size={20}
+                    color="#FF9800"
+                  />
+                </TouchableOpacity>
+                <View style={[styles.tripStatusBadge, { backgroundColor: getStatusColor(trip.status) }]}>
+                  <Text style={styles.tripStatusText}>
+                    {trip.status === 'requested' ? 'Solicitada' :
+                     trip.status === 'accepted' ? 'Aceita' :
+                     trip.status === 'in_progress' ? 'Em andamento' :
+                     trip.status === 'completed' ? 'Concluída' :
+                     trip.status === 'cancelled' ? 'Cancelada' : trip.status}
+                  </Text>
+                </View>
               </View>
               <Text style={styles.tripPrice}>R$ {trip.estimated_price.toFixed(2)}</Text>
             </View>
