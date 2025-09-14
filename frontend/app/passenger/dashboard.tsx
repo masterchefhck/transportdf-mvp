@@ -506,6 +506,17 @@ export default function PassengerDashboard() {
           </View>
         </View>
         <View style={styles.headerActions}>
+          {adminMessages.filter(msg => !msg.read).length > 0 && (
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => setShowMessagesPanel(true)}
+            >
+              <Ionicons name="chatbubble" size={24} color="#4CAF50" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>{adminMessages.filter(msg => !msg.read).length}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
           {pendingReports.length > 0 && (
             <TouchableOpacity 
               style={styles.notificationButton}
