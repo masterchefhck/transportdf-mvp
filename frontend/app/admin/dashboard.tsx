@@ -739,6 +739,7 @@ export default function AdminDashboard() {
         {activeTab === 'stats' && renderStats()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'reports' && renderReports()}
+        {activeTab === 'ratings' && renderRatings()}
         {activeTab === 'trips' && renderTrips()}
       </View>
 
