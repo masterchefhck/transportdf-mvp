@@ -782,6 +782,8 @@ class BackendTester:
                         self.tokens[f"test_passenger_{i+1}"] = data["access_token"]
                         self.users[f"test_passenger_{i+1}"] = data["user"]
                         self.log_test(f"Login Test Passenger {i+1}", True, "Existing user")
+                    else:
+                        self.log_test(f"Login Test Passenger {i+1}", False, f"Status: {login_response.status_code}")
                 else:
                     self.log_test(f"Create Test Passenger {i+1}", False, f"Status: {response.status_code}")
             except Exception as e:
