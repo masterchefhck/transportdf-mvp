@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SkyCab MVP",
-    "slug": "skycab-mvp", 
+    "name": "TransportDF MVP",
+    "slug": "transportdf-mvp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,7 +25,7 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "scheme": "skycab",
+    "scheme": "transportdf",
     "plugins": [
       "expo-router",
       [
