@@ -359,12 +359,12 @@ export default function PassengerDashboard() {
 
       if (activeTrip) {
         setCurrentTrip(activeTrip);
-      } else if (recentlyCompleted && currentTrip?.status !== 'completed') {
-        // Trip just completed, show rating modal only if not already shown
+      } else if (recentlyCompleted && !showRatingModal) {
+        // Trip just completed, show rating modal only if modal is not already showing
         setCompletedTrip(recentlyCompleted);
         setShowRatingModal(true);
         setCurrentTrip(null);
-      } else {
+      } else if (!recentlyCompleted) {
         setCurrentTrip(null);
       }
     } catch (error) {
