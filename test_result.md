@@ -234,7 +234,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Dashboard administrativo"
+    - "Driver Information in Trip Responses"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
