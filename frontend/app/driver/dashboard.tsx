@@ -563,6 +563,30 @@ export default function DriverDashboard() {
         <Text style={styles.priceText}>R$ {item.estimated_price.toFixed(2)}</Text>
       </View>
 
+      {/* Passenger Info Section */}
+      {item.passenger_name && (
+        <View style={styles.passengerInfo}>
+          <View style={styles.passengerDetails}>
+            {item.passenger_photo ? (
+              <Image source={{ uri: item.passenger_photo }} style={styles.passengerPhoto} />
+            ) : (
+              <View style={styles.defaultPassengerPhoto}>
+                <Ionicons name="person" size={20} color="#666" />
+              </View>
+            )}
+            <View style={styles.passengerTextInfo}>
+              <Text style={styles.passengerName}>{item.passenger_name}</Text>
+              <View style={styles.passengerRating}>
+                <Ionicons name="star" size={14} color="#FF9800" />
+                <Text style={styles.passengerRatingText}>
+                  {item.passenger_rating ? item.passenger_rating.toFixed(1) : '5.0'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
       <View style={styles.addressRow}>
         <Ionicons name="radio-button-on" size={16} color="#4CAF50" />
         <Text style={styles.addressText}>{item.pickup_address}</Text>
