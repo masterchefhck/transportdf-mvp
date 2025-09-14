@@ -147,6 +147,11 @@ export default function AdminDashboard() {
   const [selectedRating, setSelectedRating] = useState<any>(null);
   const [alertMessage, setAlertMessage] = useState('');
 
+  // Chat states
+  const [chats, setChats] = useState<any[]>([]);
+  const [selectedChatId, setSelectedChatId] = useState<string>('');
+  const [showChatModal, setShowChatModal] = useState(false);
+
   useEffect(() => {
     loadUserData();
     loadData();
