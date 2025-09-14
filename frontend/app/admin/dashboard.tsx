@@ -1195,6 +1195,14 @@ export default function AdminDashboard() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'messages' && styles.activeTab]}
+          onPress={() => setActiveTab('messages')}
+        >
+          <Text style={[styles.tabText, activeTab === 'messages' && styles.activeTabText]}>
+            Mensagens
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'trips' && styles.activeTab]}
           onPress={() => setActiveTab('trips')}
         >
