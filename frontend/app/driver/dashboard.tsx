@@ -1442,6 +1442,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginRight: 12,
   },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
   defaultAvatar: {
     width: 50,
     height: 50,
