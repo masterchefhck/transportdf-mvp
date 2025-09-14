@@ -359,13 +359,23 @@ export default function PassengerDashboard() {
 
       if (activeTrip) {
         setCurrentTrip(activeTrip);
-      } else if (recentlyCompleted && !showRatingModal) {
-        // Trip just completed, show rating modal only if modal is not already showing
+        // Close rating modal if there's an active trip
+        if (showRatingModal) {
+          setShowRatingModal(false);
+          setCompletedTrip(null);
+        }
+      } else if (recentlyCompleted && !showRatingModal && !completedTrip) {
+        // Trip just completed, show rating modal only if no modal is showing and no trip is being processed
+        console.log('Showing rating modal for trip:', recentlyCompleted.id);
         setCompletedTrip(recentlyCompleted);
         setShowRatingModal(true);
         setCurrentTrip(null);
-      } else if (!recentlyCompleted) {
+      } else if (!recentlyCompleted && !activeTrip) {
         setCurrentTrip(null);
+        // Only close modal if there's no trip to be rated
+        if (showRatingModal && !completedTrip) {
+          setShowRatingModal(false);
+        }
       }
     } catch (error) {
       console.log('Error checking current trip:', error);
