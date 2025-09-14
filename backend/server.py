@@ -162,6 +162,33 @@ class UserBlock(BaseModel):
     user_id: str
     reason: str
 
+# Rating and Evaluation Models
+class RatingCreate(BaseModel):
+    trip_id: str
+    rated_user_id: str  # driver being rated by passenger
+    rating: int = Field(..., ge=1, le=5)  # 1-5 stars
+    reason: Optional[str] = None  # Required when rating < 5
+
+class Rating(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    trip_id: str
+    rater_id: str  # who gave the rating
+    rated_user_id: str  # who received the rating
+    rating: int = Field(..., ge=1, le=5)
+    reason: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AdminAlert(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rating_id: str
+    driver_id: str
+    admin_message: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AdminAlertCreate(BaseModel):
+    rating_id: str
+    message: str
+
 # Utility functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
