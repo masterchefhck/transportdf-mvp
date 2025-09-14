@@ -139,10 +139,20 @@ export default function PassengerDashboard() {
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
-    checkCurrentTrip();
+    loadRatedTrips();
     loadMyReports();
     loadCurrentRating();
     loadAdminMessages();
+    
+    // Set up interval to check trip status
+    const interval = setInterval(() => {
+      checkCurrentTrip();
+    }, 5000);
+    
+    // Initial check
+    checkCurrentTrip();
+    
+    return () => clearInterval(interval);
   }, []);
 
   const loadUserData = async () => {
