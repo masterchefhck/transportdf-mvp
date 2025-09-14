@@ -214,20 +214,17 @@ frontend:
         agent: "main"
         comment: "Dashboard implementado com status online/offline e aceitação de corridas"
 
-  - task: "Dashboard administrativo"
+  - task: "Dashboard passageiro - Rating e Mensagens Admin"
     implemented: true
     working: "NA"
-    file: "app/admin/dashboard.tsx"
+    file: "app/passenger/dashboard.tsx"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Painel admin implementado com estatísticas, usuários e viagens"
-      - working: "NA"
-        agent: "main"
-        comment: "MAJOR UPDATE: Implementado operações em massa (bulk operations) com checkboxes e Select All para usuários, viagens, reports e avaliações. Adicionada nova aba 'Mensagens' para envio de mensagens diretas do admin para passageiros. Funcionalidades incluem: seleção individual e bulk com checkboxes, botões de bulk delete com confirmação, nova interface de messaging para passageiros ativos."
+        comment: "PASSENGER DASHBOARD FINALIZADO! Implementado sistema completo de rating pessoal do passageiro (exibido no header) e sistema de mensagens do admin. Funcionalidades incluem: 1) Exibição do rating atual do passageiro com estrela no header, 2) Botão de notificação para mensagens não lidas do admin, 3) Modal de listagem de mensagens com status de leitura, 4) Sistema de marcar mensagens como lidas automaticamente, 5) Interface responsiva e mobile-first. Integração completa com endpoints backend já testados."
 
 metadata:
   created_by: "main_agent"
