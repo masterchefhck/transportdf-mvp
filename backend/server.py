@@ -1140,7 +1140,7 @@ async def get_chat_messages(trip_id: str, current_user: User = Depends(get_curre
     
     # Get messages sorted by timestamp (oldest first)
     messages = await db.chat_messages.find(
-        {"trip_id": trip_id}
+        {"trip_id": trip_id}, {"_id": 0}  # Exclude MongoDB _id field
     ).sort("timestamp", 1).to_list(1000)  # Limit to 1000 messages
     
     return messages
