@@ -494,9 +494,15 @@ export default function PassengerDashboard() {
           </View>
           <View style={styles.userDetails}>
             <Text style={styles.welcomeText}>Olá, {user?.name || 'Usuário'}</Text>
-            <Text style={styles.locationText}>
-              📍 {location ? 'Brasília, DF' : 'Obtendo localização...'}
-            </Text>
+            <View style={styles.ratingRow}>
+              <Text style={styles.locationText}>
+                📍 {location ? 'Brasília, DF' : 'Obtendo localização...'}
+              </Text>
+              <View style={styles.userRating}>
+                <Ionicons name="star" size={16} color="#FF9800" />
+                <Text style={styles.ratingText}>{currentRating.toFixed(1)}</Text>
+              </View>
+            </View>
           </View>
         </View>
         <View style={styles.headerActions}>
