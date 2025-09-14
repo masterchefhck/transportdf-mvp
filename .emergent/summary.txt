@@ -1,88 +1,32 @@
 <analysis>
-This trajectory details the evolution of the TransportDF ride-sharing MVP. Initially, the focus was on restoring a stable codebase after a failed renaming attempt. Subsequent work involved enhancing the driver dashboard with real-time rating display and alert acknowledgment. The project then progressed to implementing complex features on the admin dashboard, including bulk deletion for various entities and a system for sending direct messages to passengers. A significant challenge arose with the admin dashboard where the AI repeatedly overwrote existing functionalities while adding profile photo display, necessitating careful re-integration with the original code. Finally, the development shifted to integrating profile photo upload/display and passenger rating into the passenger and driver dashboards, with backend support for photo storage. The trajectory concludes with the AI receiving the original passenger dashboard code to implement photo upload.
+This trajectory chronicles the development of the TransportDF ride-sharing MVP. It began with clarifying the scope and the user's explicit request to focus on passenger profile photo upload. The AI engineer successfully implemented photo upload functionality for both passenger and driver dashboards, including avatar clickability, image selection, and base64 upload to the backend. It also integrated driver information (photo, name, rating) into the passenger dashboard and ensured passenger information (photo, name, rating) was consistently visible in the driver's current trip view. Crucially, photo maximization modals were added to both passenger and driver dashboards, mirroring the admin dashboard's functionality. A significant portion of the conversation involved debugging frontend loading issues and correcting the server port, ultimately resolving connection problems. The trajectory concludes with the user providing an updated driver dashboard code for future use.
 </analysis>
 
 <product_requirements>
-The application is a ride-sharing MVP for Brasília/DF, Transport App Brasília MVP, on Expo React Native (Android/iOS), similar to Uber.
-**Core Features:**
-1.  **User Management**: Passenger, driver, admin registration and dedicated logins. User blocking/unblocking.
-2.  **Trip Management**: Passenger trip requests and tracking; driver online/offline status, trip acceptance, start, completion.
-3.  **Reporting System**: Passengers report drivers, drivers report passengers (title, description); admin views, responds to, resolves/dismisses reports.
-4.  **Rating System**: 5-star post-trip rating for drivers by passengers (mandatory reason for < 5 stars, resets every 100 trips). Admin views low ratings and sends alerts to drivers (button disabled if alert sent).
-5.  **Admin Alerts**: Drivers view admin alerts, mark as read.
-6.  **Passenger Quick Actions**: Placeholder alerts for Histórico, Pagamento, and Ajuda buttons.
-7.  **Project Name**: Reverted from SkyCab to Transport App Brasília MVP.
-
-**Implemented Enhancements:**
--   **Driver Dashboard**: Real-time rating display; Ok, entendido button to mark alerts as read.
--   **Admin Dashboard**: Bulk deletion for trips, users (excluding admins), reports, and ratings; Mensagem para Passageiro menu item for direct messaging to passengers.
--   **Passenger Dashboard**: Display user rating; read admin messages with notifications.
--   **Profile Photos**: Allow passenger and driver to upload local photos via clickable avatar; admin dashboard to display photo miniatures and a clickable popup for enlarged viewing.
+The Transport App Brasília MVP is a ride-sharing application for Android/iOS, mimicking Uber. Key features include user management (passenger, driver, admin registration/login, blocking), trip management (requests, tracking, acceptance, completion), a reporting system for passengers/drivers, and a 5-star post-trip rating system for drivers (with mandatory reasons for low ratings). Admin features include viewing reports, sending alerts to drivers for low ratings, and managing users/trips. Initial enhancements focused on driver dashboard rating display and alert acknowledgment, admin bulk deletion and direct passenger messaging, and passenger dashboard user rating and admin message display. More recently, profile photo upload for passengers and drivers was added, along with admin dashboard display of user photos and clickable popups for enlarged viewing. The system now supports displaying driver/passenger photos and ratings dynamically across relevant dashboards.
 </product_requirements>
 
 <key_technical_concepts>
--   **Frontend**: React Native, Expo, Expo Router (file-based routing), AsyncStorage, axios, expo-location, expo-image-picker, Ionicons.
--   **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT (authentication), Pydantic (data models).
--   **Features**: User authentication, location tracking, trip lifecycle, reporting, rating, admin messaging, bulk deletion, profile photo management (base64 storage).
+-   **Frontend**: React Native, Expo, Expo Router, AsyncStorage, Axios, Expo-Location, Expo-Image-Picker, Ionicons.
+-   **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT Authentication, Pydantic.
+-   **Features**: User Authentication, Geolocation, Trip Lifecycle, Reporting, Rating, Admin Messaging, Bulk Deletion, Base64 Profile Photo Storage.
 </key_technical_concepts>
 
 <code_architecture>
 
-
--   ****: The central FastAPI application.
-    -   **Importance**: Defines API endpoints, data models, and handles database interactions with MongoDB and JWT authentication.
-    -   **Changes Made**:
-        -   Restored app title and JWT secret.
-        -   Added  to  model and .
-        -   Added  endpoint.
-        -   Implemented  model, , , .
-        -   Implemented  model and bulk delete endpoints for trips, users, reports, and ratings.
-        -   Added  to  model.
-        -   Added  model and  for photo upload.
-        -   Modified  to include passenger's photo and rating.
--   ****: The administrator control panel.
-    -   **Importance**: Provides UI for system oversight, user/trip/report/rating management, and admin messaging.
-    -   **Changes Made**:
-        -   Restored to original state (tabs, messaging, blocking, alerts for low ratings).
-        -   Added bulk selection state, checkboxes, Select All, and bulk delete buttons for users, trips, reports, and ratings.
-        -   Added Mensagem para Passageiro tab, passenger selection, and message sending modal.
-        -   Added  to  interface.
-        -   Implemented states (, , ) and  function for profile photo viewing.
-        -   Modified  to display clickable photo thumbnails (36x36px) or default icon, with a green border for users with photos.
-        -   Added a full-screen photo viewer modal for enlarged viewing (300x400px) with user name in header and close button.
-        -   Added new styles to support bulk operations, messaging tab, and photo features.
--   ****: The main interface for passengers.
-    -   **Importance**: Handles trip requests, report submission, and viewing admin communications.
-    -   **Changes Made**:
-        -   Restored to original state (trip request/tracking, report driver, quick actions, post-trip rating).
-        -   Implemented  state and  function to display user's average rating in the header.
-        -   Implemented  state,  to fetch messages, , and  functions.
-        -   Added a notification button with a badge for unread admin messages.
-        -   Added a modal for displaying a list of admin messages and a separate modal for detailed message viewing.
-        -   Added  to  interface.
-        -   Installed  and implemented  and  functions.
-        -   Modified  to fetch .
-        -   Updated header avatar to be clickable for photo upload.
-        -   Added new styles.
--   ****: The main interface for drivers.
-    -   **Importance**: Manages online/offline status, available/current trips, and reporting passengers.
-    -   **Changes Made**:
-        -   Restored to original state (status toggling, trip acceptance/management, report passenger).
-        -   Implemented  state and  to display driver's average rating.
-        -   Implemented  and Ok, entendido button for alerts.
-        -   Added  to  interface and updated  interface to include , .
-        -   Installed  (via yarn add v1.22.22
-info Visit https://yarnpkg.com/en/docs/cli/add for documentation about this command.).
-        -   Implemented  and  functions for driver's own profile photo.
-        -   Modified  to fetch .
-        -   Updated header avatar to be clickable for photo upload.
-        -   Modified  to display passenger's photo and rating in trip details.
-        -   Added new styles.
+-   ****: Central FastAPI application managing API endpoints, data models, MongoDB interactions, and JWT authentication.
+    -   **Changes Made**: Initial restoration and addition of  to , ,  model, admin messaging endpoints,  and bulk delete endpoints. Later,  was added to  model,  for photo upload. Crucially,  was modified to include passenger's photo/rating, and  for passengers and drivers was enhanced to include driver/passenger details respectively (photo, name, rating).
+-   ****: Admin control panel for system oversight.
+    -   **Changes Made**: Restored to original state with tabs, messaging, blocking, alerts. Added bulk selection/deletion features. Added  to  interface,  states and  for clickable photo thumbnails and a full-screen photo viewer modal (300x400px).
+-   ****: Passenger interface for trip requests, reports, admin messages.
+    -   **Changes Made**: Restored to original, added  display, admin message fetching/display with notifications.  added to  interface.  installed, and / for avatar-based photo upload.  now fetches .  interface updated for , , . A new Driver Info Section was added to  to display driver details. Photo maximization modal functionality (states, , clickable avatar) was added.
+-   ****: Driver interface for status, trips, reports.
+    -   **Changes Made**: Restored to original, added  display, .  added to  interface.  installed, and / for driver's own photo upload.  interface updated for , , .  now displays passenger's photo/rating. A Passenger Info Section was added to  to display passenger details throughout the trip lifecycle. Photo maximization modal functionality (states, , clickable passenger photos) was added. The entire file was recently replaced by the user's provided version.
 </code_architecture>
 
 <pending_tasks>
 -   Integrate fully with Google Maps API for accurate distance matrix, routing, and real-time map display.
--   Implement an advanced payment system (e.g., Stripe, PagSeguro).
+-   Implement an advanced payment system (e.g., Stripe, PagSegurop).
 -   Expand geographical coverage beyond Brasília/DF.
 -   Implement real-time features like chat and live updates using WebSockets/Socket.io.
 -   Add push notifications (e.g., Firebase Cloud Messaging).
@@ -90,16 +34,19 @@ info Visit https://yarnpkg.com/en/docs/cli/add for documentation about this comm
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary request, the AI engineer was working on implementing profile photo functionalities across the application. The backend () has been updated to support  in the  model, an endpoint for photo upload (), and to include passenger photo/rating in trip details for drivers (). The  library has been installed in the frontend.
+Immediately prior to this summary, the AI engineer completed implementing photo maximization for profile pictures across both the passenger and driver dashboards. This involved adding , , and  states, along with a  function to open a full-screen modal (300x400px) displaying the selected photo with the user's name.
 
-On the frontend, the following has been implemented:
--   **Admin Dashboard ()**: The ability to view user profile photo miniatures next to usernames and click them to open an enlarged view in a popup modal. This was a critical re-implementation after a previous version accidentally removed existing functionalities, ensuring all original features are preserved.
--   **Driver Dashboard ()**: Driver's own profile photo upload via a clickable avatar, and the display of the passenger's photo and rating within the trip details.
--   **Passenger Dashboard ()**: Passenger's own profile photo upload via a clickable avatar, alongside the existing rating display and admin message reading functionality.
+For the **Passenger Dashboard ()**, the passenger's own profile photo (from the clickable avatar) and the driver's profile photo (displayed when a trip is accepted) are now clickable to trigger this maximization modal.
 
-The backend changes for profile photos have been tested and confirmed to be working. The frontend implementations for the admin and driver dashboards have also been completed and verified via screenshots, though a previous frontend issue with the Messages tab on the admin dashboard was noted. The latest activity involves the user providing the original  file for the AI to adjust for photo upload, indicating that the passenger dashboard photo upload might require further adjustments or confirmation of the complete implementation.
+For the **Driver Dashboard ()**, the driver's own profile photo (from the clickable avatar) and the passenger's profile photo (displayed in available trip cards and the current trip section) are now clickable for maximization. This ensures that driver's can view passenger photos and vice-versa, similar to the admin functionality.
+
+Before this, the AI also resolved a critical issue where passenger information (name, rating, photo) was disappearing from the driver's current trip view after a trip was accepted/started. This was fixed by modifying the backend's  endpoint to consistently include passenger details for drivers, and updating the driver frontend to display this information in the .
+
+The previous interactions also involved debugging frontend loading issues related to incorrect port usage (initially using 3000 instead of 8081) and Expo tunnel/CI modes, which were resolved by using  directly and cleaning caches.
+
+The very last action in the trajectory was the user providing a new, complete  file, requesting it be used as the definitive version for all future adjustments, which the AI acknowledged.
 </current_work>
 
 <optional_next_step>
-Adjust the  to allow photo upload via clicking the avatar, using the provided original code.
+Replace the current  file with the new code provided by the user.
 </optional_next_step>
