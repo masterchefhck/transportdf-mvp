@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
+import ChatComponent from '../../components/ChatComponent';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
