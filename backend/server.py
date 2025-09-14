@@ -826,6 +826,42 @@ async def get_user_rating(current_user: User = Depends(get_current_user)):
     rating = await calculate_user_rating(current_user.id)
     return {"rating": rating}
 
+@api_router.get("/drivers/alerts")
+async def get_driver_alerts(current_user: User = Depends(get_current_user)):
+    """Get alerts sent to current driver"""
+    if current_user.user_type != UserType.DRIVER:
+        raise HTTPException(status_code=403, detail="Only drivers can view alerts")
+    
+    # Get alerts for this driver with rating details
+    pipeline = [
+        {"$match": {"driver_id": current_user.id}},
+        {"$lookup": {
+            "from": "ratings",
+            "localField": "rating_id",
+            "foreignField": "id",
+            "as": "rating"
+        }},
+        {"$sort": {"created_at": -1}}
+    ]
+    
+    alerts = await db.admin_alerts.aggregate(pipeline).to_list(50)
+    
+    # Process results to include rating details
+    result = []
+    for alert in alerts:
+        rating = alert["rating"][0] if alert["rating"] else {}
+        
+        result.append({
+            "id": alert["id"],
+            "admin_message": alert["admin_message"],
+            "created_at": alert["created_at"],
+            "rating_stars": rating.get("rating", 0),
+            "rating_reason": rating.get("reason", ""),
+            "rating_date": rating.get("created_at", "")
+        })
+    
+    return result
+
 # Basic health check
 @api_router.get("/health")
 async def health_check():
