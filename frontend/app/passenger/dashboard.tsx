@@ -717,6 +717,80 @@ export default function PassengerDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Rating Modal */}
+      <Modal visible={showRatingModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Avaliar Viagem</Text>
+            </View>
+            
+            <Text style={styles.modalSubtitle}>
+              Como foi sua experiência com o motorista?
+            </Text>
+            
+            {/* Star Rating */}
+            <View style={styles.starContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => setRating(star)}
+                  style={styles.starButton}
+                >
+                  <Ionicons
+                    name={star <= rating ? "star" : "star-outline"}
+                    size={40}
+                    color={star <= rating ? "#FF9800" : "#666"}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            
+            <Text style={styles.ratingText}>
+              {rating === 5 ? "Excelente!" : 
+               rating === 4 ? "Muito bom!" :
+               rating === 3 ? "Bom" :
+               rating === 2 ? "Regular" : "Ruim"}
+            </Text>
+            
+            {/* Reason field for ratings < 5 */}
+            {rating < 5 && (
+              <View style={styles.reasonContainer}>
+                <Text style={styles.reasonLabel}>Motivo da avaliação (obrigatório):</Text>
+                <TextInput
+                  style={[styles.reportInput, styles.textArea]}
+                  placeholder="Descreva o que pode ser melhorado..."
+                  placeholderTextColor="#666"
+                  value={ratingReason}
+                  onChangeText={setRatingReason}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
+            )}
+            
+            <View style={styles.ratingButtons}>
+              <TouchableOpacity 
+                style={styles.skipButton} 
+                onPress={() => {
+                  setShowRatingModal(false);
+                  setRating(5);
+                  setRatingReason('');
+                  setCompletedTrip(null);
+                }}
+              >
+                <Text style={styles.skipButtonText}>Pular</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.submitButton} onPress={submitRating}>
+                <Text style={styles.submitButtonText}>Enviar Avaliação</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
