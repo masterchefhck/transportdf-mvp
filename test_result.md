@@ -285,27 +285,33 @@ test_plan:
 
   - task: "Bulk Delete Operations Backend"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado endpoints de bulk delete para trips, users, reports e ratings. Funcionalidades incluem: POST /api/admin/trips/bulk-delete, POST /api/admin/users/bulk-delete (exclui admins), POST /api/admin/reports/bulk-delete, POST /api/admin/ratings/bulk-delete. Todos aceitam lista de IDs via BulkDeleteRequest model."
+      - working: true
+        agent: "testing"
+        comment: "✅ BULK DELETE OPERATIONS COMPLETAMENTE TESTADAS E APROVADAS! Executei testes específicos para todos os 4 endpoints de bulk delete com 100% de sucesso: 1) POST /api/admin/trips/bulk-delete funcionando perfeitamente ✅, 2) POST /api/admin/users/bulk-delete corretamente excluindo admins da operação ✅, 3) POST /api/admin/reports/bulk-delete operacional ✅, 4) POST /api/admin/ratings/bulk-delete funcionando ✅. Validação de permissões funcionando - apenas admin pode executar operações bulk (401/403 para não-admins). Todos os endpoints retornam contagem correta de itens deletados. Sistema production-ready!"
 
   - task: "Admin Messages to Passengers Backend"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado sistema completo de mensagens do admin para passageiros. Funcionalidades incluem: POST /api/admin/messages/send para enviar mensagem, GET /api/passengers/messages para passageiro ler mensagens, POST /api/passengers/messages/{message_id}/read para marcar como lida. AdminMessageToUser model com read status."
+      - working: true
+        agent: "testing"
+        comment: "✅ SISTEMA DE MESSAGING ADMIN-TO-PASSENGER COMPLETAMENTE TESTADO E APROVADO! Executei testes abrangentes com 100% de sucesso: 1) POST /api/admin/messages/send funcionando perfeitamente - admin envia mensagem para passageiro específico ✅, 2) Validação correta - admin não pode enviar mensagem para motorista (400 Bad Request) ✅, 3) Validação de usuário inexistente (404 Not Found) ✅, 4) GET /api/passengers/messages funcionando - passageiro recebe suas mensagens com estrutura correta (id, user_id, admin_id, message, created_at, read) ✅, 5) POST /api/passengers/messages/{message_id}/read funcionando - passageiro marca mensagem como lida ✅, 6) Controle de acesso rigoroso - apenas passageiros podem acessar suas mensagens (403 para motoristas/admins) ✅. Fluxo completo testado: admin envia → passageiro recebe → passageiro marca como lida. Sistema production-ready!"
 
 agent_communication:
   - agent: "main"
