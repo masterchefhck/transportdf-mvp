@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://capital-ride.preview.emergentagent.com/api"
+BASE_URL = "https://photo-upload-ride.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 def make_request(method, endpoint, data=None, auth_token=None):
