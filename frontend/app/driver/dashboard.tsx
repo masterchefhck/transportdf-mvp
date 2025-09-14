@@ -20,7 +20,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
-import ChatComponent from '../../components/ChatComponent';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -120,14 +119,6 @@ export default function DriverDashboard() {
   // Alert states
   const [myAlerts, setMyAlerts] = useState<any[]>([]);
   const [showAlertsPanel, setShowAlertsPanel] = useState(false);
-  
-  // Photo modal states
-  const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
-  const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
-
-  // Chat states
-  const [showChatModal, setShowChatModal] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -207,12 +198,6 @@ export default function DriverDashboard() {
       console.error('Error marking alert as read:', error);
       showAlert('Erro', 'Erro ao marcar alerta como lido');
     }
-  };
-
-  const handleViewPhoto = (photoUrl: string, userName: string) => {
-    setSelectedPhotoUrl(photoUrl);
-    setSelectedPhotoUser(userName);
-    setShowPhotoModal(true);
   };
 
   const pickImage = async () => {
@@ -582,18 +567,13 @@ export default function DriverDashboard() {
       {item.passenger_name && (
         <View style={styles.passengerInfo}>
           <View style={styles.passengerDetails}>
-            <TouchableOpacity
-              onPress={() => item.passenger_photo && handleViewPhoto(item.passenger_photo, item.passenger_name)}
-              disabled={!item.passenger_photo}
-            >
-              {item.passenger_photo ? (
-                <Image source={{ uri: item.passenger_photo }} style={styles.passengerPhoto} />
-              ) : (
-                <View style={styles.defaultPassengerPhoto}>
-                  <Ionicons name="person" size={20} color="#666" />
-                </View>
-              )}
-            </TouchableOpacity>
+            {item.passenger_photo ? (
+              <Image source={{ uri: item.passenger_photo }} style={styles.passengerPhoto} />
+            ) : (
+              <View style={styles.defaultPassengerPhoto}>
+                <Ionicons name="person" size={20} color="#666" />
+              </View>
+            )}
             <View style={styles.passengerTextInfo}>
               <Text style={styles.passengerName}>{item.passenger_name}</Text>
               <View style={styles.passengerRating}>
@@ -741,36 +721,6 @@ export default function DriverDashboard() {
               <Text style={styles.addressText}>{currentTrip.destination_address}</Text>
             </View>
 
-            {/* Passenger Info Section for Current Trip */}
-            {currentTrip.passenger_name && (
-              <View style={styles.passengerInfo}>
-                <Text style={styles.passengerInfoTitle}>Passageiro</Text>
-                <View style={styles.passengerDetails}>
-                  <TouchableOpacity
-                    onPress={() => currentTrip.passenger_photo && handleViewPhoto(currentTrip.passenger_photo, currentTrip.passenger_name || 'Passageiro')}
-                    disabled={!currentTrip.passenger_photo}
-                  >
-                    {currentTrip.passenger_photo ? (
-                      <Image source={{ uri: currentTrip.passenger_photo }} style={styles.passengerPhoto} />
-                    ) : (
-                      <View style={styles.defaultPassengerPhoto}>
-                        <Ionicons name="person" size={20} color="#666" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                  <View style={styles.passengerTextInfo}>
-                    <Text style={styles.passengerName}>{currentTrip.passenger_name}</Text>
-                    <View style={styles.passengerRating}>
-                      <Ionicons name="star" size={14} color="#FF9800" />
-                      <Text style={styles.passengerRatingText}>
-                        {currentTrip.passenger_rating ? currentTrip.passenger_rating.toFixed(1) : '5.0'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            )}
-
             <View style={styles.tripActions}>
               {currentTrip.status === 'accepted' && (
                 <TouchableOpacity
@@ -799,25 +749,15 @@ export default function DriverDashboard() {
                 </TouchableOpacity>
               )}
               
-              {/* Action Buttons */}
+              {/* Report Passenger Button */}
               {(currentTrip.status === 'in_progress' || currentTrip.status === 'accepted') && (
-                <View style={styles.actionButtonsContainer}>
-                  <TouchableOpacity
-                    style={[styles.chatButton]}
-                    onPress={() => setShowChatModal(true)}
-                  >
-                    <Ionicons name="chatbubble" size={16} color="#fff" />
-                    <Text style={styles.chatButtonText}>Chat</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={[styles.reportButton]}
-                    onPress={handleReportPassenger}
-                  >
-                    <Ionicons name="flag" size={16} color="#fff" />
-                    <Text style={styles.reportButtonText}>Reportar Passageiro</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={[styles.reportButton]}
+                  onPress={handleReportPassenger}
+                >
+                  <Ionicons name="flag" size={16} color="#fff" />
+                  <Text style={styles.reportButtonText}>Reportar Passageiro</Text>
+                </TouchableOpacity>
               )}
             </View>
           </View>
@@ -1052,37 +992,6 @@ export default function DriverDashboard() {
           </View>
         </View>
       </Modal>
-
-      {/* Photo Modal */}
-      <Modal visible={showPhotoModal} transparent animationType="fade">
-        <View style={styles.photoModalOverlay}>
-          <View style={styles.photoModalContent}>
-            <View style={styles.photoModalHeader}>
-              <Text style={styles.photoModalTitle}>{selectedPhotoUser}</Text>
-              <TouchableOpacity
-                onPress={() => setShowPhotoModal(false)}
-                style={styles.photoModalCloseButton}
-              >
-                <Ionicons name="close" size={28} color="#fff" />
-              </TouchableOpacity>
-            </View>
-            {selectedPhotoUrl && (
-              <Image source={{ uri: selectedPhotoUrl }} style={styles.fullSizePhoto} />
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Chat Component */}
-      {currentTrip && (
-        <ChatComponent
-          tripId={currentTrip.id}
-          currentUserId={user?.id || ''}
-          currentUserType="driver"
-          visible={showChatModal}
-          onClose={() => setShowChatModal(false)}
-        />
-      )}
     </SafeAreaView>
   );
 }
@@ -1208,26 +1117,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  chatButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  chatButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
   reportButton: {
     backgroundColor: '#FF9800',
     paddingVertical: 12,
@@ -1237,7 +1126,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    flex: 1,
   },
   reportButtonText: {
     fontSize: 14,
@@ -1439,11 +1327,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  statusText: {
-    fontSize: 12,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
   reportItemDescription: {
     fontSize: 14,
     color: '#888',
@@ -1592,12 +1475,6 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
-  passengerInfoTitle: {
-    fontSize: 16,
-    color: '#4CAF50',
-    marginBottom: 4,
-    fontWeight: 'bold',
-  },
   passengerDetails: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1634,41 +1511,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 4,
-  },
-  // Photo modal styles
-  photoModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoModalContent: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 16,
-    padding: 20,
-    width: '90%',
-    maxWidth: 350,
-    alignItems: 'center',
-  },
-  photoModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
-  },
-  photoModalTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  photoModalCloseButton: {
-    padding: 4,
-  },
-  fullSizePhoto: {
-    width: 300,
-    height: 400,
-    borderRadius: 12,
-    resizeMode: 'cover',
   },
 });
