@@ -401,9 +401,10 @@ export default function PassengerDashboard() {
     }
   };
 
-  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Atualização imediata do estado
+  // FUNÇÃO CORRIGIDA PARA RACE CONDITION - Proteção total com logs
   const skipRating = async () => {
     if (completedTrip) {
+      console.log('Skipping rating for trip:', completedTrip.id);
       // CORREÇÃO: Marcar como avaliada para prevenir loop
       await markTripAsRated(completedTrip.id);
     }
@@ -412,6 +413,7 @@ export default function PassengerDashboard() {
     setShowRatingModal(false);
     setRating(5);
     setRatingReason('');
+    console.log('Rating modal closed (skipped)');
   };
 
   const handleRespondToReport = (report: Report) => {
