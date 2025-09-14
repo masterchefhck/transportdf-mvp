@@ -621,6 +621,36 @@ export default function PassengerDashboard() {
               </View>
             </View>
 
+            {/* Driver Info Section */}
+            {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_name && (
+              <View style={styles.driverInfo}>
+                <Text style={styles.driverInfoTitle}>Seu Motorista</Text>
+                <View style={styles.driverDetails}>
+                  <TouchableOpacity
+                    onPress={() => handleViewPhoto(currentTrip.driver_photo, currentTrip.driver_name)}
+                    disabled={!currentTrip.driver_photo}
+                  >
+                    {currentTrip.driver_photo ? (
+                      <Image source={{ uri: currentTrip.driver_photo }} style={styles.driverPhoto} />
+                    ) : (
+                      <View style={styles.defaultDriverPhoto}>
+                        <Ionicons name="car" size={20} color="#666" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <View style={styles.driverTextInfo}>
+                    <Text style={styles.driverName}>{currentTrip.driver_name}</Text>
+                    <View style={styles.driverRating}>
+                      <Ionicons name="star" size={14} color="#FF9800" />
+                      <Text style={styles.driverRatingText}>
+                        {currentTrip.driver_rating ? currentTrip.driver_rating.toFixed(1) : '5.0'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
+
             <View style={styles.tripStatus}>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(currentTrip.status) }]}>
                 <Text style={styles.statusText}>{getStatusText(currentTrip.status)}</Text>
