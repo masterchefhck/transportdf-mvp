@@ -1072,6 +1072,67 @@ export default function AdminDashboard() {
     </ScrollView>
   );
 
+  const renderMessages = () => (
+    <ScrollView
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Mensagem para Passageiro</Text>
+        <Text style={styles.sectionSubtitle}>Selecione um passageiro para enviar uma mensagem</Text>
+        
+        {passengers.length === 0 ? (
+          <View style={styles.noDataContainer}>
+            <Ionicons name="person" size={60} color="#666" />
+            <Text style={styles.noDataText}>Nenhum passageiro encontrado!</Text>
+            <Text style={styles.noDataSubtext}>Não há passageiros registrados no sistema</Text>
+          </View>
+        ) : (
+          passengers.map(passenger => (
+            <View key={passenger.id} style={styles.passengerCard}>
+              <View style={styles.passengerInfo}>
+                <View style={[styles.userTypeIndicator, { backgroundColor: getUserTypeColor(passenger.user_type) }]} />
+                <View style={styles.userDetails}>
+                  <Text style={styles.userName}>{passenger.name}</Text>
+                  <Text style={styles.userEmail}>{passenger.email}</Text>
+                  <Text style={styles.userDate}>Registrado em: {formatDate(passenger.created_at)}</Text>
+                  {!passenger.is_active && (
+                    <Text style={styles.blockedText}>Usuário bloqueado</Text>
+                  )}
+                </View>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.messagePassengerButton,
+                  !passenger.is_active && styles.messagePassengerButtonDisabled
+                ]}
+                onPress={() => {
+                  if (passenger.is_active) {
+                    setSelectedPassenger(passenger);
+                    setShowPassengerMessageModal(true);
+                  }
+                }}
+                disabled={!passenger.is_active}
+              >
+                <Ionicons 
+                  name="mail" 
+                  size={16} 
+                  color={passenger.is_active ? "#fff" : "#888"} 
+                />
+                <Text style={[
+                  styles.messagePassengerButtonText,
+                  !passenger.is_active && styles.messagePassengerButtonTextDisabled
+                ]}>
+                  Enviar Mensagem
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
+      </View>
+    </ScrollView>
+  );
+
   if (loading && !stats) {
     return (
       <SafeAreaView style={styles.container}>
