@@ -595,6 +595,75 @@ export default function AdminDashboard() {
     </ScrollView>
   );
 
+  const renderRatings = () => (
+    <ScrollView
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Avaliações Abaixo de 5 Estrelas</Text>
+        {ratings.length === 0 ? (
+          <View style={styles.noDataContainer}>
+            <Ionicons name="star" size={60} color="#666" />
+            <Text style={styles.noDataText}>Nenhuma avaliação baixa encontrada!</Text>
+            <Text style={styles.noDataSubtext}>Todos os motoristas estão bem avaliados</Text>
+          </View>
+        ) : (
+          ratings.map(rating => (
+            <View key={rating.id} style={styles.ratingCard}>
+              <View style={styles.ratingHeader}>
+                <View style={styles.starsContainer}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Ionicons
+                      key={star}
+                      name={star <= rating.rating ? "star" : "star-outline"}
+                      size={20}
+                      color={star <= rating.rating ? "#FF9800" : "#666"}
+                    />
+                  ))}
+                  <Text style={styles.ratingValue}>({rating.rating})</Text>
+                </View>
+                <Text style={styles.ratingDate}>
+                  {formatDateTime(rating.created_at)}
+                </Text>
+              </View>
+
+              <View style={styles.ratingDetails}>
+                <Text style={styles.ratingDriverName}>
+                  Motorista: {rating.rated_user_name}
+                </Text>
+                <Text style={styles.ratingPassengerName}>
+                  Avaliado por: {rating.rater_name}
+                </Text>
+                <Text style={styles.ratingTrip}>
+                  Viagem: {rating.trip_pickup} → {rating.trip_destination}
+                </Text>
+              </View>
+
+              {rating.reason && (
+                <View style={styles.ratingReasonContainer}>
+                  <Text style={styles.ratingReasonLabel}>Motivo:</Text>
+                  <Text style={styles.ratingReasonText}>{rating.reason}</Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => {
+                  setSelectedRating(rating);
+                  setShowAlertModal(true);
+                }}
+              >
+                <Ionicons name="warning" size={16} color="#fff" />
+                <Text style={styles.alertButtonText}>Enviar Alerta</Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
+      </View>
+    </ScrollView>
+  );
+
   if (loading && !stats) {
     return (
       <SafeAreaView style={styles.container}>
