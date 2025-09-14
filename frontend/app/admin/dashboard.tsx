@@ -168,6 +168,10 @@ export default function AdminDashboard() {
     try {
       const token = await AsyncStorage.getItem('access_token');
       const headers = { Authorization: `Bearer ${token}` };
+      
+      console.log('🔥 DEBUG: Loading admin data');
+      console.log('🔥 DEBUG: API_URL:', API_URL);
+      console.log('🔥 DEBUG: Token exists:', !!token);
 
       const [statsResponse, usersResponse, tripsResponse, reportsResponse, ratingsResponse] = await Promise.all([
         axios.get(`${API_URL}/api/admin/stats`, { headers }),
@@ -176,6 +180,9 @@ export default function AdminDashboard() {
         axios.get(`${API_URL}/api/admin/reports`, { headers }),
         axios.get(`${API_URL}/api/ratings/low`, { headers }),
       ]);
+
+      console.log('🔥 DEBUG: Ratings response:', ratingsResponse.status, ratingsResponse.data);
+      console.log('🔥 DEBUG: Number of low ratings:', ratingsResponse.data.length);
 
       setStats(statsResponse.data);
       setUsers(usersResponse.data);
