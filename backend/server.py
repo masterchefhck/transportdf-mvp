@@ -211,6 +211,19 @@ class AdminMessageCreate(BaseModel):
     user_id: str
     message: str
 
+# Chat Models
+class ChatMessage(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    trip_id: str
+    sender_id: str
+    sender_name: str
+    sender_type: UserType  # passenger, driver, admin
+    message: str = Field(..., max_length=250)  # 250 character limit
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class ChatMessageCreate(BaseModel):
+    message: str = Field(..., max_length=250)
+
 # Bulk Delete Models
 class BulkDeleteRequest(BaseModel):
     ids: List[str]
