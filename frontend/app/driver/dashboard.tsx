@@ -721,6 +721,31 @@ export default function DriverDashboard() {
               <Text style={styles.addressText}>{currentTrip.destination_address}</Text>
             </View>
 
+            {/* Passenger Info Section for Current Trip */}
+            {currentTrip.passenger_name && (
+              <View style={styles.passengerInfo}>
+                <Text style={styles.passengerInfoTitle}>Passageiro</Text>
+                <View style={styles.passengerDetails}>
+                  {currentTrip.passenger_photo ? (
+                    <Image source={{ uri: currentTrip.passenger_photo }} style={styles.passengerPhoto} />
+                  ) : (
+                    <View style={styles.defaultPassengerPhoto}>
+                      <Ionicons name="person" size={20} color="#666" />
+                    </View>
+                  )}
+                  <View style={styles.passengerTextInfo}>
+                    <Text style={styles.passengerName}>{currentTrip.passenger_name}</Text>
+                    <View style={styles.passengerRating}>
+                      <Ionicons name="star" size={14} color="#FF9800" />
+                      <Text style={styles.passengerRatingText}>
+                        {currentTrip.passenger_rating ? currentTrip.passenger_rating.toFixed(1) : '5.0'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
+
             <View style={styles.tripActions}>
               {currentTrip.status === 'accepted' && (
                 <TouchableOpacity
