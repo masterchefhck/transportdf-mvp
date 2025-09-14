@@ -104,6 +104,11 @@ export default function PassengerDashboard() {
   const [currentRating, setCurrentRating] = useState<number>(5.0);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   
+  // Photo modal states
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
+  const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
+  
   // Admin Messages states
   const [adminMessages, setAdminMessages] = useState<any[]>([]);
   const [showMessagesPanel, setShowMessagesPanel] = useState(false);
@@ -217,6 +222,12 @@ export default function PassengerDashboard() {
     if (!message.read) {
       markMessageAsRead(message.id);
     }
+  };
+
+  const handleViewPhoto = (photoUrl: string, userName: string) => {
+    setSelectedPhotoUrl(photoUrl);
+    setSelectedPhotoUser(userName);
+    setShowPhotoModal(true);
   };
 
   const pickImage = async () => {
@@ -624,15 +635,20 @@ export default function PassengerDashboard() {
             {/* Driver Info Section */}
             {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_name && (
               <View style={styles.driverInfo}>
-                <Text style={styles.driverInfoTitle}>Seu Motorista</Text>
+                <Text style={styles.driverInfoTitle}>Motorista</Text>
                 <View style={styles.driverDetails}>
-                  {currentTrip.driver_photo ? (
-                    <Image source={{ uri: currentTrip.driver_photo }} style={styles.driverPhoto} />
-                  ) : (
-                    <View style={styles.defaultDriverPhoto}>
-                      <Ionicons name="person" size={20} color="#666" />
-                    </View>
-                  )}
+                  <TouchableOpacity
+                    onPress={() => currentTrip.driver_photo && handleViewPhoto(currentTrip.driver_photo, currentTrip.driver_name || 'Motorista')}
+                    disabled={!currentTrip.driver_photo}
+                  >
+                    {currentTrip.driver_photo ? (
+                      <Image source={{ uri: currentTrip.driver_photo }} style={styles.driverPhoto} />
+                    ) : (
+                      <View style={styles.defaultDriverPhoto}>
+                        <Ionicons name="person" size={20} color="#666" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
                   <View style={styles.driverTextInfo}>
                     <Text style={styles.driverName}>{currentTrip.driver_name}</Text>
                     <View style={styles.driverRating}>
@@ -699,6 +715,26 @@ export default function PassengerDashboard() {
           <Text style={styles.actionText}>Ajuda</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Photo Modal */}
+      <Modal visible={showPhotoModal} transparent animationType="fade">
+        <View style={styles.photoModalOverlay}>
+          <View style={styles.photoModalContent}>
+            <View style={styles.photoModalHeader}>
+              <Text style={styles.photoModalTitle}>{selectedPhotoUser}</Text>
+              <TouchableOpacity
+                onPress={() => setShowPhotoModal(false)}
+                style={styles.photoModalCloseButton}
+              >
+                <Ionicons name="close" size={28} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            {selectedPhotoUrl && (
+              <Image source={{ uri: selectedPhotoUrl }} style={styles.fullSizePhoto} />
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* Request Trip Modal */}
       <Modal
