@@ -610,6 +610,65 @@ class TransportDFTester:
         else:
             self.log_test("User Rating Profile Update", False, f"Failed to get user profile (status: {status_code})", data)
 
+    def test_driver_alerts_endpoint(self):
+        """Test 24: Driver alerts endpoint - NEW ENDPOINT TEST"""
+        
+        if "driver" not in self.tokens:
+            self.log_test("Driver Alerts Endpoint", False, "No driver token available")
+            return
+            
+        success, data, status_code = self.make_request("GET", "/drivers/alerts", 
+                                                     auth_token=self.tokens["driver"])
+        
+        if success and isinstance(data, list):
+            self.log_test("Driver Alerts Endpoint", True, f"Driver alerts retrieved successfully - {len(data)} alerts found")
+            
+            # Verify data structure if alerts exist
+            if data:
+                alert = data[0]
+                required_fields = ["id", "admin_message", "created_at", "rating_stars", "rating_reason", "rating_date"]
+                missing_fields = [field for field in required_fields if field not in alert]
+                
+                if not missing_fields:
+                    self.log_test("Driver Alerts Data Structure", True, "All required fields present in alert data")
+                else:
+                    self.log_test("Driver Alerts Data Structure", False, f"Missing fields: {missing_fields}")
+                    
+                # Check if alerts are ordered by date (most recent first)
+                if len(data) > 1:
+                    dates_ordered = all(data[i]["created_at"] >= data[i+1]["created_at"] for i in range(len(data)-1))
+                    if dates_ordered:
+                        self.log_test("Driver Alerts Ordering", True, "Alerts correctly ordered by date (most recent first)")
+                    else:
+                        self.log_test("Driver Alerts Ordering", False, "Alerts not properly ordered by date")
+            else:
+                self.log_test("Driver Alerts Data Structure", True, "No alerts found - endpoint working but no data")
+        else:
+            self.log_test("Driver Alerts Endpoint", False, f"Failed to get driver alerts (status: {status_code})", data)
+
+    def test_driver_alerts_access_control(self):
+        """Test 25: Driver alerts access control - only drivers should access"""
+        
+        # Test with passenger token (should fail)
+        if "passenger" in self.tokens:
+            success, data, status_code = self.make_request("GET", "/drivers/alerts", 
+                                                         auth_token=self.tokens["passenger"])
+            
+            if not success and status_code == 403:
+                self.log_test("Driver Alerts Access Control - Passenger", True, "Passenger correctly denied access to driver alerts")
+            else:
+                self.log_test("Driver Alerts Access Control - Passenger", False, f"Passenger should not have access (status: {status_code})", data)
+        
+        # Test with admin token (should fail)
+        if "admin" in self.tokens:
+            success, data, status_code = self.make_request("GET", "/drivers/alerts", 
+                                                         auth_token=self.tokens["admin"])
+            
+            if not success and status_code == 403:
+                self.log_test("Driver Alerts Access Control - Admin", True, "Admin correctly denied access to driver alerts")
+            else:
+                self.log_test("Driver Alerts Access Control - Admin", False, f"Admin should not have access (status: {status_code})", data)
+
     def run_all_tests(self):
         """Run all backend tests in sequence"""
         print("=" * 80)
