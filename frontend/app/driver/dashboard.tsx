@@ -799,15 +799,25 @@ export default function DriverDashboard() {
                 </TouchableOpacity>
               )}
               
-              {/* Report Passenger Button */}
+              {/* Action Buttons */}
               {(currentTrip.status === 'in_progress' || currentTrip.status === 'accepted') && (
-                <TouchableOpacity
-                  style={[styles.reportButton]}
-                  onPress={handleReportPassenger}
-                >
-                  <Ionicons name="flag" size={16} color="#fff" />
-                  <Text style={styles.reportButtonText}>Reportar Passageiro</Text>
-                </TouchableOpacity>
+                <View style={styles.actionButtonsContainer}>
+                  <TouchableOpacity
+                    style={[styles.chatButton]}
+                    onPress={() => setShowChatModal(true)}
+                  >
+                    <Ionicons name="chatbubble" size={16} color="#fff" />
+                    <Text style={styles.chatButtonText}>Chat</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.reportButton]}
+                    onPress={handleReportPassenger}
+                  >
+                    <Ionicons name="flag" size={16} color="#fff" />
+                    <Text style={styles.reportButtonText}>Reportar Passageiro</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           </View>
