@@ -60,6 +60,7 @@ interface User {
   name: string;
   email: string;
   user_type: string;
+  profile_photo?: string;
 }
 
 interface Trip {
