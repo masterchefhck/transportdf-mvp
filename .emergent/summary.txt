@@ -1,52 +1,43 @@
 <analysis>
-This trajectory chronicles the development of the TransportDF ride-sharing MVP. It began with clarifying the scope and the user's explicit request to focus on passenger profile photo upload. The AI engineer successfully implemented photo upload functionality for both passenger and driver dashboards, including avatar clickability, image selection, and base64 upload to the backend. It also integrated driver information (photo, name, rating) into the passenger dashboard and ensured passenger information (photo, name, rating) was consistently visible in the driver's current trip view. Crucially, photo maximization modals were added to both passenger and driver dashboards, mirroring the admin dashboard's functionality. A significant portion of the conversation involved debugging frontend loading issues and correcting the server port, ultimately resolving connection problems. The trajectory concludes with the user providing an updated driver dashboard code for future use.
+This trajectory details the continued development of the TransportDF ride-sharing app. It began with the user providing an updated  file, which the AI engineer successfully replaced and verified, ensuring all previous functionalities like photo upload and trip management were preserved. The core of this trajectory then shifted to implementing a chat system between passengers and drivers when a trip is active. The AI designed and implemented this using a polling mechanism, adhering to a 250-character limit, and integrated it into both passenger and driver dashboards. Furthermore, the administrative dashboard was enhanced to include a Chat M/P section, and the backend's  endpoint was modified to provide comprehensive passenger and driver details for better oversight. The AI completed backend changes, created a reusable frontend chat component, and integrated it into both user dashboards. The trajectory concludes with the AI providing the complete modified and new code files to the user for local implementation, confirming backend stability and frontend functionality after resolving a port issue.
 </analysis>
 
 <product_requirements>
-The Transport App Brasília MVP is a ride-sharing application for Android/iOS, mimicking Uber. Key features include user management (passenger, driver, admin registration/login, blocking), trip management (requests, tracking, acceptance, completion), a reporting system for passengers/drivers, and a 5-star post-trip rating system for drivers (with mandatory reasons for low ratings). Admin features include viewing reports, sending alerts to drivers for low ratings, and managing users/trips. Initial enhancements focused on driver dashboard rating display and alert acknowledgment, admin bulk deletion and direct passenger messaging, and passenger dashboard user rating and admin message display. More recently, profile photo upload for passengers and drivers was added, along with admin dashboard display of user photos and clickable popups for enlarged viewing. The system now supports displaying driver/passenger photos and ratings dynamically across relevant dashboards.
+The Transport App Brasília MVP is a ride-sharing application for Android/iOS, mimicking Uber. It handles user management (passenger, driver, admin registration/login, blocking), trip management (requests, tracking, acceptance, completion), a reporting system, and a 5-star post-trip rating system. Admin features include report viewing, driver alerts, user/trip management, bulk deletion, and direct passenger messaging. Recent updates added profile photo upload for all user types, with admin/driver/passenger dashboards displaying these photos and offering clickable full-screen viewing. The current focus is on implementing a real-time chat system between passengers and drivers once a trip is accepted, utilizing polling for simplicity, and with a 250-character message limit. The admin dashboard must record these chats and display detailed passenger/driver information (photo, name, email, contact) alongside trip routes and statuses for better managerial control.
 </product_requirements>
 
 <key_technical_concepts>
--   **Frontend**: React Native, Expo, Expo Router, AsyncStorage, Axios, Expo-Location, Expo-Image-Picker, Ionicons.
--   **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT Authentication, Pydantic.
--   **Features**: User Authentication, Geolocation, Trip Lifecycle, Reporting, Rating, Admin Messaging, Bulk Deletion, Base64 Profile Photo Storage.
+- **Frontend**: React Native, Expo, Expo Router, AsyncStorage, Axios, Expo-Location, Expo-Image-Picker, Ionicons, custom .
+- **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT Authentication, Pydantic, new  model.
+- **Features**: User Authentication, Geolocation, Trip Lifecycle, Reporting, Rating, Admin Messaging, Bulk Deletion, Base64 Profile Photo Storage, Polling-based Chat System, Photo Maximization Modals.
 </key_technical_concepts>
 
 <code_architecture>
 
--   ****: Central FastAPI application managing API endpoints, data models, MongoDB interactions, and JWT authentication.
-    -   **Changes Made**: Initial restoration and addition of  to , ,  model, admin messaging endpoints,  and bulk delete endpoints. Later,  was added to  model,  for photo upload. Crucially,  was modified to include passenger's photo/rating, and  for passengers and drivers was enhanced to include driver/passenger details respectively (photo, name, rating).
--   ****: Admin control panel for system oversight.
-    -   **Changes Made**: Restored to original state with tabs, messaging, blocking, alerts. Added bulk selection/deletion features. Added  to  interface,  states and  for clickable photo thumbnails and a full-screen photo viewer modal (300x400px).
--   ****: Passenger interface for trip requests, reports, admin messages.
-    -   **Changes Made**: Restored to original, added  display, admin message fetching/display with notifications.  added to  interface.  installed, and / for avatar-based photo upload.  now fetches .  interface updated for , , . A new Driver Info Section was added to  to display driver details. Photo maximization modal functionality (states, , clickable avatar) was added.
--   ****: Driver interface for status, trips, reports.
-    -   **Changes Made**: Restored to original, added  display, .  added to  interface.  installed, and / for driver's own photo upload.  interface updated for , , .  now displays passenger's photo/rating. A Passenger Info Section was added to  to display passenger details throughout the trip lifecycle. Photo maximization modal functionality (states, , clickable passenger photos) was added. The entire file was recently replaced by the user's provided version.
+- ****: Central FastAPI application.
+    - **Changes Made**: Extended  model with  for admin display. Added  Pydantic model (, , , , ). Implemented new API endpoints:  for sending messages,  for fetching messages, and  modified to fetch and embed full passenger/driver user details (name, email, phone, photo) for each trip.
+- ****: Admin control panel.
+    - **Changes Made**: A new tab Chat M/P was added to the dashboard. The  component (implicitly, as the backend  was modified) now expects and can display richer user data (photos, names, emails, phones) for passengers and drivers involved in trips.
+- ****: Passenger interface.
+    - **Changes Made**: Integrated . New states (, , ) for chat functionality. A Chat button was added to the  (next to Report Driver) which triggers the  modal, visible only when a trip is  or .
+- ****: Driver interface.
+    - **Changes Made**: Initially, the entire file was replaced with a user-provided version. Post-replacement,  was integrated. New states (, , ) were added for chat functionality. A Chat button was added to the  (next to Report Passenger) which triggers the  modal, visible only when a trip is  or .
+- ** (New file)**: A reusable React Native component.
+    - **Summary of why this file is important**: Encapsulates the chat UI and logic, including message display, input field with character limit, sending messages via API (polling), and auto-scrolling. It's designed to be used by both passenger and driver dashboards.
 </code_architecture>
 
 <pending_tasks>
--   Integrate fully with Google Maps API for accurate distance matrix, routing, and real-time map display.
--   Implement an advanced payment system (e.g., Stripe, PagSegurop).
--   Expand geographical coverage beyond Brasília/DF.
--   Implement real-time features like chat and live updates using WebSockets/Socket.io.
--   Add push notifications (e.g., Firebase Cloud Messaging).
--   Develop detailed KYC and background check processes for drivers.
+- Integrate fully with Google Maps API for accurate distance matrix, routing, and real-time map display.
+- Implement an advanced payment system (e.g., Stripe, PagSegurop).
+- Expand geographical coverage beyond Brasília/DF.
+- Add push notifications (e.g., Firebase Cloud Messaging).
+- Develop detailed KYC and background check processes for drivers.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer completed implementing photo maximization for profile pictures across both the passenger and driver dashboards. This involved adding , , and  states, along with a  function to open a full-screen modal (300x400px) displaying the selected photo with the user's name.
-
-For the **Passenger Dashboard ()**, the passenger's own profile photo (from the clickable avatar) and the driver's profile photo (displayed when a trip is accepted) are now clickable to trigger this maximization modal.
-
-For the **Driver Dashboard ()**, the driver's own profile photo (from the clickable avatar) and the passenger's profile photo (displayed in available trip cards and the current trip section) are now clickable for maximization. This ensures that driver's can view passenger photos and vice-versa, similar to the admin functionality.
-
-Before this, the AI also resolved a critical issue where passenger information (name, rating, photo) was disappearing from the driver's current trip view after a trip was accepted/started. This was fixed by modifying the backend's  endpoint to consistently include passenger details for drivers, and updating the driver frontend to display this information in the .
-
-The previous interactions also involved debugging frontend loading issues related to incorrect port usage (initially using 3000 instead of 8081) and Expo tunnel/CI modes, which were resolved by using  directly and cleaning caches.
-
-The very last action in the trajectory was the user providing a new, complete  file, requesting it be used as the definitive version for all future adjustments, which the AI acknowledged.
+Immediately prior to this summary, the AI engineer had successfully implemented the chat system between drivers and passengers and integrated it into their respective dashboards. This included backend API endpoints for sending and retrieving messages (using a polling mechanism) and a reusable  for the frontend. The admin dashboard was also updated to include a Chat M/P tab, and its trip view was enhanced to display comprehensive passenger and driver details for each trip. The AI confirmed the backend was fully operational and validated frontend loading after resolving a port issue. The very last explicit request from the user was to provide the *complete* code for the driver, passenger, and admin dashboards (which have the chat integration), after having already provided separate files for chat-related modifications and the new chat component. The AI was in the process of fulfilling this request by generating the full  and was about to do the same for the driver and admin dashboards.
 </current_work>
 
 <optional_next_step>
-Replace the current  file with the new code provided by the user.
+Provide the complete  and  files to the user.
 </optional_next_step>

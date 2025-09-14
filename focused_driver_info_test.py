@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://photo-upload-ride.preview.emergentagent.com/api"
+BASE_URL = "https://brasilia-rideapp.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 class DriverInfoTester:
