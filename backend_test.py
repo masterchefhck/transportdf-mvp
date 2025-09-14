@@ -634,6 +634,19 @@ class TransportDFTester:
         self.test_admin_users_list()
         self.test_admin_trips_list()
         
+        # Rating System Tests
+        print("\n" + "=" * 50)
+        print("🌟 TESTING RATING SYSTEM")
+        print("=" * 50)
+        self.test_rating_5_stars_no_reason()
+        self.test_rating_3_stars_with_reason()
+        self.test_rating_duplicate_prevention()
+        self.test_rating_without_reason_validation()
+        self.test_admin_get_low_ratings()
+        self.test_admin_send_alert()
+        self.test_user_rating_calculation()
+        self.test_user_rating_updated_in_profile()
+        
         # Summary
         print("=" * 80)
         print("📊 TEST SUMMARY")
