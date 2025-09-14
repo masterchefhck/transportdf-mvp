@@ -54,7 +54,7 @@ export default function ChatComponent({
     if (visible) {
       loadMessages();
       // Set up polling for new messages every 3 seconds
-      const interval = setInterval(loadMessages, 3000);
+      const interval = setInterval(loadMessages, 5000);
       return () => clearInterval(interval);
     }
   }, [visible, tripId]);
