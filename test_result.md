@@ -323,6 +323,18 @@ test_plan:
         agent: "testing"
         comment: "🎯 PASSENGER PROFILE PHOTO UPLOAD RE-TESTADO COM SUCESSO TOTAL! Executei testes abrangentes conforme review request específico com taxa de sucesso de 95% (57/60 testes passaram). FOCO NO REVIEW REQUEST: ✅ PUT /api/users/profile-photo com dados base64 válidos para usuário passageiro - funcionando perfeitamente, ✅ GET /api/users/me retorna profile_photo para passageiros - foto salva e recuperada corretamente, ✅ GET /api/trips/available inclui dados de foto do passageiro - integração completa funcionando (nome='Maria Silva Santos', rating=5.0, photo=present), ✅ Validação de autenticação - 403 para requests não autenticados (comportamento correto), ✅ Validação de payload - rejeita payloads vazios/inválidos corretamente, ✅ Funcionalidade de sobrescrever foto existente - atualização perfeita. Todos os cenários específicos do review request testados e aprovados. Sistema production-ready para funcionalidade de foto de perfil de passageiros!"
 
+  - task: "Driver Information in Trip Responses"
+    implemented: false
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ PROBLEMA CRÍTICO IDENTIFICADO - GET /api/trips/my não inclui informações do motorista! Executei 4 testes específicos do review request: ✅ Driver profile photo upload funcionando, ❌ Trip flow with driver info - informações do motorista NÃO incluídas na resposta para passageiro, ❌ Trip status updates - GET /api/trips/my não retorna driver info para trips 'accepted'/'in_progress', ❌ Driver info completeness - faltando todos os campos (driver_name, driver_rating, driver_photo). CAUSA RAIZ: Endpoint GET /api/trips/my (linhas 520-529) retorna apenas objetos Trip básicos sem enriquecer com dados do motorista, diferente do GET /api/trips/available que enriquece com dados do passageiro. SOLUÇÃO NECESSÁRIA: Modificar endpoint para incluir driver_name, driver_rating, driver_photo quando trip.driver_id existe e trip status é 'accepted', 'in_progress' ou 'completed'."
+
 agent_communication:
   - agent: "main"
     message: "MVP do SkyCab implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
