@@ -613,10 +613,60 @@ export default function AdminDashboard() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Usuários Registrados</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Usuários Registrados</Text>
+          <View style={styles.bulkActions}>
+            <TouchableOpacity
+              style={styles.selectAllButton}
+              onPress={handleSelectAllUsers}
+            >
+              <Ionicons 
+                name={selectedUsers.length === users.filter(u => u.user_type !== 'admin').length ? "checkbox" : "square-outline"} 
+                size={20} 
+                color="#FF9800" 
+              />
+              <Text style={styles.selectAllText}>Selecionar Todos</Text>
+            </TouchableOpacity>
+            {selectedUsers.length > 0 && (
+              <TouchableOpacity
+                style={[styles.bulkActionButton, { backgroundColor: '#f44336' }]}
+                onPress={handleBulkDeleteUsers}
+                disabled={bulkOperationLoading}
+              >
+                {bulkOperationLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="trash" size={16} color="#fff" />
+                    <Text style={styles.bulkActionText}>Deletar ({selectedUsers.length})</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+        
         {users.map(user => (
           <View key={user.id} style={styles.userCard}>
             <View style={styles.userInfo}>
+              {user.user_type !== 'admin' && (
+                <TouchableOpacity
+                  style={styles.checkbox}
+                  onPress={() => {
+                    if (selectedUsers.includes(user.id)) {
+                      setSelectedUsers(selectedUsers.filter(id => id !== user.id));
+                    } else {
+                      setSelectedUsers([...selectedUsers, user.id]);
+                    }
+                  }}
+                >
+                  <Ionicons
+                    name={selectedUsers.includes(user.id) ? "checkbox" : "square-outline"}
+                    size={20}
+                    color="#FF9800"
+                  />
+                </TouchableOpacity>
+              )}
               <View style={[styles.userTypeIndicator, { backgroundColor: getUserTypeColor(user.user_type) }]} />
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{user.name}</Text>
