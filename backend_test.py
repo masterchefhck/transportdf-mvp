@@ -90,10 +90,13 @@ class ChatEndpointsTestSuite:
             
     async def setup_test_users(self):
         """Setup test users for chat testing"""
+        import time
+        timestamp = str(int(time.time()))
+        
         users_to_create = [
-            ("passenger", "Maria Silva Santos", "maria.chat@test.com"),
-            ("driver", "João Carlos Oliveira", "joao.chat@test.com"),
-            ("admin", "Admin Chat Test", "admin.chat@test.com")
+            ("passenger", "Maria Silva Santos", f"maria.chat.{timestamp}@test.com"),
+            ("driver", "João Carlos Oliveira", f"joao.chat.{timestamp}@test.com"),
+            ("admin", "Admin Chat Test", f"admin.chat.{timestamp}@test.com")
         ]
         
         success_count = 0
