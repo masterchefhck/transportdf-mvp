@@ -974,14 +974,31 @@ class TransportDFTester:
     def test_admin_send_message_to_passenger(self):
         """Test 37: Admin send message to passenger"""
         
-        if "admin" not in self.tokens or "passenger" not in self.tokens:
-            self.log_test("Admin Send Message to Passenger", False, "Admin or passenger token not available")
+        if "admin" not in self.tokens:
+            self.log_test("Admin Send Message to Passenger", False, "Admin token not available")
             return
             
-        passenger_id = self.users.get("passenger", {}).get("id", "")
-        if not passenger_id:
-            self.log_test("Admin Send Message to Passenger", False, "Passenger ID not available")
-            return
+        # Get current user info to ensure we have the correct passenger ID
+        success, passenger_data, _ = self.make_request("GET", "/users/me", 
+                                                     auth_token=self.tokens.get("passenger", ""))
+        
+        if not success or not passenger_data.get("id"):
+            # Try to get passenger from users list
+            success, users_data, _ = self.make_request("GET", "/admin/users", 
+                                                     auth_token=self.tokens["admin"])
+            
+            if success and users_data:
+                passenger_user = next((u for u in users_data if u.get("user_type") == "passenger"), None)
+                if passenger_user:
+                    passenger_id = passenger_user["id"]
+                else:
+                    self.log_test("Admin Send Message to Passenger", False, "No passenger user found")
+                    return
+            else:
+                self.log_test("Admin Send Message to Passenger", False, "Could not retrieve passenger ID")
+                return
+        else:
+            passenger_id = passenger_data["id"]
             
         message_data = {
             "user_id": passenger_id,
