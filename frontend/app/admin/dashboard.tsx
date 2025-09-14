@@ -948,7 +948,7 @@ export default function AdminDashboard() {
                   </Text>
                 </View>
               </View>
-              <Text style={styles.tripPrice}>R$ {trip.estimated_price.toFixed(2)}</Text>
+              <Text style={styles.tripPrice}>R$ {(trip.estimated_price || 0).toFixed(2)}</Text>
             </View>
 
             <View style={styles.addressRow}>
