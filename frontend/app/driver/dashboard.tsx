@@ -97,6 +97,7 @@ export default function DriverDashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [currentRating, setCurrentRating] = useState<number>(5.0);
   
   // Report states
   const [myReports, setMyReports] = useState<Report[]>([]);
