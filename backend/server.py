@@ -529,20 +529,12 @@ async def get_my_trips(current_user: User = Depends(get_current_user)):
             trip_dict = trip_data.dict()
             
             # Add driver info if trip has a driver assigned
-            print(f"DEBUG: Trip {trip.get('id', 'unknown')[:8]}... - driver_id: {trip.get('driver_id')}, status: {trip.get('status')}")
             if trip.get("driver_id") and trip.get("status") in ["accepted", "in_progress", "completed"]:
-                print(f"DEBUG: Fetching driver info for driver_id: {trip['driver_id']}")
                 driver = await db.users.find_one({"id": trip["driver_id"]})
                 if driver:
-                    print(f"DEBUG: Found driver: {driver.get('name', 'Unknown')}")
                     trip_dict["driver_name"] = driver["name"]
                     trip_dict["driver_rating"] = driver.get("rating", 5.0)
                     trip_dict["driver_photo"] = driver.get("profile_photo")
-                    print(f"DEBUG: Added driver info to trip_dict")
-                else:
-                    print(f"DEBUG: Driver not found in database")
-            else:
-                print(f"DEBUG: Conditions not met for adding driver info")
             
             enriched_trips.append(trip_dict)
         
