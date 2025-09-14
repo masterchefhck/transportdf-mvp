@@ -695,6 +695,134 @@ async def unblock_user(user_id: str, current_user: User = Depends(get_current_us
     
     return {"message": "User unblocked successfully"}
 
+# Rating endpoints
+@api_router.post("/ratings/create")
+async def create_rating(rating_data: RatingCreate, current_user: User = Depends(get_current_user)):
+    """Create a rating after trip completion (passenger rates driver)"""
+    # Verify trip exists and current user is the passenger
+    trip = await db.trips.find_one({
+        "id": rating_data.trip_id,
+        "passenger_id": current_user.id,
+        "status": TripStatus.COMPLETED
+    })
+    
+    if not trip:
+        raise HTTPException(status_code=404, detail="Completed trip not found")
+    
+    # Check if rating already exists for this trip
+    existing_rating = await db.ratings.find_one({
+        "trip_id": rating_data.trip_id,
+        "rater_id": current_user.id
+    })
+    
+    if existing_rating:
+        raise HTTPException(status_code=400, detail="Rating already exists for this trip")
+    
+    # Validate reason field for ratings < 5
+    if rating_data.rating < 5 and not rating_data.reason:
+        raise HTTPException(status_code=400, detail="Reason is required for ratings below 5 stars")
+    
+    # Create rating
+    rating = Rating(
+        trip_id=rating_data.trip_id,
+        rater_id=current_user.id,
+        rated_user_id=rating_data.rated_user_id,
+        rating=rating_data.rating,
+        reason=rating_data.reason
+    )
+    
+    await db.ratings.insert_one(rating.dict())
+    
+    # Update user's average rating
+    new_average = await calculate_user_rating(rating_data.rated_user_id)
+    await db.users.update_one(
+        {"id": rating_data.rated_user_id},
+        {"$set": {"rating": new_average}}
+    )
+    
+    return {"message": "Rating created successfully", "rating_id": rating.id}
+
+@api_router.get("/ratings/low")
+async def get_low_ratings(current_user: User = Depends(get_current_user)):
+    """Get ratings below 5 stars for admin panel"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all ratings below 5 stars with user details
+    pipeline = [
+        {"$match": {"rating": {"$lt": 5}}},
+        {"$lookup": {
+            "from": "users",
+            "localField": "rated_user_id",
+            "foreignField": "id",
+            "as": "rated_user"
+        }},
+        {"$lookup": {
+            "from": "users", 
+            "localField": "rater_id",
+            "foreignField": "id",
+            "as": "rater"
+        }},
+        {"$lookup": {
+            "from": "trips",
+            "localField": "trip_id", 
+            "foreignField": "id",
+            "as": "trip"
+        }},
+        {"$sort": {"created_at": -1}}
+    ]
+    
+    ratings = await db.ratings.aggregate(pipeline).to_list(100)
+    
+    # Process results to include user names
+    result = []
+    for rating in ratings:
+        rated_user = rating["rated_user"][0] if rating["rated_user"] else {}
+        rater = rating["rater"][0] if rating["rater"] else {}
+        trip = rating["trip"][0] if rating["trip"] else {}
+        
+        result.append({
+            "id": rating["id"],
+            "rating": rating["rating"],
+            "reason": rating.get("reason"),
+            "created_at": rating["created_at"],
+            "rated_user_name": rated_user.get("name", "Unknown"),
+            "rated_user_id": rating["rated_user_id"],
+            "rater_name": rater.get("name", "Unknown"),
+            "trip_pickup": trip.get("pickup_address", "Unknown"),
+            "trip_destination": trip.get("destination_address", "Unknown")
+        })
+    
+    return result
+
+@api_router.post("/admin/ratings/{rating_id}/alert")
+async def send_driver_alert(rating_id: str, alert_data: AdminAlertCreate, current_user: User = Depends(get_current_user)):
+    """Send alert message to driver with low rating"""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Verify rating exists
+    rating = await db.ratings.find_one({"id": rating_id})
+    if not rating:
+        raise HTTPException(status_code=404, detail="Rating not found")
+    
+    # Create admin alert
+    alert = AdminAlert(
+        rating_id=rating_id,
+        driver_id=rating["rated_user_id"],
+        admin_message=alert_data.message
+    )
+    
+    await db.admin_alerts.insert_one(alert.dict())
+    
+    return {"message": "Alert sent to driver successfully"}
+
+@api_router.get("/users/rating")
+async def get_user_rating(current_user: User = Depends(get_current_user)):
+    """Get current user's rating"""
+    rating = await calculate_user_rating(current_user.id)
+    return {"rating": rating}
+
 # Basic health check
 @api_router.get("/health")
 async def health_check():
