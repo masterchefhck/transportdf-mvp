@@ -892,7 +892,7 @@ export default function PassengerDashboard() {
               <Ionicons name="radio-button-on" size={20} color="#4CAF50" />
               <TextInput
                 style={styles.input}
-                placeholder="Endereço de origem"
+                placeholder="Ex: Asa Norte, W3 Sul, Taguatinga, Centro..."
                 placeholderTextColor="#666"
                 value={pickupAddress}
                 onChangeText={setPickupAddress}
@@ -903,13 +903,17 @@ export default function PassengerDashboard() {
               <Ionicons name="location" size={20} color="#f44336" />
               <TextInput
                 style={styles.input}
-                placeholder="Endereço de destino"
+                placeholder="Ex: Asa Sul, Gama, Aeroporto, Shopping..."
                 placeholderTextColor="#666"
                 value={destinationAddress}
                 onChangeText={setDestinationAddress}
                 onEndEditing={calculateEstimatePrice}
               />
             </View>
+
+            <Text style={styles.addressHint}>
+              💡 Você pode usar nomes de bairros, pontos de referência ou endereços de Brasília
+            </Text>
 
             {estimatedPrice > 0 && (
               <View style={styles.priceEstimate}>
