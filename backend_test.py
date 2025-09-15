@@ -1,11 +1,30 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for Transport App Brasília MVP - Current Bug Fixes Testing
-Testing the bug fixes implemented as per current review request:
-- BUG 1: Driver dashboard - informações do passageiro não aparecem
-- BUG 2: Admin dashboard - informações dos usuários nas viagens
-- Enhanced GET /api/trips/my endpoint with user aggregation
-- Enhanced GET /api/admin/trips endpoint with complete user information
+Backend Test Suite for Transport App Brasília MVP - Rating Modal Bug Fix Testing
+Testing the bug fix for persistent rating modal in passenger dashboard:
+
+BUG ORIGINAL: Modal de avaliação aparecia repetidamente após o passageiro já ter enviado a avaliação com sucesso.
+
+CORREÇÕES IMPLEMENTADAS:
+1. Backend - endpoint POST /api/ratings/create:
+   - Agora marca a viagem como "rated": true
+   - Adiciona passenger_rating_given com o valor da avaliação
+   - Previne criação de avaliações duplicadas
+
+2. Frontend - checkCurrentTrip():
+   - Verifica !trip.rated E !trip.passenger_rating_given 
+   - Adiciona condição !showRatingModal para evitar modal duplo
+
+3. Frontend - submitRating():
+   - Limpa completamente todos os estados relacionados
+   - Trata erro de avaliação duplicada
+   - Força refresh dos dados após 1 segundo
+
+CENÁRIO DE TESTE COMPLETO:
+1. Criar usuários e viagem
+2. Completar viagem e testar avaliação
+3. Verificar se modal aparece apenas UMA vez
+4. Testar proteção contra avaliações duplicadas
 """
 
 import asyncio
