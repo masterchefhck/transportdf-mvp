@@ -532,7 +532,7 @@ export default function PassengerDashboard() {
     }
   };
 
-  const calculateEstimatePrice = () => {  
+  const calculateEstimatePrice = (suggestion?: any) => {  
     // Simulate price calculation (in real app, would use Google Maps Distance Matrix)
     const basePrice = 5.0;
     const randomDistance = Math.random() * 20 + 2; // 2-22 km
