@@ -683,10 +683,12 @@ export default function PassengerDashboard() {
       if (response.data) {
         setCurrentTrip(response.data);
         setShowGoogleMapModal(false);
-        showAlert(
-          'Sucesso', 
-          `Corrida solicitada!\nPreço estimado: R$ ${tripData.estimatedPrice.toFixed(2)}\nDistância: ${tripData.distance} • Tempo: ${tripData.duration}`
-        );
+        
+        const successMessage = tripData.passengerName 
+          ? `Corrida solicitada para ${tripData.passengerName}!\nPreço estimado: R$ ${tripData.estimatedPrice.toFixed(2)}\nDistância: ${tripData.distance} • Tempo: ${tripData.duration}`
+          : `Corrida solicitada!\nPreço estimado: R$ ${tripData.estimatedPrice.toFixed(2)}\nDistância: ${tripData.distance} • Tempo: ${tripData.duration}`;
+        
+        showAlert('Sucesso', successMessage);
       }
     } catch (error: any) {
       console.error('Erro ao solicitar corrida:', error);
