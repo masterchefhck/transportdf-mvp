@@ -741,6 +741,67 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  webSearchContainer: {
+    flex: 1,
+  },
+  suggestionsList: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    marginTop: 4,
+    maxHeight: 200,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  webMapPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1a1a1a',
+    padding: 40,
+  },
+  webMapTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  webMapSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  locationInfo: {
+    marginTop: 30,
+    width: '100%',
+    maxWidth: 300,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  locationText: {
+    color: '#fff',
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
+  },
+  routeInfo: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+  },
+  routeText: {
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 4,
+  },
 });
 
 export default GoogleMapView;
