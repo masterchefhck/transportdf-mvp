@@ -1680,10 +1680,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tripTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
-    marginLeft: 12,
+    color: '#333',
   },
   tripDetails: {
     marginBottom: 16,
