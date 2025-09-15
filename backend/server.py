@@ -224,6 +224,17 @@ class ChatMessage(BaseModel):
 class ChatMessageCreate(BaseModel):
     message: str = Field(..., max_length=250)
 
+# Password Reset Models
+class PasswordResetRequest(BaseModel):
+    email: str
+    cpf: str
+
+class PasswordReset(BaseModel):
+    email: str
+    cpf: str
+    new_password: str = Field(..., min_length=6)
+    confirm_password: str = Field(..., min_length=6)
+
 # Bulk Delete Models
 class BulkDeleteRequest(BaseModel):
     ids: List[str]
