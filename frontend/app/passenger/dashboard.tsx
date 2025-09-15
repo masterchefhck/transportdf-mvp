@@ -162,6 +162,25 @@ export default function PassengerDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // Start progress animation when trip status is "requested"
+  useEffect(() => {
+    if (currentTrip?.status === 'requested') {
+      // Start looping animation
+      const startAnimation = () => {
+        progressAnim.setValue(0);
+        Animated.timing(progressAnim, {
+          toValue: 1,
+          duration: 2000, // 2 seconds for full progress
+          useNativeDriver: false,
+        }).start(() => {
+          // Loop the animation
+          startAnimation();
+        });
+      };
+      startAnimation();
+    }
+  }, [currentTrip?.status]);
+
   const loadUserData = async () => {
     try {
       const token = await AsyncStorage.getItem('access_token');
