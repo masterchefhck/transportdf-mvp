@@ -2410,4 +2410,72 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
+  // Trip users info styles
+  tripUsersSection: {
+    marginVertical: 12,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+  },
+  usersTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FF9800',
+    marginBottom: 8,
+  },
+  usersContainer: {
+    gap: 8,
+  },
+  userInfoCard: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 6,
+    padding: 8,
+  },
+  userTypeLabel: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 4,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  userPhoto: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  defaultUserPhoto: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#333',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  userPhone: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 2,
+  },
+  userRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  userRatingText: {
+    fontSize: 12,
+    color: '#FF9800',
+    fontWeight: 'bold',
+  },
 });
