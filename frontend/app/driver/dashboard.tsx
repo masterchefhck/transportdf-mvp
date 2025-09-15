@@ -821,13 +821,23 @@ export default function DriverDashboard() {
               {/* Chat and Report Buttons */}
               {(currentTrip.status === 'in_progress' || currentTrip.status === 'accepted') && (
                 <>
-                  <TouchableOpacity
-                    style={styles.chatButton}
-                    onPress={() => setShowChatModal(true)}
-                  >
-                    <Ionicons name="chatbubbles" size={16} color="#fff" />
-                    <Text style={styles.chatButtonText}>Chat com Passageiro</Text>
-                  </TouchableOpacity>
+                  <View style={styles.chatButtonContainer}>
+                    <TouchableOpacity
+                      style={styles.chatButton}
+                      onPress={() => {
+                        setShowChatModal(true);
+                        setNewMessageAlert(false); // Clear alert when opening chat
+                      }}
+                    >
+                      <Ionicons name="chatbubbles" size={16} color="#fff" />
+                      <Text style={styles.chatButtonText}>Chat com Passageiro</Text>
+                      {newMessageAlert && (
+                        <View style={styles.messageAlert}>
+                          <Text style={styles.messageAlertText}>Nova!</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                   
                   <TouchableOpacity
                     style={[styles.reportButton]}
