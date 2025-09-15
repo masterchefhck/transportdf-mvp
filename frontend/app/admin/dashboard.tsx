@@ -793,11 +793,15 @@ export default function AdminDashboard() {
                 <Text style={styles.userPhone}>Telefone: {user.phone}</Text>
                 <Text style={styles.userType}>
                   {user.user_type === 'driver' ? 'Motorista' : 
-                   user.user_type === 'passenger' ? 'Passageiro' : 'Admin'}
+                   user.user_type === 'passenger' ? 'Passageiro' : 
+                   user.user_type === 'admin' ? (user.is_admin_full ? 'Admin Full' : 'Admin') : 'Admin'}
                   {user.user_type === 'driver' && user.driver_status && (
                     <Text style={[styles.driverStatus, { color: user.driver_status === 'online' ? '#4CAF50' : '#666' }]}>
                       {' • '}{user.driver_status === 'online' ? 'Online' : 'Offline'}
                     </Text>
+                  )}
+                  {user.user_type === 'admin' && user.is_admin_full && (
+                    <Text style={styles.adminFullBadge}> ⭐</Text>
                   )}
                 </Text>
                 <Text style={styles.userDate}>Registrado em: {formatDate(user.created_at)}</Text>
