@@ -446,46 +446,76 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
             <Text style={styles.loadingText}>Obtendo sua localização...</Text>
           </View>
         ) : (
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            provider={PROVIDER_GOOGLE}
-            region={region}
-            showsUserLocation={true}
-            showsMyLocationButton={false}
-            toolbarEnabled={false}
-            loadingEnabled={true}
-          >
-            {/* Origin Marker */}
-            {userLocation && (
-              <Marker
-                coordinate={userLocation}
-                title="Sua localização"
-                description={originAddress}
-                pinColor="#4CAF50"
-              />
-            )}
-            
-            {/* Destination Marker */}
-            {destination && (
-              <Marker
-                coordinate={destination}
-                title="Destino"
-                description={destinationAddress}
-                pinColor="#f44336"
-              />
-            )}
-            
-            {/* Route Polyline */}
-            {route && (
-              <Polyline
-                coordinates={route.coordinates}
-                strokeColor="#2196F3"
-                strokeWidth={4}
-                lineDashPattern={[1]}
-              />
-            )}
-          </MapView>
+          Platform.OS !== 'web' && MapView ? (
+            <MapView
+              ref={mapRef}
+              style={styles.map}
+              provider={PROVIDER_GOOGLE}
+              region={region}
+              showsUserLocation={true}
+              showsMyLocationButton={false}
+              toolbarEnabled={false}
+              loadingEnabled={true}
+            >
+              {/* Origin Marker */}
+              {userLocation && (
+                <Marker
+                  coordinate={userLocation}
+                  title="Sua localização"
+                  description={originAddress}
+                  pinColor="#4CAF50"
+                />
+              )}
+              
+              {/* Destination Marker */}
+              {destination && (
+                <Marker
+                  coordinate={destination}
+                  title="Destino"
+                  description={destinationAddress}
+                  pinColor="#f44336"
+                />
+              )}
+              
+              {/* Route Polyline */}
+              {route && (
+                <Polyline
+                  coordinates={route.coordinates}
+                  strokeColor="#2196F3"
+                  strokeWidth={4}
+                  lineDashPattern={[1]}
+                />
+              )}
+            </MapView>
+          ) : (
+            // Web-compatible map placeholder
+            <View style={[styles.map, styles.webMapPlaceholder]}>
+              <Ionicons name="map" size={80} color="#666" />
+              <Text style={styles.webMapTitle}>Mapa não disponível na web</Text>
+              <Text style={styles.webMapSubtitle}>
+                Use o aplicativo mobile para visualizar o mapa interativo
+              </Text>
+              
+              {userLocation && destination && (
+                <View style={styles.locationInfo}>
+                  <View style={styles.locationRow}>
+                    <Ionicons name="location" size={16} color="#007AFF" />
+                    <Text style={styles.locationText}>Origem: {originAddress}</Text>
+                  </View>
+                  <View style={styles.locationRow}>
+                    <Ionicons name="flag" size={16} color="#FF3B30" />
+                    <Text style={styles.locationText}>Destino: {destinationAddress}</Text>
+                  </View>
+                  {route && (
+                    <View style={styles.routeInfo}>
+                      <Text style={styles.routeText}>Distância: {route.distance}</Text>
+                      <Text style={styles.routeText}>Tempo: {route.duration}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+          )
         )}
       </View>
 
