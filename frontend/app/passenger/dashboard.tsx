@@ -81,6 +81,9 @@ interface Trip {
   status: string;
   requested_at: string;
   rated?: boolean;
+  passenger_name?: string;
+  requested_by?: string;
+  is_for_another_person?: boolean;
 }
 
 interface Report {
