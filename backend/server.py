@@ -567,10 +567,20 @@ async def get_my_trips(current_user: User = Depends(get_current_user)):
     # Process results to include user details
     result = []
     for trip in trips:
+        # Clean trip data by removing MongoDB ObjectId fields and nested arrays
+        trip_clean = {}
+        for k, v in trip.items():
+            if k not in ["_id", "passenger", "driver"]:
+                # Convert datetime objects to ISO strings for JSON serialization
+                if isinstance(v, datetime):
+                    trip_clean[k] = v.isoformat()
+                else:
+                    trip_clean[k] = v
+        
         if current_user.user_type == UserType.PASSENGER:
             driver = trip["driver"][0] if trip["driver"] else {}
             trip_data = {
-                **trip,
+                **trip_clean,
                 "driver_name": driver.get("name"),
                 "driver_photo": driver.get("profile_photo"),
                 "driver_rating": driver.get("rating"),
@@ -579,7 +589,7 @@ async def get_my_trips(current_user: User = Depends(get_current_user)):
         else:  # DRIVER
             passenger = trip["passenger"][0] if trip["passenger"] else {}
             trip_data = {
-                **trip,
+                **trip_clean,
                 "passenger_name": passenger.get("name"),
                 "passenger_photo": passenger.get("profile_photo"),
                 "passenger_rating": passenger.get("rating"),
