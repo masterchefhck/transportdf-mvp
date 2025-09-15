@@ -135,8 +135,11 @@ export default function PassengerDashboard() {
   const [showChatModal, setShowChatModal] = useState(false);
   const [newMessageAlert, setNewMessageAlert] = useState(false);
 
-  // Google Map states
+  // Google Map states - NOVOS ESTADOS
+  const [showTripTypeModal, setShowTripTypeModal] = useState(false);
   const [showGoogleMapModal, setShowGoogleMapModal] = useState(false);
+  const [tripIsForMe, setTripIsForMe] = useState(true);
+  const [tripPassengerName, setTripPassengerName] = useState('');
 
   // Photo modal states
   const [showPhotoModal, setShowPhotoModal] = useState(false);
