@@ -2353,4 +2353,34 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 2,
   },
+  webSuggestionsContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#333',
+    borderRadius: 8,
+  },
+  webSuggestionsTitle: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  webSuggestionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  webSuggestionButton: {
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  webSuggestionText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
