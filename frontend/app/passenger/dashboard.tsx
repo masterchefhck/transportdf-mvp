@@ -403,31 +403,57 @@ export default function PassengerDashboard() {
   };
 
   const handleRequestTrip = async () => {
-    if (!pickupAddress || !destinationAddress) {
-      showAlert('Erro', 'Preencha origem e destino');
+    if (!pickupAddress.trim() || !destinationAddress.trim()) {
+      showAlert('Erro', 'Preencha os endereços de origem e destino');
       return;
     }
 
     if (!location) {
-      showAlert('Erro', 'Localização não encontrada');
+      showAlert('Erro', 'Localização não disponível');
       return;
     }
 
     setLoading(true);
     try {
+      // Geocode pickup address
+      const pickupGeocode = await geocodeAddress(pickupAddress);
+      if (!pickupGeocode) {
+        showAlert('Erro', 'Endereço de origem não encontrado');
+        return;
+      }
+
+      // Geocode destination address
+      const destinationGeocode = await geocodeAddress(destinationAddress);
+      if (!destinationGeocode) {
+        showAlert('Erro', 'Endereço de destino não encontrado');
+        return;
+      }
+
+      // Get route for better price calculation
+      const route = await getDirections(
+        {
+          lat: pickupGeocode.geometry.location.lat,
+          lng: pickupGeocode.geometry.location.lng,
+        },
+        {
+          lat: destinationGeocode.geometry.location.lat,
+          lng: destinationGeocode.geometry.location.lng,
+        }
+      );
+
+      const estimatedPrice = route ? calculateTripPrice(route.distance) : 10.0;
+
       const token = await AsyncStorage.getItem('access_token');
-      
-      // For MVP, using current location as pickup and simulated destination coordinates
       const response = await axios.post(
         `${API_URL}/api/trips/request`,
         {
           passenger_id: user?.id,
-          pickup_latitude: location.coords.latitude,
-          pickup_longitude: location.coords.longitude,
-          pickup_address: pickupAddress,
-          destination_latitude: location.coords.latitude + (Math.random() - 0.5) * 0.01,
-          destination_longitude: location.coords.longitude + (Math.random() - 0.5) * 0.01,
-          destination_address: destinationAddress,
+          pickup_latitude: pickupGeocode.geometry.location.lat,
+          pickup_longitude: pickupGeocode.geometry.location.lng,
+          pickup_address: pickupGeocode.formatted_address,
+          destination_latitude: destinationGeocode.geometry.location.lat,
+          destination_longitude: destinationGeocode.geometry.location.lng,
+          destination_address: destinationGeocode.formatted_address,
           estimated_price: estimatedPrice,
         },
         {
@@ -435,12 +461,22 @@ export default function PassengerDashboard() {
         }
       );
 
-      setCurrentTrip(response.data);
-      setShowRequestModal(false);
-      showAlert('Sucesso', 'Viagem solicitada! Aguardando motorista...');
-    } catch (error) {
-      console.error('Error requesting trip:', error);
-      showAlert('Erro', 'Erro ao solicitar viagem');
+      if (response.data) {
+        setCurrentTrip(response.data);
+        setPickupAddress('');
+        setDestinationAddress('');
+        showAlert(
+          'Sucesso', 
+          `Corrida solicitada! Preço estimado: R$ ${estimatedPrice.toFixed(2)}\n${route ? `Distância: ${route.distance} • Tempo: ${route.duration}` : ''}`
+        );
+        
+        // Start progress animation
+        startProgressAnimation();
+      }
+    } catch (error: any) {
+      console.error('Erro ao solicitar corrida:', error);
+      const errorMessage = error.response?.data?.detail || 'Erro ao solicitar corrida';
+      showAlert('Erro', errorMessage);
     } finally {
       setLoading(false);
     }
