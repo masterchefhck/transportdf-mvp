@@ -1624,11 +1624,11 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#333',
   },
   locationText: {
     fontSize: 14,
-    color: '#888',
+    color: '#666',
     marginTop: 2,
   },
   headerActions: {
