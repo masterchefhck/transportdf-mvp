@@ -1218,7 +1218,7 @@ async def reset_password(request: PasswordReset):
     # Update password in database (store as decoded string)
     await db.users.update_one(
         {"id": user["id"]},
-        {"$set": {"password": hashed_password.decode('utf-8')}}
+        {"$set": {"hashed_password": hashed_password.decode('utf-8')}}
     )
     
     return {"message": "Senha alterada com sucesso"}
