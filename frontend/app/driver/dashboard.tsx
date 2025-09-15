@@ -1845,7 +1845,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
   },
-  sectionTitle: {
+  passengerSectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2196F3',
