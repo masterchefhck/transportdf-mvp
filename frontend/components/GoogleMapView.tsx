@@ -245,22 +245,79 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
     return points;
   };
 
-  // Web-compatible place search function
+  // Web-compatible place search function with popular destinations fallback
   const searchPlaces = async (input: string) => {
-    if (!input.trim() || !GOOGLE_MAPS_API_KEY) return;
+    if (!input.trim()) {
+      setShowSuggestions(false);
+      return;
+    }
     
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_MAPS_API_KEY}&language=pt-BR&components=country:br`
-      );
-      const data = await response.json();
-      
-      if (data.predictions) {
-        setSearchSuggestions(data.predictions);
+    // Popular destinations as fallback
+    const popularDestinations = [
+      { 
+        place_id: 'brasilia-1', 
+        description: 'Brasília, DF, Brasil',
+        geometry: { location: { lat: -15.7942, lng: -47.8822 } }
+      },
+      { 
+        place_id: 'caldas-novas-1', 
+        description: 'Caldas Novas, GO, Brasil',
+        geometry: { location: { lat: -17.7739, lng: -48.6255 } }
+      },
+      { 
+        place_id: 'goiania-1', 
+        description: 'Goiânia, GO, Brasil',
+        geometry: { location: { lat: -16.6868, lng: -49.2648 } }
+      },
+      { 
+        place_id: 'anapolis-1', 
+        description: 'Anápolis, GO, Brasil',
+        geometry: { location: { lat: -16.3267, lng: -48.9530 } }
+      },
+      { 
+        place_id: 'aparecida-1', 
+        description: 'Aparecida de Goiânia, GO, Brasil',
+        geometry: { location: { lat: -16.8173, lng: -49.2437 } }
+      }
+    ];
+
+    // Filter popular destinations based on input
+    const filteredDestinations = popularDestinations.filter(dest =>
+      dest.description.toLowerCase().includes(input.toLowerCase())
+    );
+
+    if (filteredDestinations.length > 0) {
+      setSearchSuggestions(filteredDestinations);
+      setShowSuggestions(true);
+      return;
+    }
+
+    // If API key is available, try Google Places API
+    if (GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY !== 'SUA_CHAVE_GOOGLE_MAPS_AQUI') {
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_MAPS_API_KEY}&language=pt-BR&components=country:br`
+        );
+        const data = await response.json();
+        
+        if (data.predictions && data.predictions.length > 0) {
+          setSearchSuggestions(data.predictions);
+          setShowSuggestions(true);
+        } else {
+          // Show popular destinations if no API results
+          setSearchSuggestions(popularDestinations.slice(0, 3));
+          setShowSuggestions(true);
+        }
+      } catch (error) {
+        console.error('Error searching places:', error);
+        // Fallback to popular destinations on error
+        setSearchSuggestions(popularDestinations.slice(0, 3));
         setShowSuggestions(true);
       }
-    } catch (error) {
-      console.error('Error searching places:', error);
+    } else {
+      // No valid API key, show popular destinations
+      setSearchSuggestions(popularDestinations.slice(0, 3));
+      setShowSuggestions(true);
     }
   };
 
