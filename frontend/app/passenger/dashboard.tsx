@@ -1157,6 +1157,7 @@ export default function PassengerDashboard() {
           currentUserId={user?.id || ''}
           currentUserType="passenger"
           onClose={() => setShowChatModal(false)}
+          onNewMessage={() => setNewMessageAlert(true)}
         />
       </Modal>
 
