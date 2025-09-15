@@ -110,6 +110,7 @@ interface Stats {
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdminFull, setIsAdminFull] = useState<boolean>(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
