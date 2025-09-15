@@ -134,6 +134,9 @@ export default function PassengerDashboard() {
   const [showChatModal, setShowChatModal] = useState(false);
   const [newMessageAlert, setNewMessageAlert] = useState(false);
 
+  // Google Map states
+  const [showGoogleMapModal, setShowGoogleMapModal] = useState(false);
+
   // Photo modal states
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string>('');
