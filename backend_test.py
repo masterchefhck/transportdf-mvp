@@ -561,6 +561,205 @@ class GoogleMapsTestSuite:
         
         self.log_test("Maps Reverse Geocode - Authentication Required", success, details)
         return success
+
+    # ==========================================
+    # ENHANCED GEOCODING TESTS - REVIEW REQUEST
+    # ==========================================
+    
+    async def test_enhanced_geocoding_asa_norte(self):
+        """Test enhanced geocoding - Asa Norte"""
+        address = "Asa Norte"
+        
+        status, data = await self.make_request('GET', f'/maps/geocode/{address}', None, self.tokens['passenger'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                geometry = result.get('geometry', {})
+                location = geometry.get('location', {})
+                
+                if 'lat' in location and 'lng' in location:
+                    lat = location['lat']
+                    lng = location['lng']
+                    # Check coordinates are within Brasília bounds
+                    coords_valid = (-16.1 <= lat <= -15.6) and (-48.2 <= lng <= -47.7)
+                    
+                    formatted_address = result.get('formatted_address', '')
+                    has_brasilia_ref = 'Brasília' in formatted_address or 'DF' in formatted_address
+                    
+                    success = coords_valid and has_brasilia_ref
+                    details = f"Status: {status}, Coords: ({lat}, {lng}), Valid: {coords_valid}, Address: {formatted_address}"
+                else:
+                    details = f"Status: {status}, Missing coordinates in response"
+            else:
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Enhanced Geocoding - Asa Norte", success, details)
+        return success
+        
+    async def test_enhanced_geocoding_w3_sul(self):
+        """Test enhanced geocoding - W3 Sul"""
+        address = "W3 Sul"
+        
+        status, data = await self.make_request('GET', f'/maps/geocode/{address}', None, self.tokens['driver'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                geometry = result.get('geometry', {})
+                location = geometry.get('location', {})
+                
+                if 'lat' in location and 'lng' in location:
+                    lat = location['lat']
+                    lng = location['lng']
+                    # Check coordinates are within Brasília bounds
+                    coords_valid = (-16.1 <= lat <= -15.6) and (-48.2 <= lng <= -47.7)
+                    
+                    formatted_address = result.get('formatted_address', '')
+                    has_brasilia_ref = 'Brasília' in formatted_address or 'DF' in formatted_address
+                    
+                    success = coords_valid and has_brasilia_ref
+                    details = f"Status: {status}, Coords: ({lat}, {lng}), Valid: {coords_valid}, Address: {formatted_address}"
+                else:
+                    details = f"Status: {status}, Missing coordinates in response"
+            else:
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Enhanced Geocoding - W3 Sul", success, details)
+        return success
+        
+    async def test_enhanced_geocoding_shopping_conjunto_nacional(self):
+        """Test enhanced geocoding - Shopping Conjunto Nacional"""
+        address = "Shopping Conjunto Nacional"
+        
+        status, data = await self.make_request('GET', f'/maps/geocode/{address}', None, self.tokens['admin'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                geometry = result.get('geometry', {})
+                location = geometry.get('location', {})
+                
+                if 'lat' in location and 'lng' in location:
+                    lat = location['lat']
+                    lng = location['lng']
+                    # Check coordinates are within Brasília bounds
+                    coords_valid = (-16.1 <= lat <= -15.6) and (-48.2 <= lng <= -47.7)
+                    
+                    formatted_address = result.get('formatted_address', '')
+                    has_brasilia_ref = 'Brasília' in formatted_address or 'DF' in formatted_address
+                    
+                    success = coords_valid and has_brasilia_ref
+                    details = f"Status: {status}, Coords: ({lat}, {lng}), Valid: {coords_valid}, Address: {formatted_address}"
+                else:
+                    details = f"Status: {status}, Missing coordinates in response"
+            else:
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Enhanced Geocoding - Shopping Conjunto Nacional", success, details)
+        return success
+        
+    async def test_enhanced_geocoding_rua_das_palmeiras(self):
+        """Test enhanced geocoding - Rua das Palmeiras, 123"""
+        address = "Rua das Palmeiras, 123"
+        
+        status, data = await self.make_request('GET', f'/maps/geocode/{address}', None, self.tokens['passenger'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                geometry = result.get('geometry', {})
+                location = geometry.get('location', {})
+                
+                if 'lat' in location and 'lng' in location:
+                    lat = location['lat']
+                    lng = location['lng']
+                    # Check coordinates are within Brasília bounds
+                    coords_valid = (-16.1 <= lat <= -15.6) and (-48.2 <= lng <= -47.7)
+                    
+                    formatted_address = result.get('formatted_address', '')
+                    has_brasilia_ref = 'Brasília' in formatted_address or 'DF' in formatted_address
+                    
+                    success = coords_valid and has_brasilia_ref
+                    details = f"Status: {status}, Coords: ({lat}, {lng}), Valid: {coords_valid}, Address: {formatted_address}"
+                else:
+                    details = f"Status: {status}, Missing coordinates in response"
+            else:
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Enhanced Geocoding - Rua das Palmeiras, 123", success, details)
+        return success
+        
+    async def test_enhanced_geocoding_quadra_102_norte(self):
+        """Test enhanced geocoding - Quadra 102 Norte"""
+        address = "Quadra 102 Norte"
+        
+        status, data = await self.make_request('GET', f'/maps/geocode/{address}', None, self.tokens['driver'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                geometry = result.get('geometry', {})
+                location = geometry.get('location', {})
+                
+                if 'lat' in location and 'lng' in location:
+                    lat = location['lat']
+                    lng = location['lng']
+                    # Check coordinates are within Brasília bounds
+                    coords_valid = (-16.1 <= lat <= -15.6) and (-48.2 <= lng <= -47.7)
+                    
+                    formatted_address = result.get('formatted_address', '')
+                    has_brasilia_ref = 'Brasília' in formatted_address or 'DF' in formatted_address
+                    
+                    success = coords_valid and has_brasilia_ref
+                    details = f"Status: {status}, Coords: ({lat}, {lng}), Valid: {coords_valid}, Address: {formatted_address}"
+                else:
+                    details = f"Status: {status}, Missing coordinates in response"
+            else:
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Enhanced Geocoding - Quadra 102 Norte", success, details)
+        return success
         
     async def test_maps_directions_invalid_coordinates(self):
         """Test POST /api/maps/directions with invalid coordinates"""
