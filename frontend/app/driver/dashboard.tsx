@@ -756,6 +756,39 @@ export default function DriverDashboard() {
               <Text style={styles.addressText}>{currentTrip.destination_address}</Text>
             </View>
 
+            {/* Passenger Info Section */}
+            {currentTrip.passenger_name && (
+              <View style={styles.passengerInfoSection}>
+                <Text style={styles.sectionTitle}>Passageiro</Text>
+                <View style={styles.passengerInfoCard}>
+                  <TouchableOpacity
+                    onPress={() => handleViewPhoto(currentTrip.passenger_photo, currentTrip.passenger_name)}
+                    disabled={!currentTrip.passenger_photo}
+                  >
+                    {currentTrip.passenger_photo ? (
+                      <Image source={{ uri: currentTrip.passenger_photo }} style={styles.currentPassengerPhoto} />
+                    ) : (
+                      <View style={styles.defaultCurrentPassengerPhoto}>
+                        <Ionicons name="person" size={24} color="#666" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <View style={styles.currentPassengerDetails}>
+                    <Text style={styles.currentPassengerName}>{currentTrip.passenger_name}</Text>
+                    <View style={styles.currentPassengerRating}>
+                      <Ionicons name="star" size={16} color="#FF9800" />
+                      <Text style={styles.currentPassengerRatingText}>
+                        {currentTrip.passenger_rating ? currentTrip.passenger_rating.toFixed(1) : '5.0'}
+                      </Text>
+                    </View>
+                    {currentTrip.passenger_phone && (
+                      <Text style={styles.currentPassengerPhone}>📞 {currentTrip.passenger_phone}</Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+            )}
+
             <View style={styles.tripActions}>
               {currentTrip.status === 'accepted' && (
                 <TouchableOpacity
