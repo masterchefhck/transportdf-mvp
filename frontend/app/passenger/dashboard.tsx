@@ -1722,6 +1722,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  tripStatusBadge: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  tripStatusText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   tripTitle: {
     fontSize: 18,
     fontWeight: 'bold',
