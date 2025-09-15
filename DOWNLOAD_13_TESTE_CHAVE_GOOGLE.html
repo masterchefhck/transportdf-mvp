@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Google Maps API Key</title>
+</head>
+<body>
+    <h1>Teste da Chave Google Maps API</h1>
+    
+    <h2>1. Teste Places API</h2>
+    <button onclick="testPlaces()">Testar Places API</button>
+    <div id="placesResult"></div>
+    
+    <h2>2. Teste Geocoding API</h2>
+    <button onclick="testGeocoding()">Testar Geocoding API</button>
+    <div id="geocodingResult"></div>
+    
+    <script>
+        const API_KEY = 'SUA_CHAVE_GOOGLE_MAPS_AQUI'; // SUBSTITUA AQUI
+        
+        async function testPlaces() {
+            try {
+                const response = await fetch(
+                    `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=shopping&key=${API_KEY}&language=pt-BR&components=country:br`
+                );
+                const data = await response.json();
+                document.getElementById('placesResult').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('placesResult').innerHTML = 
+                    `<p style="color: red;">Erro: ${error.message}</p>`;
+            }
+        }
+        
+        async function testGeocoding() {
+            try {
+                const response = await fetch(
+                    `https://maps.googleapis.com/maps/api/geocode/json?address=Brasília&key=${API_KEY}&language=pt-BR`
+                );
+                const data = await response.json();
+                document.getElementById('geocodingResult').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('geocodingResult').innerHTML = 
+                    `<p style="color: red;">Erro: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
