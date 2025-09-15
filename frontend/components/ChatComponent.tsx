@@ -32,6 +32,7 @@ interface ChatComponentProps {
   currentUserId: string;
   currentUserType: 'passenger' | 'driver' | 'admin';
   onClose?: () => void;
+  onNewMessage?: (messageCount: number) => void;
   style?: any;
 }
 
