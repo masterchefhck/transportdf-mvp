@@ -1766,6 +1766,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4CAF50',
   },
+  passengerInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    gap: 8,
+  },
+  passengerInfoText: {
+    fontSize: 14,  
+    color: '#1976D2',
+    fontWeight: '500',
+  },
   tripActions: {
     marginTop: 16,
     gap: 12,
