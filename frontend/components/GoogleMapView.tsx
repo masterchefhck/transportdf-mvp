@@ -246,6 +246,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
       estimatedPrice,
       distance: route.distance,
       duration: route.duration,
+      passengerName: !isForMe ? passengerName : undefined,
     });
   };
 
