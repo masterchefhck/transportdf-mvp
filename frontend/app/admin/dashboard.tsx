@@ -1831,6 +1831,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
   },
+  highlightedUserCard: {
+    backgroundColor: '#FF9800',
+    borderWidth: 2,
+    borderColor: '#FFB74D',
+    shadowColor: '#FF9800',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
