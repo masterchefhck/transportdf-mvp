@@ -67,6 +67,7 @@ interface User {
   blocked_at?: string;
   block_reason?: string;
   profile_photo?: string;
+  is_admin_full?: boolean;
 }
 
 interface Trip {
