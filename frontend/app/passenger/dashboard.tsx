@@ -144,6 +144,16 @@ export default function PassengerDashboard() {
     loadAdminMessages();
   }, []);
 
+  // Auto-refresh data every 5 seconds for real-time sync
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkCurrentTrip(); // Check for trip status updates
+      loadAdminMessages(); // Check for new admin messages
+    }, 5000); // 5 seconds polling
+
+    return () => clearInterval(interval);
+  }, []);
+
   const loadUserData = async () => {
     try {
       const token = await AsyncStorage.getItem('access_token');
