@@ -461,9 +461,10 @@ class BugFixTestSuite:
         return successful_tests == total_tests
         
     async def run_all_tests(self):
-        """Run all bug fix tests"""
-        print("🚀 STARTING BUG FIX TEST SUITE")
+        """Run all current bug fix tests"""
+        print("🚀 STARTING CURRENT BUG FIX TEST SUITE")
         print("=" * 60)
+        print("Focus: Driver dashboard passenger info & Admin dashboard user info")
         
         await self.setup_session()
         
@@ -473,12 +474,12 @@ class BugFixTestSuite:
                 print("❌ Health check failed, aborting tests")
                 return
                 
-            # Run bug fix scenario
+            # Run current bug fix scenario
             scenario_success = await self.run_bug_fix_scenario()
             
             # Print summary
             print("\n" + "=" * 60)
-            print("📊 BUG FIX TEST SUMMARY")
+            print("📊 CURRENT BUG FIX TEST SUMMARY")
             print("=" * 60)
             
             passed = sum(1 for result in self.test_results if result['success'])
@@ -491,10 +492,12 @@ class BugFixTestSuite:
             print(f"Success Rate: {success_rate:.1f}%")
             
             if scenario_success:
-                print("\n🎉 BUG FIXES COMPLETELY FUNCTIONAL!")
-                print("✅ All bug fixes working as expected")
+                print("\n🎉 CURRENT BUG FIXES COMPLETELY FUNCTIONAL!")
+                print("✅ BUG 1: Driver dashboard now shows passenger information")
+                print("✅ BUG 2: Admin dashboard shows complete user information")
+                print("✅ MongoDB aggregations working correctly")
             else:
-                print("\n⚠️  Some bug fix issues detected")
+                print("\n⚠️  Some current bug fix issues detected")
                 
             # Print failed tests
             failed_tests = [result for result in self.test_results if not result['success']]
