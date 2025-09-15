@@ -365,33 +365,71 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
 
       {/* Search Input */}
       <View style={styles.searchContainer}>
-        <GooglePlacesAutocomplete
-          ref={autocompleteRef}
-          placeholder="Digite o destino..."
-          onPress={handlePlaceSelect}
-          query={{
-            key: GOOGLE_MAPS_API_KEY,
-            language: 'pt-BR',
-            components: 'country:br',
-            // Removed location and radius to allow searches throughout Brazil
-          }}
-          requestUrl={{
-            useOnPlatform: 'web',
-            url: 'https://maps.googleapis.com/maps/api/place/autocomplete/json',
-          }}
-          styles={{
-            container: styles.autocompleteContainer,
-            textInputContainer: styles.textInputContainer,
-            textInput: styles.textInput,
-            listView: styles.listView,
-            row: styles.suggestionRow,
-            description: styles.suggestionText,
-          }}
-          fetchDetails={true}
-          enablePoweredByContainer={false}
-          nearbyPlacesAPI="GooglePlacesSearch"
-          debounce={200}
-        />
+        {Platform.OS !== 'web' && GooglePlacesAutocomplete ? (
+          <GooglePlacesAutocomplete
+            ref={autocompleteRef}
+            placeholder="Digite o destino..."
+            onPress={handlePlaceSelect}
+            query={{
+              key: GOOGLE_MAPS_API_KEY,
+              language: 'pt-BR',
+              components: 'country:br',
+              // Removed location and radius to allow searches throughout Brazil
+            }}
+            requestUrl={{
+              useOnPlatform: 'web',
+              url: 'https://maps.googleapis.com/maps/api/place/autocomplete/json',
+            }}
+            styles={{
+              container: styles.autocompleteContainer,
+              textInputContainer: styles.textInputContainer,
+              textInput: styles.textInput,
+              listView: styles.listView,
+              row: styles.suggestionRow,
+              description: styles.suggestionText,
+            }}
+            fetchDetails={true}
+            enablePoweredByContainer={false}
+            nearbyPlacesAPI="GooglePlacesSearch"
+            debounce={200}
+          />
+        ) : (
+          // Web-compatible search input
+          <View style={styles.webSearchContainer}>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Digite o destino..."
+                placeholderTextColor="#999"
+                value={destinationAddress}
+                onChangeText={(text) => {
+                  setDestinationAddress(text);
+                  if (text.length > 2) {
+                    searchPlaces(text);
+                  } else {
+                    setShowSuggestions(false);
+                  }
+                }}
+              />
+            </View>
+            
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <FlatList
+                data={searchSuggestions}
+                keyExtractor={(item) => item.place_id}
+                style={styles.suggestionsList}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.suggestionRow}
+                    onPress={() => handlePlaceSelect(item)}
+                  >
+                    <Text style={styles.suggestionText}>{item.description}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        )}
         
         {destination && (
           <TouchableOpacity onPress={resetDestination} style={styles.resetButton}>
