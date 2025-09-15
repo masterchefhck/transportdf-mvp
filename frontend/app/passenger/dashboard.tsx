@@ -631,7 +631,15 @@ export default function PassengerDashboard() {
     }
   };
 
-  // Handle Google Maps trip request
+  // NOVA FUNÇÃO: Handle Trip Type Confirm
+  const handleTripTypeConfirm = (isForMe: boolean, passengerName?: string) => {
+    setTripIsForMe(isForMe);
+    setTripPassengerName(passengerName || '');
+    setShowTripTypeModal(false);
+    setShowGoogleMapModal(true);
+  };
+
+  // FUNÇÃO ATUALIZADA: Handle Google Maps Trip Request
   const handleGoogleMapTripRequest = async (tripData: {
     origin: { latitude: number; longitude: number };
     destination: { latitude: number; longitude: number };
@@ -640,6 +648,7 @@ export default function PassengerDashboard() {
     estimatedPrice: number;
     distance: string;
     duration: string;
+    passengerName?: string;
   }) => {
     setLoading(true);
     try {
