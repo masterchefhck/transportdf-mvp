@@ -923,7 +923,19 @@ export default function DriverDashboard() {
                       </View>
                     </View>
                   </View>
-                  <View style={styles.radarSweep} />
+                  <Animated.View 
+                    style={[
+                      styles.radarSweep,
+                      {
+                        transform: [{
+                          rotate: radarRotation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['0deg', '360deg'],
+                          })
+                        }]
+                      }
+                    ]}
+                  />
                 </View>
                 
                 {/* Car Icon and Messages */}
