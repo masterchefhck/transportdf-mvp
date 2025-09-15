@@ -722,13 +722,23 @@ export default function PassengerDashboard() {
             {/* Chat and Report Driver Buttons */}
             {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_id && (
               <View style={styles.tripActions}>
-                <TouchableOpacity
-                  style={styles.chatButton}
-                  onPress={() => setShowChatModal(true)}
-                >
-                  <Ionicons name="chatbubbles" size={16} color="#fff" />
-                  <Text style={styles.chatButtonText}>Chat com Motorista</Text>
-                </TouchableOpacity>
+                <View style={styles.chatButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.chatButton}
+                    onPress={() => {
+                      setShowChatModal(true);
+                      setNewMessageAlert(false); // Clear alert when opening chat
+                    }}
+                  >
+                    <Ionicons name="chatbubbles" size={16} color="#fff" />
+                    <Text style={styles.chatButtonText}>Chat com Motorista</Text>
+                    {newMessageAlert && (
+                      <View style={styles.messageAlert}>
+                        <Text style={styles.messageAlertText}>Nova!</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
                 
                 <TouchableOpacity
                   style={styles.reportButton}
