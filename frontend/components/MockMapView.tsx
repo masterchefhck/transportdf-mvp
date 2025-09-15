@@ -8,7 +8,19 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
+
+// Try to import SVG, fall back to View-based rendering if not available
+let Svg, Path, Circle, Line, SvgText;
+try {
+  const svgModule = require('react-native-svg');
+  Svg = svgModule.default || svgModule.Svg;
+  Path = svgModule.Path;
+  Circle = svgModule.Circle;
+  Line = svgModule.Line;
+  SvgText = svgModule.Text;
+} catch (error) {
+  console.log('SVG not available, using fallback rendering');
+}
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAP_HEIGHT = 300;
