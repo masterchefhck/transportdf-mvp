@@ -827,10 +827,19 @@ class GoogleMapsTestSuite:
         # Test error handling
         test13_success = await self.test_maps_directions_invalid_coordinates()
         
+        # Test enhanced geocoding - Review Request specific addresses
+        print("Step 3: Testing enhanced geocoding with specific Brasília addresses...")
+        test14_success = await self.test_enhanced_geocoding_asa_norte()
+        test15_success = await self.test_enhanced_geocoding_w3_sul()
+        test16_success = await self.test_enhanced_geocoding_shopping_conjunto_nacional()
+        test17_success = await self.test_enhanced_geocoding_rua_das_palmeiras()
+        test18_success = await self.test_enhanced_geocoding_quadra_102_norte()
+        
         results = [test1_success, test2_success, test3_success, test4_success, 
                   test5_success, test6_success, test7_success, test8_success,
                   test9_success, test10_success, test11_success, test12_success,
-                  test13_success]
+                  test13_success, test14_success, test15_success, test16_success,
+                  test17_success, test18_success]
         
         # Count successful tests
         successful_tests = sum(1 for result in results if result is True)
