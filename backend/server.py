@@ -1176,6 +1176,54 @@ async def bulk_delete_ratings(request: BulkDeleteRequest, current_user: User = D
     return {"message": f"Deleted {result.deleted_count} ratings"}
 
 # ==========================================
+# PASSWORD RESET ENDPOINTS
+# ==========================================
+
+@api_router.post("/auth/forgot-password")
+async def validate_reset_credentials(request: PasswordResetRequest):
+    """Validate email and CPF for password reset"""
+    user = await db.users.find_one({
+        "email": request.email.lower(),
+        "cpf": request.cpf
+    })
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado com essas credenciais")
+    
+    return {
+        "message": "Credenciais validadas com sucesso",
+        "user_id": user["id"],
+        "user_type": user["user_type"]
+    }
+
+@api_router.post("/auth/reset-password")
+async def reset_password(request: PasswordReset):
+    """Reset user password after validation"""
+    # Validate that passwords match
+    if request.new_password != request.confirm_password:
+        raise HTTPException(status_code=400, detail="Senhas não coincidem")
+    
+    # Find user with email and CPF
+    user = await db.users.find_one({
+        "email": request.email.lower(),
+        "cpf": request.cpf
+    })
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado com essas credenciais")
+    
+    # Hash new password
+    hashed_password = bcrypt.hashpw(request.new_password.encode('utf-8'), bcrypt.gensalt())
+    
+    # Update password in database
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"password": hashed_password}}
+    )
+    
+    return {"message": "Senha alterada com sucesso"}
+
+# ==========================================
 # TRIP HISTORY ENDPOINTS
 # ==========================================
 
