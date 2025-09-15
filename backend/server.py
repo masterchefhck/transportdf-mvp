@@ -239,6 +239,43 @@ class PasswordReset(BaseModel):
 class BulkDeleteRequest(BaseModel):
     ids: List[str]
 
+# Google Maps Mock Models
+class RouteRequest(BaseModel):
+    origin_lat: float
+    origin_lng: float
+    destination_lat: float
+    destination_lng: float
+
+class RoutePoint(BaseModel):
+    lat: float
+    lng: float
+
+class RouteStep(BaseModel):
+    instruction: str
+    distance: str
+    duration: str
+    start_location: RoutePoint
+    end_location: RoutePoint
+
+class RouteResponse(BaseModel):
+    distance: str
+    duration: str
+    steps: List[RouteStep]
+    overview_polyline: str  # Encoded polyline for route visualization
+    bounds: dict  # Map bounds for centering
+
+class DistanceMatrixRequest(BaseModel):
+    origins: List[dict]  # [{"lat": float, "lng": float}]
+    destinations: List[dict]  # [{"lat": float, "lng": float}]
+
+class DistanceMatrixElement(BaseModel):
+    distance: dict  # {"text": "5.2 km", "value": 5200}
+    duration: dict  # {"text": "15 mins", "value": 900}
+    status: str = "OK"
+
+class DistanceMatrixResponse(BaseModel):
+    rows: List[dict]  # Each row contains elements array
+
 # Utility functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
