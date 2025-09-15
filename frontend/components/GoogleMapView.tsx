@@ -375,6 +375,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
               key: GOOGLE_MAPS_API_KEY,
               language: 'pt-BR',
               components: 'country:br',
+              types: 'establishment',
               // Removed location and radius to allow searches throughout Brazil
             }}
             requestUrl={{
@@ -392,7 +393,19 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
             fetchDetails={true}
             enablePoweredByContainer={false}
             nearbyPlacesAPI="GooglePlacesSearch"
-            debounce={200}
+            debounce={300}
+            minLength={2}
+            autoFillOnNotFound={false}
+            returnKeyType="search"
+            listEmptyComponent={() => (
+              <View style={styles.emptyResultContainer}>
+                <Text style={styles.emptyResultText}>Nenhum resultado encontrado</Text>
+              </View>
+            )}
+            onFail={(error) => {
+              console.warn('GooglePlacesAutocomplete error:', error);
+            }}
+            filterReverseGeocodingByTypes={['locality', 'administrative_area_level_3']}
           />
         ) : (
           // Web-compatible search input
