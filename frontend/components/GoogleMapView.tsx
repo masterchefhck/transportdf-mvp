@@ -86,7 +86,9 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
   const [locationLoading, setLocationLoading] = useState(true);
   
   const mapRef = useRef<MapView>(null);
-  const autocompleteRef = useRef<GooglePlacesAutocompleteRef>(null);
+  const autocompleteRef = useRef<any>(null);
+  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
