@@ -782,9 +782,6 @@ export default function DriverDashboard() {
                         {currentTrip.passenger_rating ? currentTrip.passenger_rating.toFixed(1) : '5.0'}
                       </Text>
                     </View>
-                    {currentTrip.passenger_phone && (
-                      <Text style={styles.currentPassengerPhone}>📞 {currentTrip.passenger_phone}</Text>
-                    )}
                   </View>
                 </View>
               </View>
