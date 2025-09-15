@@ -646,7 +646,7 @@ export default function AdminDashboard() {
   const renderStats = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
     >
       <View style={styles.statsGrid}>
         <View style={[styles.statCard, { backgroundColor: '#4CAF50' }]}>
@@ -705,7 +705,7 @@ export default function AdminDashboard() {
   const renderUsers = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
     >
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -860,7 +860,7 @@ export default function AdminDashboard() {
   const renderReports = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
     >
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -993,7 +993,7 @@ export default function AdminDashboard() {
   const renderTrips = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
     >
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -1157,7 +1157,7 @@ export default function AdminDashboard() {
   const renderRatings = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
     >
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -1293,7 +1293,7 @@ export default function AdminDashboard() {
   const renderMessages = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Mensagem para Passageiro</Text>
@@ -1482,7 +1482,7 @@ export default function AdminDashboard() {
               </View>
             </View>
           )}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
         />
       )}
     </View>
