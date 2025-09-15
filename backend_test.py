@@ -1,36 +1,38 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for Transport App Brasília MVP - New Features Testing
-Testing all implemented adjustments as per review request:
+Backend Test Suite for Transport App Brasília MVP - Google Maps Integration Testing
+Testing Google Maps mock endpoints as per review request:
 
-AJUSTES IMPLEMENTADOS PARA TESTE:
+GOOGLE MAPS ENDPOINTS TO TEST:
 
-1. ALERTA DE NOVA MENSAGEM NO CHAT:
-   - ChatComponent atualizado com callback onNewMessage
-   - Dashboards driver/passenger com estado newMessageAlert
-   - Notificação visual "Nova!" no botão de chat
-   - Sistema funciona via polling a cada 5 segundos
+1. POST /api/maps/directions - Get route between two points
+   - Test with valid Brasília coordinates
+   - Test realistic trip scenarios (Asa Norte → Asa Sul, Centro → Taguatinga, Plano Piloto → Gama)
+   - Verify authentication requirement
+   - Test error handling with invalid coordinates
 
-2. REMOÇÃO DO TELEFONE DO PASSAGEIRO:
-   - Removido campo passenger_phone do dashboard do driver
-   - Mantém apenas nome, foto e rating
+2. POST /api/maps/distance-matrix - Get distances between multiple points
+   - Test with multiple Brasília locations
+   - Verify response structure and data accuracy
+   - Test authentication requirement
 
-3. BARRA DE PROGRESSO "PROCURANDO MOTORISTA":
-   - Barra animada azul transparente quando status = 'requested'
-   - Animação loop contínua de 2 segundos
-   - Substitui botão laranja estático
+3. GET /api/maps/geocode/{address} - Convert address to coordinates
+   - Test with common Brasília addresses
+   - Verify realistic coordinate responses
+   - Test authentication requirement
 
-4. FUNCIONALIDADE "ESQUECI MINHA SENHA":
-   - Endpoints: POST /api/auth/forgot-password, POST /api/auth/reset-password
-   - Tela /auth/forgot-password com validação email+CPF
-   - Link "Esqueci minha senha" na tela de login
-   - Processo em 2 etapas: validação → nova senha
+4. GET /api/maps/reverse-geocode - Convert coordinates to address
+   - Test with Brasília coordinates
+   - Verify realistic address responses
+   - Test authentication requirement
 
-CENÁRIO DE TESTE COMPLETO:
-1. Teste chat com notificações
-2. Teste informações de usuários (sem telefone para driver)
-3. Teste barra de progresso
-4. Teste "Esqueci minha senha"
+COMPREHENSIVE TEST SCENARIOS:
+1. Trip from Asa Norte to Asa Sul
+2. Trip from Centro to Taguatinga  
+3. Trip from Plano Piloto to Gama
+4. Geocoding of common Brasília locations
+5. Error cases with invalid data
+6. Authentication validation for all endpoints
 """
 
 import asyncio
