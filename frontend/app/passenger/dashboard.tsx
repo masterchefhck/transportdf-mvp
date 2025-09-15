@@ -985,16 +985,38 @@ export default function PassengerDashboard() {
       <View style={styles.mainContent}>
         {currentTrip ? (
           <View style={styles.currentTripContainer}>
-            {/* Trip Map View */}
-            <TripMapView
-              trip={currentTrip}
-              currentLocation={location ? {
-                lat: location.coords.latitude,
-                lng: location.coords.longitude,
-              } : undefined}
-              showDirections={true}
-              style={styles.mapView}
-            />
+            {/* Simplified Trip Info */}
+            <View style={styles.tripInfoContainer}>
+              <View style={styles.routeInfo}>
+                <View style={styles.locationRow}>
+                  <Ionicons name="location" size={20} color="#4CAF50" />
+                  <Text style={styles.locationText} numberOfLines={2}>
+                    De: {currentTrip.pickup_address}
+                  </Text>
+                </View>
+                <View style={styles.locationRow}>
+                  <Ionicons name="flag" size={20} color="#FF3B30" />
+                  <Text style={styles.locationText} numberOfLines={2}>
+                    Para: {currentTrip.destination_address}
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Trip Status Info */}
+              <View style={styles.statusInfoContainer}>
+                <Text style={styles.statusInfoText}>
+                  {currentTrip.status === 'requested' && 'Buscando motorista...'}
+                  {currentTrip.status === 'accepted' && 'Motorista a caminho'}
+                  {currentTrip.status === 'in_progress' && 'Viagem em andamento'}
+                  {currentTrip.status === 'completed' && 'Viagem concluída'}
+                </Text>
+                {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && (
+                  <Text style={styles.estimatedTimeText}>
+                    Tempo estimado: 5-15 minutos
+                  </Text>
+                )}
+              </View>
+            </View>
 
             {/* Current Trip Details */}
             <View style={styles.currentTripCard}>
