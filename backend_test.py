@@ -416,49 +416,48 @@ class BugFixTestSuite:
         return success
         
     async def run_bug_fix_scenario(self):
-        """Run the complete bug fix testing scenario"""
-        print("\n🎯 EXECUTING BUG FIX TESTING SCENARIO")
+        """Run the complete bug fix testing scenario for current review request"""
+        print("\n🎯 EXECUTING CURRENT BUG FIX TESTING SCENARIO")
         print("=" * 60)
+        print("Testing BUG 1: Driver dashboard - informações do passageiro não aparecem")
+        print("Testing BUG 2: Admin dashboard - informações dos usuários nas viagens")
         
         # Step 1: Setup users
         print("Step 1: Creating test users...")
         if not await self.setup_test_users():
             return False
             
-        # Step 2: Upload profile photos (for BUG 1 testing)
+        # Step 2: Upload profile photos (critical for bug testing)
         print("Step 2: Uploading profile photos...")
-        await self.upload_profile_photos()  # Not critical if fails
+        if not await self.upload_profile_photos():
+            print("⚠️  Profile photo upload failed - may affect user info display")
             
         # Step 3: Create trip
         print("Step 3: Creating test trip...")
         if not await self.create_test_trip():
             return False
             
-        # Step 4: Driver accepts trip
+        # Step 4: Driver accepts trip (critical for BUG 1)
         print("Step 4: Driver accepting trip...")
         if not await self.accept_trip():
             return False
             
-        # Step 5: Test all bug fixes
-        print("Step 5: Testing bug fixes...")
-        bug_fix_tests = [
-            self.test_bug1_trips_my_passenger_info(),
-            self.test_bug1_trips_my_driver_info(),
-            self.test_bug3_chat_send_and_persist(),
-            self.test_bug3_chat_message_persistence(),
-            self.test_bug3_chat_synchronization(),
-            self.test_chat_character_limit(),
-            self.test_admin_chats_endpoint(),
-            self.test_chat_polling_simulation()
+        # Step 5: Test the specific bug fixes
+        print("Step 5: Testing current bug fixes...")
+        current_bug_fix_tests = [
+            self.test_bug1_trips_my_passenger_info(),  # Driver sees passenger info
+            self.test_bug1_trips_my_driver_info(),     # Passenger sees driver info  
+            self.test_bug2_admin_trips_complete_user_info(),  # Admin sees both
+            self.test_mongodb_aggregation_functionality()     # Aggregations working
         ]
         
-        results = await asyncio.gather(*bug_fix_tests, return_exceptions=True)
+        results = await asyncio.gather(*current_bug_fix_tests, return_exceptions=True)
         
         # Count successful tests
         successful_tests = sum(1 for result in results if result is True)
         total_tests = len(results)
         
-        print(f"\nBug fix tests: {successful_tests}/{total_tests} passed")
+        print(f"\nCurrent bug fix tests: {successful_tests}/{total_tests} passed")
         return successful_tests == total_tests
         
     async def run_all_tests(self):
