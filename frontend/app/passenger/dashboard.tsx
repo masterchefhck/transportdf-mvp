@@ -325,13 +325,13 @@ export default function PassengerDashboard() {
 
       // Check for recently completed trips that need rating
       const recentlyCompleted = response.data.find(
-        (trip: Trip) => trip.status === 'completed' && !trip.rated
+        (trip: Trip) => trip.status === 'completed' && !trip.rated && !trip.passenger_rating_given
       );
 
       if (activeTrip) {
         setCurrentTrip(activeTrip);
-      } else if (recentlyCompleted && currentTrip?.status !== 'completed') {
-        // Trip just completed, show rating modal
+      } else if (recentlyCompleted && !showRatingModal) {
+        // Only show rating modal if not already showing and trip just completed
         setCompletedTrip(recentlyCompleted);
         setShowRatingModal(true);
         setCurrentTrip(null);
