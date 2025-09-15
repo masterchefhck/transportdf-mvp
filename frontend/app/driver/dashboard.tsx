@@ -1663,4 +1663,24 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     maxHeight: '100%',
   },
+  // Quick actions styles
+  quickActions: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2a2a2a',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    gap: 8,
+  },
+  historyButtonText: {
+    color: '#2196F3',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
