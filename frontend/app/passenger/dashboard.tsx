@@ -1349,6 +1349,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
+  chatButtonContainer: {
+    position: 'relative',
+  },
+  messageAlert: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#ff4444',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 40,
+    alignItems: 'center',
+  },
+  messageAlertText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   chatButtonText: {
     fontSize: 14,
     fontWeight: 'bold',
