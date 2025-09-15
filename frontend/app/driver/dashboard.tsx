@@ -150,6 +150,7 @@ export default function DriverDashboard() {
         checkCurrentTrip();
       }
       loadMyAlerts(); // Always check for new alerts
+      checkForNewMessages(); // Check for new chat messages
     }, 5000); // 5 seconds polling
 
     return () => clearInterval(interval);
