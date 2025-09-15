@@ -603,8 +603,8 @@ async def get_my_trips(current_user: User = Depends(get_current_user)):
                 **trip_clean,
                 "passenger_name": passenger.get("name"),
                 "passenger_photo": passenger.get("profile_photo"),
-                "passenger_rating": passenger.get("rating"),
-                "passenger_phone": passenger.get("phone")
+                "passenger_rating": passenger.get("rating")
+                # passenger_phone removed as per review request - driver only sees name, photo, rating
             }
         result.append(trip_data)
     
