@@ -216,8 +216,39 @@ export default function PassengerDashboard() {
     { name: 'Itapoã', area: 'Região Administrativa', coords: { lat: -15.7542, lng: -47.7422 } },
   ];
 
-  // Search suggestions based on user input
+  // Handle destination input with debounced search (web-compatible)
+  const handleDestinationChange = (text: string) => {
+    setDestinationAddress(text);
+    
+    console.log('Destination changed:', text); // Debug log
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Immediate search for better web compatibility
+    if (text.length >= 2) {
+      searchDestinations(text);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+    
+    // Also do debounced search
+    const timeout = setTimeout(() => {
+      if (text.length >= 2) {
+        searchDestinations(text);
+      }
+    }, 300);
+    
+    setSearchTimeout(timeout);
+  };
+
+  // Search suggestions based on user input (improved)
   const searchDestinations = (query: string) => {
+    console.log('Searching for:', query); // Debug log
+    
     if (query.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -229,25 +260,10 @@ export default function PassengerDashboard() {
       location.area.toLowerCase().includes(query.toLowerCase())
     ).slice(0, 8); // Limit to 8 suggestions
 
+    console.log('Found suggestions:', filtered.length); // Debug log
+    
     setSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);
-  };
-
-  // Handle destination input with debounced search
-  const handleDestinationChange = (text: string) => {
-    setDestinationAddress(text);
-    
-    // Clear previous timeout
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-    
-    // Debounce search to avoid too many requests
-    const timeout = setTimeout(() => {
-      searchDestinations(text);
-    }, 300);
-    
-    setSearchTimeout(timeout);
   };
 
   // Handle suggestion selection
