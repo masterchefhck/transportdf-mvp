@@ -431,6 +431,18 @@ test_plan:
         agent: "testing"
         comment: "🎯 PASSENGER INFO IN DRIVER TRIPS COMPLETAMENTE TESTADO E APROVADO! Executei testes específicos conforme review request atual com 100% de sucesso (6/6 testes passaram). FUNCIONALIDADE TESTADA: GET /api/trips/my para motoristas agora retorna informações do passageiro (passenger_name, passenger_rating, passenger_photo) para TODOS os status de viagem, não apenas viagens disponíveis. TESTES APROVADOS: ✅ Driver Trips - Accepted Status: informações do passageiro incluídas (name='Maria Silva Santos', rating=5.0, photo=True), ✅ Driver Trips - In Progress Status: informações do passageiro mantidas durante viagem, ✅ Driver Trips - Completed Status: informações do passageiro preservadas após conclusão, ✅ Consistência entre available trips e my trips: informações idênticas, ✅ Isolamento correto para múltiplas viagens do mesmo passageiro. FLUXO COMPLETO VERIFICADO: motorista vê informações do passageiro durante todo o ciclo de vida da viagem (accepted → in_progress → completed). Sistema production-ready!"
 
+  - task: "Current Bug Fixes - Driver & Admin Dashboard User Info"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎯 CORREÇÕES DE BUGS ATUAIS COMPLETAMENTE TESTADAS E APROVADAS - 100% SUCESSO! Executei teste específico das correções implementadas conforme review request atual com taxa de sucesso perfeita de 100% (11/11 testes passaram). BUGS CORRIGIDOS E VALIDADOS: ✅ BUG 1 - Driver dashboard informações do passageiro não aparecem: GET /api/trips/my com agregação MongoDB funcionando perfeitamente, retornando informações completas do passageiro para motoristas (passenger_name='Maria Silva Santos', passenger_photo=presente, passenger_rating=5.0, passenger_phone='+556198795') e informações completas do motorista para passageiros (driver_name='João Carlos Oliveira', driver_photo=presente, driver_rating=5.0, driver_phone='+556197815'). ✅ BUG 2 - Admin dashboard informações dos usuários nas viagens: GET /api/admin/trips funcionando perfeitamente com dados completos de ambos participantes (passenger_name, passenger_phone, passenger_photo, passenger_rating, driver_name, driver_phone, driver_photo, driver_rating). ✅ AGREGAÇÕES MONGODB FUNCIONANDO: Todas as agregações de dados dos usuários operacionais, endpoints passenger/driver/admin retornando dados completos. CENÁRIO COMPLETO EXECUTADO: criação de usuários → upload de fotos → solicitação de viagem → aceitação pelo motorista → verificação de informações completas em todos os dashboards. SISTEMA PRODUCTION-READY COM CORREÇÕES IMPLEMENTADAS!"
+
 agent_communication:
   - agent: "main"
     message: "MVP do SkyCab implementado com sucesso! Funcionalidades principais: 3 tipos de usuário, autenticação, solicitação/aceitação de viagens, dashboards específicos. Frontend testado e funcionando. Necessário testar backend APIs e fluxo completo de viagens."
