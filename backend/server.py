@@ -1375,44 +1375,100 @@ async def mock_geocode_address(address: str, current_user: User = Depends(get_cu
     
     # Mock geocoding for common Brasília locations
     brasilia_locations = {
-        "asa norte": {"lat": -15.7801, "lng": -47.8827},
-        "asa sul": {"lat": -15.8267, "lng": -47.8934},
-        "taguatinga": {"lat": -15.8270, "lng": -48.0427},
-        "ceilandia": {"lat": -15.8190, "lng": -48.1076},
-        "gama": {"lat": -16.0209, "lng": -48.0647},
-        "sobradinho": {"lat": -15.6536, "lng": -47.7863},
-        "planaltina": {"lat": -15.4523, "lng": -47.6142},
-        "brasilia": {"lat": -15.7942, "lng": -47.8822},
-        "aeroporto": {"lat": -15.8711, "lng": -47.9178},
-        "rodoviaria": {"lat": -15.7945, "lng": -47.8828}
+        "asa norte": {"lat": -15.7801, "lng": -47.8827, "area": "Asa Norte"},
+        "asa sul": {"lat": -15.8267, "lng": -47.8934, "area": "Asa Sul"},
+        "taguatinga": {"lat": -15.8270, "lng": -48.0427, "area": "Taguatinga"},
+        "ceilandia": {"lat": -15.8190, "lng": -48.1076, "area": "Ceilândia"},
+        "gama": {"lat": -16.0209, "lng": -48.0647, "area": "Gama"},
+        "sobradinho": {"lat": -15.6536, "lng": -47.7863, "area": "Sobradinho"},
+        "planaltina": {"lat": -15.4523, "lng": -47.6142, "area": "Planaltina"},
+        "brasilia": {"lat": -15.7942, "lng": -47.8822, "area": "Brasília"},
+        "aeroporto": {"lat": -15.8711, "lng": -47.9178, "area": "Aeroporto JK"},
+        "rodoviaria": {"lat": -15.7945, "lng": -47.8828, "area": "Rodoviária do Plano Piloto"},
+        # Adicionar mais variações comuns
+        "plano piloto": {"lat": -15.7942, "lng": -47.8822, "area": "Plano Piloto"},
+        "w3 norte": {"lat": -15.7801, "lng": -47.8827, "area": "W3 Norte"},
+        "w3 sul": {"lat": -15.8267, "lng": -47.8934, "area": "W3 Sul"},
+        "centro": {"lat": -15.7942, "lng": -47.8822, "area": "Centro de Brasília"},
+        "esplanada": {"lat": -15.7942, "lng": -47.8822, "area": "Esplanada dos Ministérios"},
+        "sudoeste": {"lat": -15.7942, "lng": -47.9132, "area": "Setor Sudoeste"},
+        "noroeste": {"lat": -15.7642, "lng": -47.8822, "area": "Setor Noroeste"},
+        "lago norte": {"lat": -15.7542, "lng": -47.8522, "area": "Lago Norte"},
+        "lago sul": {"lat": -15.8542, "lng": -47.8522, "area": "Lago Sul"},
     }
     
-    address_lower = address.lower()
+    address_lower = address.lower().strip()
     
-    # Find best match
-    for location_name, coords in brasilia_locations.items():
+    # Find best match usando correspondência parcial mais flexível
+    best_match = None
+    best_score = 0
+    
+    for location_name, location_data in brasilia_locations.items():
+        # Verificar correspondência exata
+        if location_name == address_lower:
+            best_match = location_data
+            best_score = 100
+            break
+        
+        # Verificar se o nome da localização está contido no endereço
         if location_name in address_lower:
-            return {
-                "results": [{
-                    "formatted_address": f"{location_name.title()}, Brasília - DF, Brasil",
-                    "geometry": {
-                        "location": coords
-                    },
-                    "place_id": f"mock_place_id_{location_name}",
-                    "types": ["locality", "political"]
-                }],
-                "status": "OK"
-            }
+            score = len(location_name) / len(address_lower) * 100
+            if score > best_score:
+                best_match = location_data
+                best_score = score
+        
+        # Verificar se palavras-chave do endereço estão na localização
+        address_words = address_lower.split()
+        location_words = location_name.split()
+        
+        common_words = set(address_words) & set(location_words)
+        if common_words:
+            score = len(common_words) / max(len(address_words), len(location_words)) * 50
+            if score > best_score:
+                best_match = location_data
+                best_score = score
     
-    # Default to central Brasília if no match found
+    if best_match:
+        return {
+            "results": [{
+                "formatted_address": f"{best_match['area']}, Brasília - DF, Brasil",
+                "geometry": {
+                    "location": {"lat": best_match["lat"], "lng": best_match["lng"]}
+                },
+                "place_id": f"mock_place_id_{best_match['area'].lower().replace(' ', '_')}",
+                "types": ["locality", "political"]
+            }],
+            "status": "OK"
+        }
+    
+    # Se não encontrou correspondência, gerar coordenadas aleatórias dentro de Brasília
+    import random
+    
+    # Brasília bounds aproximados
+    lat_min, lat_max = -16.1, -15.4
+    lng_min, lng_max = -48.2, -47.4
+    
+    random_lat = random.uniform(lat_min, lat_max)
+    random_lng = random.uniform(lng_min, lng_max)
+    
+    # Determinar área baseada nas coordenadas geradas
+    if random_lat > -15.75:
+        area = "Asa Norte"
+    elif random_lat < -15.85:
+        area = "Asa Sul"
+    elif random_lng < -48.0:
+        area = "Taguatinga"
+    else:
+        area = "Plano Piloto"
+    
     return {
         "results": [{
-            "formatted_address": f"{address}, Brasília - DF, Brasil",
+            "formatted_address": f"{address.title()}, {area}, Brasília - DF, Brasil",
             "geometry": {
-                "location": {"lat": -15.7942, "lng": -47.8822}
+                "location": {"lat": random_lat, "lng": random_lng}
             },
-            "place_id": f"mock_place_id_default",
-            "types": ["establishment"]
+            "place_id": f"mock_place_id_{random.randint(1000, 9999)}",
+            "types": ["street_address"]
         }],
         "status": "OK"
     }
