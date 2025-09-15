@@ -38,7 +38,7 @@ import sys
 BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://ridemate-18.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
-class BugFixTestSuite:
+class RatingModalBugFixTestSuite:
     def __init__(self):
         self.session = None
         self.test_results = []
@@ -117,14 +117,14 @@ class BugFixTestSuite:
             return False
             
     async def setup_test_users(self):
-        """Setup test users for bug fix testing"""
+        """Setup test users for rating modal bug fix testing"""
         import time
         timestamp = str(int(time.time()))
         
         users_to_create = [
-            ("passenger", "Maria Silva Santos", f"maria.bugfix.{timestamp}@test.com"),
-            ("driver", "João Carlos Oliveira", f"joao.bugfix.{timestamp}@test.com"),
-            ("admin", "Admin Bug Test", f"admin.bugfix.{timestamp}@test.com")
+            ("passenger", "Ana Carolina Silva", f"ana.rating.{timestamp}@test.com"),
+            ("driver", "Carlos Eduardo Santos", f"carlos.rating.{timestamp}@test.com"),
+            ("admin", "Admin Rating Test", f"admin.rating.{timestamp}@test.com")
         ]
         
         success_count = 0
@@ -134,28 +134,8 @@ class BugFixTestSuite:
                 
         return success_count == len(users_to_create)
         
-    async def upload_profile_photos(self):
-        """Upload profile photos for both passenger and driver"""
-        # Simple base64 encoded 1x1 pixel image for testing
-        test_photo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-        
-        # Upload passenger photo
-        passenger_status, passenger_data = await self.make_request('PUT', '/users/profile-photo', 
-                                                                  {"profile_photo": test_photo}, 
-                                                                  self.tokens['passenger'])
-        
-        # Upload driver photo  
-        driver_status, driver_data = await self.make_request('PUT', '/users/profile-photo',
-                                                           {"profile_photo": test_photo},
-                                                           self.tokens['driver'])
-        
-        success = passenger_status == 200 and driver_status == 200
-        self.log_test("Upload Profile Photos", success, 
-                     f"Passenger: {passenger_status}, Driver: {driver_status}")
-        return success
-        
     async def create_test_trip(self):
-        """Create a test trip for bug fix testing"""
+        """Create a test trip for rating modal bug fix testing"""
         # Passenger requests trip
         trip_data = {
             "passenger_id": self.users['passenger']['id'],
@@ -165,7 +145,7 @@ class BugFixTestSuite:
             "destination_latitude": -15.8267,
             "destination_longitude": -47.9218,
             "destination_address": "Asa Sul, Brasília - DF",
-            "estimated_price": 12.50
+            "estimated_price": 15.50
         }
         
         status, data = await self.make_request('POST', '/trips/request', trip_data, self.tokens['passenger'])
@@ -190,8 +170,32 @@ class BugFixTestSuite:
             self.log_test("Driver Accept Trip", False, f"Status: {status}, Error: {data}")
             return False
             
-    async def test_bug1_trips_my_passenger_info(self):
-        """BUG 1: Test GET /api/trips/my returns complete driver information for passenger"""
+    async def start_trip(self):
+        """Driver starts the trip"""
+        trip_id = self.trips['test_trip']['id']
+        status, data = await self.make_request('PUT', f'/trips/{trip_id}/start', None, self.tokens['driver'])
+        
+        if status == 200:
+            self.log_test("Driver Start Trip", True, "Trip started successfully")
+            return True
+        else:
+            self.log_test("Driver Start Trip", False, f"Status: {status}, Error: {data}")
+            return False
+            
+    async def complete_trip(self):
+        """Driver completes the trip"""
+        trip_id = self.trips['test_trip']['id']
+        status, data = await self.make_request('PUT', f'/trips/{trip_id}/complete', None, self.tokens['driver'])
+        
+        if status == 200:
+            self.log_test("Driver Complete Trip", True, "Trip completed successfully")
+            return True
+        else:
+            self.log_test("Driver Complete Trip", False, f"Status: {status}, Error: {data}")
+            return False
+            
+    async def test_trip_status_before_rating(self):
+        """Test that trip status is 'completed' and no rating fields exist yet"""
         status, data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
         
         success = False
@@ -200,290 +204,257 @@ class BugFixTestSuite:
         if status == 200 and isinstance(data, list) and len(data) > 0:
             trip = data[0]  # Get the first trip
             
-            # Check if driver information is included (BUG 1 fix)
-            required_driver_fields = ['driver_name', 'driver_photo', 'driver_rating', 'driver_phone']
-            has_driver_info = all(field in trip for field in required_driver_fields)
+            # Check trip status is completed
+            is_completed = trip.get('status') == 'completed'
             
-            if has_driver_info:
+            # Check that rating fields don't exist yet (before rating)
+            has_no_rated_flag = trip.get('rated') is None or trip.get('rated') == False
+            has_no_passenger_rating = trip.get('passenger_rating_given') is None
+            
+            if is_completed and has_no_rated_flag and has_no_passenger_rating:
                 success = True
-                driver_values = {field: trip.get(field) for field in required_driver_fields}
-                details = f"Status: {status}, Driver info complete: {driver_values}"
+                details = f"Status: {status}, Trip completed: {is_completed}, No rating flags: rated={trip.get('rated')}, passenger_rating_given={trip.get('passenger_rating_given')}"
             else:
-                missing_fields = [field for field in required_driver_fields if field not in trip]
-                present_fields = [field for field in required_driver_fields if field in trip]
-                details = f"Status: {status}, Present: {present_fields}, Missing: {missing_fields}"
+                details = f"Status: {status}, Trip completed: {is_completed}, rated: {trip.get('rated')}, passenger_rating_given: {trip.get('passenger_rating_given')}"
         else:
             details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
             
-        self.log_test("BUG 1: Driver Dashboard - Passenger Info in GET /api/trips/my", success, details)
+        self.log_test("Trip Status Before Rating", success, details)
         return success
         
-    async def test_bug1_trips_my_driver_info(self):
-        """BUG 1: Test GET /api/trips/my returns complete passenger information for driver"""
-        status, data = await self.make_request('GET', '/trips/my', None, self.tokens['driver'])
+    async def test_create_rating_success(self):
+        """Test POST /api/ratings/create successfully creates rating and marks trip"""
+        trip_id = self.trips['test_trip']['id']
+        driver_id = self.users['driver']['id']
         
-        success = False
-        details = f"Status: {status}"
-        
-        if status == 200 and isinstance(data, list) and len(data) > 0:
-            trip = data[0]  # Get the first trip
-            
-            # Check if passenger information is included (BUG 1 fix)
-            required_passenger_fields = ['passenger_name', 'passenger_photo', 'passenger_rating', 'passenger_phone']
-            has_passenger_info = all(field in trip for field in required_passenger_fields)
-            
-            if has_passenger_info:
-                success = True
-                passenger_values = {field: trip.get(field) for field in required_passenger_fields}
-                details = f"Status: {status}, Passenger info complete: {passenger_values}"
-            else:
-                missing_fields = [field for field in required_passenger_fields if field not in trip]
-                present_fields = [field for field in required_passenger_fields if field in trip]
-                details = f"Status: {status}, Present: {present_fields}, Missing: {missing_fields}"
-        else:
-            details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
-            
-        self.log_test("BUG 1: Driver Dashboard - Passenger Info in GET /api/trips/my", success, details)
-        return success
-        
-    async def test_bug2_admin_trips_complete_user_info(self):
-        """BUG 2: Test GET /api/admin/trips returns complete user information for both passenger and driver"""
-        status, data = await self.make_request('GET', '/admin/trips', None, self.tokens['admin'])
-        
-        success = False
-        details = f"Status: {status}"
-        
-        if status == 200 and isinstance(data, list) and len(data) > 0:
-            trip = data[0]  # Get the first trip
-            
-            # Check if both passenger and driver information is included (BUG 2 fix)
-            required_passenger_fields = ['passenger_name', 'passenger_phone', 'passenger_photo', 'passenger_rating']
-            required_driver_fields = ['driver_name', 'driver_phone', 'driver_photo', 'driver_rating']
-            
-            has_passenger_info = all(field in trip for field in required_passenger_fields)
-            has_driver_info = all(field in trip for field in required_driver_fields)
-            
-            if has_passenger_info and has_driver_info:
-                success = True
-                participant_info = {
-                    'passenger': {field: trip.get(field) for field in required_passenger_fields},
-                    'driver': {field: trip.get(field) for field in required_driver_fields}
-                }
-                details = f"Status: {status}, Complete participant info: {participant_info}"
-            else:
-                missing_passenger = [field for field in required_passenger_fields if field not in trip]
-                missing_driver = [field for field in required_driver_fields if field not in trip]
-                details = f"Status: {status}, Missing passenger: {missing_passenger}, Missing driver: {missing_driver}"
-        else:
-            details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
-            
-        self.log_test("BUG 2: Admin Dashboard - Complete User Info in GET /api/admin/trips", success, details)
-        return success
-        
-    async def test_mongodb_aggregation_functionality(self):
-        """Test that MongoDB aggregations are working correctly for user data"""
-        # Test passenger view (should have driver info)
-        passenger_status, passenger_data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
-        
-        # Test driver view (should have passenger info)  
-        driver_status, driver_data = await self.make_request('GET', '/trips/my', None, self.tokens['driver'])
-        
-        # Test admin view (should have both)
-        admin_status, admin_data = await self.make_request('GET', '/admin/trips', None, self.tokens['admin'])
-        
-        success = passenger_status == 200 and driver_status == 200 and admin_status == 200
-        
-        aggregation_results = {
-            'passenger_endpoint': passenger_status == 200 and len(passenger_data) > 0,
-            'driver_endpoint': driver_status == 200 and len(driver_data) > 0,
-            'admin_endpoint': admin_status == 200 and len(admin_data) > 0
+        rating_data = {
+            "trip_id": trip_id,
+            "rated_user_id": driver_id,
+            "rating": 5,
+            "reason": None  # 5 stars doesn't require reason
         }
         
-        details = f"Aggregation results: {aggregation_results}"
-        self.log_test("MongoDB Aggregation Functionality", success, details)
-        return success
+        status, data = await self.make_request('POST', '/ratings/create', rating_data, self.tokens['passenger'])
         
-    async def test_bug3_chat_send_and_persist(self):
-        """BUG 3: Test chat message sending and persistence"""
-        trip_id = self.trips['test_trip']['id']
+        success = status == 200
+        details = f"Status: {status}, Response: {data}"
         
-        # Send message from passenger
-        passenger_message = {"message": "Olá, estou no local de embarque!"}
-        status1, data1 = await self.make_request('POST', f'/trips/{trip_id}/chat/send', 
-                                                passenger_message, self.tokens['passenger'])
-        
-        # Send message from driver
-        driver_message = {"message": "Oi! Estou chegando, aguarde 2 minutos."}
-        status2, data2 = await self.make_request('POST', f'/trips/{trip_id}/chat/send',
-                                               driver_message, self.tokens['driver'])
-        
-        success = status1 == 200 and status2 == 200
-        details = f"Passenger send: {status1}, Driver send: {status2}"
-        self.log_test("BUG 3: Chat Message Sending", success, details)
-        return success
-        
-    async def test_bug3_chat_message_persistence(self):
-        """BUG 3: Test chat message persistence and retrieval"""
-        trip_id = self.trips['test_trip']['id']
-        
-        # Wait a moment to ensure messages are persisted
-        await asyncio.sleep(1)
-        
-        # Retrieve messages as passenger
-        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages', 
-                                             None, self.tokens['passenger'])
-        
-        success = False
-        if status == 200 and isinstance(data, list) and len(data) >= 2:
-            # Check if messages have required structure
-            message = data[0]
-            required_fields = ['id', 'trip_id', 'sender_id', 'sender_name', 'sender_type', 'message', 'timestamp']
-            has_all_fields = all(field in message for field in required_fields)
-            success = has_all_fields
-            details = f"Status: {status}, Messages: {len(data)}, Structure OK: {has_all_fields}"
-        else:
-            details = f"Status: {status}, Messages: {len(data) if isinstance(data, list) else 'N/A'}"
-            
-        self.log_test("BUG 3: Chat Message Persistence", success, details)
-        return success
-        
-    async def test_bug3_chat_synchronization(self):
-        """BUG 3: Test chat message synchronization between participants"""
-        trip_id = self.trips['test_trip']['id']
-        
-        # Get messages as passenger
-        status1, passenger_messages = await self.make_request('GET', f'/trips/{trip_id}/chat/messages',
-                                                            None, self.tokens['passenger'])
-        
-        # Get messages as driver
-        status2, driver_messages = await self.make_request('GET', f'/trips/{trip_id}/chat/messages',
-                                                         None, self.tokens['driver'])
-        
-        success = False
-        if status1 == 200 and status2 == 200:
-            # Both should see the same messages
-            passenger_count = len(passenger_messages) if isinstance(passenger_messages, list) else 0
-            driver_count = len(driver_messages) if isinstance(driver_messages, list) else 0
-            success = passenger_count == driver_count and passenger_count > 0
-            details = f"Passenger sees: {passenger_count}, Driver sees: {driver_count}, Synchronized: {success}"
-        else:
-            details = f"Passenger status: {status1}, Driver status: {status2}"
-            
-        self.log_test("BUG 3: Chat Message Synchronization", success, details)
-        return success
-        
-    async def test_chat_character_limit(self):
-        """Test 250 character limit validation"""
-        trip_id = self.trips['test_trip']['id']
-        # Create a message with exactly 251 characters
-        long_message = "A" * 251
-        message_data = {"message": long_message}
-        
-        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', 
-                                             message_data, self.tokens['passenger'])
-        
-        # Should fail with 422 (validation error)
-        success = status == 422
-        details = f"Status: {status}, Expected: 422 (validation error)"
-        self.log_test("Chat 250 Character Limit Validation", success, details)
-        return success
-        
-    async def test_admin_chats_endpoint(self):
-        """Test GET /api/admin/chats endpoint"""
-        status, data = await self.make_request('GET', '/admin/chats', None, self.tokens['admin'])
-        
-        success = status == 200 and isinstance(data, list)
-        if success and data:
-            # Check if aggregation has required fields
-            chat = data[0]
-            required_fields = ['trip_id', 'trip_status', 'pickup_address', 'destination_address', 
-                             'first_message', 'last_message', 'message_count', 'passenger', 'driver']
-            has_all_fields = all(field in chat for field in required_fields)
-            success = has_all_fields
-            details = f"Status: {status}, Chats: {len(data)}, Fields OK: {has_all_fields}"
-        else:
-            details = f"Status: {status}, Chats: {len(data) if isinstance(data, list) else 'N/A'}"
-            
-        self.log_test("GET /api/admin/chats Endpoint", success, details)
-        return success
-        
-    async def test_chat_polling_simulation(self):
-        """Simulate chat polling every 5 seconds (BUG 3 fix)"""
-        trip_id = self.trips['test_trip']['id']
-        
-        # Send a new message
-        new_message = {"message": "Mensagem para testar polling"}
-        await self.make_request('POST', f'/trips/{trip_id}/chat/send', new_message, self.tokens['passenger'])
-        
-        # Wait 1 second (simulating polling interval)
-        await asyncio.sleep(1)
-        
-        # Poll for messages
-        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages',
-                                             None, self.tokens['driver'])
-        
-        success = status == 200 and isinstance(data, list)
         if success:
-            # Check if the new message is present
-            messages_with_polling_text = [msg for msg in data if "polling" in msg.get('message', '').lower()]
-            success = len(messages_with_polling_text) > 0
-            details = f"Status: {status}, Total messages: {len(data)}, Polling message found: {success}"
+            # Store rating ID for later tests
+            self.rating_id = data.get('rating_id')
+            
+        self.log_test("Create Rating Success", success, details)
+        return success
+        
+    async def test_trip_marked_as_rated(self):
+        """Test that trip is now marked as rated=true and has passenger_rating_given"""
+        status, data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200 and isinstance(data, list) and len(data) > 0:
+            trip = data[0]  # Get the first trip
+            
+            # Check that trip is now marked as rated
+            is_rated = trip.get('rated') == True
+            has_passenger_rating = trip.get('passenger_rating_given') == 5
+            
+            if is_rated and has_passenger_rating:
+                success = True
+                details = f"Status: {status}, Trip marked as rated: {is_rated}, passenger_rating_given: {has_passenger_rating}"
+            else:
+                details = f"Status: {status}, rated: {trip.get('rated')}, passenger_rating_given: {trip.get('passenger_rating_given')}"
+        else:
+            details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
+            
+        self.log_test("Trip Marked as Rated", success, details)
+        return success
+        
+    async def test_duplicate_rating_prevention(self):
+        """Test that duplicate rating attempts are prevented (400 error)"""
+        trip_id = self.trips['test_trip']['id']
+        driver_id = self.users['driver']['id']
+        
+        # Try to create another rating for the same trip
+        rating_data = {
+            "trip_id": trip_id,
+            "rated_user_id": driver_id,
+            "rating": 4,
+            "reason": "Segunda tentativa de avaliação"
+        }
+        
+        status, data = await self.make_request('POST', '/ratings/create', rating_data, self.tokens['passenger'])
+        
+        # Should fail with 400 (duplicate rating)
+        success = status == 400
+        details = f"Status: {status}, Expected: 400 (duplicate rating), Response: {data}"
+        
+        self.log_test("Duplicate Rating Prevention", success, details)
+        return success
+        
+    async def test_rating_with_reason_required(self):
+        """Test that ratings below 5 stars require a reason"""
+        # Create a second trip to test rating with reason
+        trip_data = {
+            "passenger_id": self.users['passenger']['id'],
+            "pickup_latitude": -15.8267,
+            "pickup_longitude": -47.9218,
+            "pickup_address": "Asa Sul, Brasília - DF",
+            "destination_latitude": -15.7801,
+            "destination_longitude": -47.9292,
+            "destination_address": "Asa Norte, Brasília - DF",
+            "estimated_price": 18.00
+        }
+        
+        # Create second trip
+        status, trip_response = await self.make_request('POST', '/trips/request', trip_data, self.tokens['passenger'])
+        if status != 200:
+            self.log_test("Create Second Trip for Rating Test", False, f"Failed to create trip: {status}")
+            return False
+            
+        trip2_id = trip_response['id']
+        
+        # Accept, start and complete second trip
+        await self.make_request('PUT', f'/trips/{trip2_id}/accept', None, self.tokens['driver'])
+        await self.make_request('PUT', f'/trips/{trip2_id}/start', None, self.tokens['driver'])
+        await self.make_request('PUT', f'/trips/{trip2_id}/complete', None, self.tokens['driver'])
+        
+        # Try to rate with 3 stars but no reason (should fail)
+        rating_data_no_reason = {
+            "trip_id": trip2_id,
+            "rated_user_id": self.users['driver']['id'],
+            "rating": 3,
+            "reason": None
+        }
+        
+        status1, data1 = await self.make_request('POST', '/ratings/create', rating_data_no_reason, self.tokens['passenger'])
+        
+        # Should fail with 400 (reason required)
+        reason_validation_works = status1 == 400
+        
+        # Now try with reason (should succeed)
+        rating_data_with_reason = {
+            "trip_id": trip2_id,
+            "rated_user_id": self.users['driver']['id'],
+            "rating": 3,
+            "reason": "Motorista chegou atrasado e dirigiu muito rápido"
+        }
+        
+        status2, data2 = await self.make_request('POST', '/ratings/create', rating_data_with_reason, self.tokens['passenger'])
+        
+        rating_with_reason_works = status2 == 200
+        
+        success = reason_validation_works and rating_with_reason_works
+        details = f"No reason (3 stars): {status1} (expected 400), With reason: {status2} (expected 200)"
+        
+        self.log_test("Rating with Reason Required", success, details)
+        return success
+        
+    async def test_admin_can_see_low_ratings(self):
+        """Test that admin can see ratings below 5 stars"""
+        status, data = await self.make_request('GET', '/ratings/low', None, self.tokens['admin'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200 and isinstance(data, list):
+            # Should have at least one low rating (the 3-star rating we just created)
+            low_ratings = [r for r in data if r.get('rating', 5) < 5]
+            has_low_ratings = len(low_ratings) > 0
+            
+            if has_low_ratings:
+                success = True
+                rating_info = {r['rating']: r.get('reason', 'No reason') for r in low_ratings}
+                details = f"Status: {status}, Low ratings found: {len(low_ratings)}, Ratings: {rating_info}"
+            else:
+                details = f"Status: {status}, Total ratings: {len(data)}, Low ratings: 0"
         else:
             details = f"Status: {status}, Response: {data}"
             
-        self.log_test("Chat Polling Simulation", success, details)
+        self.log_test("Admin Can See Low Ratings", success, details)
         return success
         
-    async def run_bug_fix_scenario(self):
-        """Run the complete bug fix testing scenario for current review request"""
-        print("\n🎯 EXECUTING CURRENT BUG FIX TESTING SCENARIO")
-        print("=" * 60)
-        print("Testing BUG 1: Driver dashboard - informações do passageiro não aparecem")
-        print("Testing BUG 2: Admin dashboard - informações dos usuários nas viagens")
+    async def test_driver_rating_updated(self):
+        """Test that driver's average rating is updated after receiving ratings"""
+        status, data = await self.make_request('GET', '/users/rating', None, self.tokens['driver'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200 and 'rating' in data:
+            driver_rating = data['rating']
+            # Driver received 5 stars and 3 stars, so average should be 4.0
+            expected_rating = 4.0
+            rating_is_correct = abs(driver_rating - expected_rating) < 0.1  # Allow small floating point differences
+            
+            if rating_is_correct:
+                success = True
+                details = f"Status: {status}, Driver rating: {driver_rating}, Expected: {expected_rating}"
+            else:
+                details = f"Status: {status}, Driver rating: {driver_rating}, Expected: {expected_rating}, Difference: {abs(driver_rating - expected_rating)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Driver Rating Updated", success, details)
+        return success
+        
+    async def run_rating_modal_bug_fix_scenario(self):
+        """Run the complete rating modal bug fix testing scenario"""
+        print("\n🎯 EXECUTING RATING MODAL BUG FIX TESTING SCENARIO")
+        print("=" * 70)
+        print("Testing: Modal de avaliação persistente no passenger dashboard")
+        print("Focus: Verificar que modal aparece apenas UMA vez após avaliação")
         
         # Step 1: Setup users
-        print("Step 1: Creating test users...")
+        print("\nStep 1: Creating test users...")
         if not await self.setup_test_users():
             return False
             
-        # Step 2: Upload profile photos (critical for bug testing)
-        print("Step 2: Uploading profile photos...")
-        if not await self.upload_profile_photos():
-            print("⚠️  Profile photo upload failed - may affect user info display")
-            
-        # Step 3: Create trip
-        print("Step 3: Creating test trip...")
+        # Step 2: Create and complete trip
+        print("Step 2: Creating test trip...")
         if not await self.create_test_trip():
             return False
             
-        # Step 4: Driver accepts trip (critical for BUG 1)
-        print("Step 4: Driver accepting trip...")
+        print("Step 3: Driver accepting trip...")
         if not await self.accept_trip():
             return False
             
-        # Step 5: Test the specific bug fixes
-        print("Step 5: Testing current bug fixes...")
-        current_bug_fix_tests = [
-            self.test_bug1_trips_my_passenger_info(),  # Driver sees passenger info
-            self.test_bug1_trips_my_driver_info(),     # Passenger sees driver info  
-            self.test_bug2_admin_trips_complete_user_info(),  # Admin sees both
-            self.test_mongodb_aggregation_functionality()     # Aggregations working
+        print("Step 4: Driver starting trip...")
+        if not await self.start_trip():
+            return False
+            
+        print("Step 5: Driver completing trip...")
+        if not await self.complete_trip():
+            return False
+            
+        # Step 3: Test rating modal bug fix
+        print("Step 6: Testing rating modal bug fix...")
+        rating_bug_fix_tests = [
+            self.test_trip_status_before_rating(),      # Trip completed, no rating flags
+            self.test_create_rating_success(),          # First rating succeeds
+            self.test_trip_marked_as_rated(),          # Trip marked as rated=true
+            self.test_duplicate_rating_prevention(),    # Second rating blocked (400)
+            self.test_rating_with_reason_required(),    # Test reason validation
+            self.test_admin_can_see_low_ratings(),     # Admin sees low ratings
+            self.test_driver_rating_updated()          # Driver rating calculated
         ]
         
-        results = await asyncio.gather(*current_bug_fix_tests, return_exceptions=True)
+        results = await asyncio.gather(*rating_bug_fix_tests, return_exceptions=True)
         
         # Count successful tests
         successful_tests = sum(1 for result in results if result is True)
         total_tests = len(results)
         
-        print(f"\nCurrent bug fix tests: {successful_tests}/{total_tests} passed")
+        print(f"\nRating modal bug fix tests: {successful_tests}/{total_tests} passed")
         return successful_tests == total_tests
         
     async def run_all_tests(self):
-        """Run all current bug fix tests"""
-        print("🚀 STARTING CURRENT BUG FIX TEST SUITE")
-        print("=" * 60)
-        print("Focus: Driver dashboard passenger info & Admin dashboard user info")
+        """Run all rating modal bug fix tests"""
+        print("🚀 STARTING RATING MODAL BUG FIX TEST SUITE")
+        print("=" * 70)
+        print("Focus: Correção do bug do modal de avaliação persistente")
+        print("Objetivo: Modal deve aparecer apenas UMA vez após trip completed")
         
         await self.setup_session()
         
@@ -493,13 +464,13 @@ class BugFixTestSuite:
                 print("❌ Health check failed, aborting tests")
                 return
                 
-            # Run current bug fix scenario
-            scenario_success = await self.run_bug_fix_scenario()
+            # Run rating modal bug fix scenario
+            scenario_success = await self.run_rating_modal_bug_fix_scenario()
             
             # Print summary
-            print("\n" + "=" * 60)
-            print("📊 CURRENT BUG FIX TEST SUMMARY")
-            print("=" * 60)
+            print("\n" + "=" * 70)
+            print("📊 RATING MODAL BUG FIX TEST SUMMARY")
+            print("=" * 70)
             
             passed = sum(1 for result in self.test_results if result['success'])
             total = len(self.test_results)
@@ -511,12 +482,19 @@ class BugFixTestSuite:
             print(f"Success Rate: {success_rate:.1f}%")
             
             if scenario_success:
-                print("\n🎉 CURRENT BUG FIXES COMPLETELY FUNCTIONAL!")
-                print("✅ BUG 1: Driver dashboard now shows passenger information")
-                print("✅ BUG 2: Admin dashboard shows complete user information")
-                print("✅ MongoDB aggregations working correctly")
+                print("\n🎉 RATING MODAL BUG FIX COMPLETELY FUNCTIONAL!")
+                print("✅ POST /api/ratings/create marca trip como rated=true")
+                print("✅ Adiciona passenger_rating_given com valor da avaliação")
+                print("✅ Previne criação de avaliações duplicadas (400 error)")
+                print("✅ Validação de motivo obrigatório para ratings < 5 estrelas")
+                print("✅ GET /api/trips/my retorna trip com rated=true após avaliação")
+                print("✅ Sistema de avaliações funcionando corretamente")
+                print("\n🔧 BACKEND CORRECTIONS WORKING:")
+                print("   - Trip.rated flag prevents modal from reappearing")
+                print("   - Trip.passenger_rating_given stores rating value")
+                print("   - Duplicate rating protection active")
             else:
-                print("\n⚠️  Some current bug fix issues detected")
+                print("\n⚠️  Some rating modal bug fix issues detected")
                 
             # Print failed tests
             failed_tests = [result for result in self.test_results if not result['success']]
@@ -530,7 +508,7 @@ class BugFixTestSuite:
 
 async def main():
     """Main test execution"""
-    test_suite = BugFixTestSuite()
+    test_suite = RatingModalBugFixTestSuite()
     await test_suite.run_all_tests()
 
 if __name__ == "__main__":
