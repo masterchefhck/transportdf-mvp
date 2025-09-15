@@ -550,7 +550,7 @@ export default function PassengerDashboard() {
   };
 
   const handleHistoryPress = () => {
-    showAlert('Histórico', 'Funcionalidade de histórico de viagens será implementada em breve.');
+    router.push('/passenger/history');
   };
 
   const handlePaymentPress = () => {
