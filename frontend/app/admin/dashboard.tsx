@@ -1324,7 +1324,18 @@ export default function AdminDashboard() {
                       </View>
                     </TouchableOpacity>
                     <View>
-                      <Text style={styles.chatUserName}>{item.passenger.name}</Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setActiveTab('users');
+                          setHighlightedUserId(item.passenger.id);
+                          // Clear highlight after 3 seconds
+                          setTimeout(() => setHighlightedUserId(''), 3000);
+                        }}
+                      >
+                        <Text style={[styles.chatUserName, styles.clickableUserName]}>
+                          {item.passenger.name}
+                        </Text>
+                      </TouchableOpacity>
                       <Text style={styles.chatUserType}>Passageiro</Text>
                     </View>
                   </View>
