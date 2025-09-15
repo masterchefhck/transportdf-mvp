@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
+  TextInput,
   FlatList,
-  Modal,
   ActivityIndicator,
   Alert,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,7 +22,7 @@ interface ChatMessage {
   trip_id: string;
   sender_id: string;
   sender_name: string;
-  sender_type: 'passenger' | 'driver';
+  sender_type: 'passenger' | 'driver' | 'admin';
   message: string;
   timestamp: string;
 }
@@ -30,23 +30,235 @@ interface ChatMessage {
 interface ChatComponentProps {
   tripId: string;
   currentUserId: string;
-  currentUserType: 'passenger' | 'driver';
-  visible: boolean;
-  onClose: () => void;
+  currentUserType: 'passenger' | 'driver' | 'admin';
+  onClose?: () => void;
+  style?: any;
 }
+
+const showAlert = (title: string, message?: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(message ? `${title}\n\n${message}` : title);
+  } else {
+    Alert.alert(title, message);
+  }
+};
 
 export default function ChatComponent({ 
   tripId, 
   currentUserId, 
   currentUserType, 
-  visible, 
-  onClose 
+  onClose,
+  style 
 }: ChatComponentProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  // Polling for new messages every 5 seconds
+  useEffect(() => {
+    loadMessages();
+    
+    const interval = setInterval(() => {
+      loadMessages();
+    }, 5000); // 5 seconds as requested
+
+    return () => clearInterval(interval);
+  }, [tripId]);
+
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
+
+  const loadMessages = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(
+        `${API_URL}/api/trips/${tripId}/chat/messages`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessages(response.data);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim()) return;
+    
+    if (newMessage.length > 250) {
+      showAlert('Erro', 'Mensagem muito longa! Máximo de 250 caracteres.');
+      return;
+    }
+
+    setSending(true);
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/trips/${tripId}/chat/send`,
+        { message: newMessage.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setNewMessage('');
+      loadMessages(); // Refresh messages immediately after sending
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      if (error.response?.status === 400) {
+        showAlert('Erro', 'Chat disponível apenas durante viagens ativas');
+      } else if (error.response?.status === 403) {
+        showAlert('Erro', 'Apenas participantes da viagem podem enviar mensagens');
+      } else {
+        showAlert('Erro', 'Erro ao enviar mensagem');
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const isOwnMessage = (message: ChatMessage) => {
+    return message.sender_id === currentUserId;
+  };
+
+  const renderMessage = ({ item }: { item: ChatMessage }) => {
+    const isOwn = isOwnMessage(item);
+    
+    return (
+      <View style={[
+        styles.messageContainer,
+        isOwn ? styles.ownMessage : styles.otherMessage
+      ]}>
+        <View style={[
+          styles.messageBubble,
+          isOwn ? styles.ownBubble : styles.otherBubble
+        ]}>
+          {!isOwn && (
+            <Text style={styles.senderName}>
+              {item.sender_name} ({item.sender_type === 'passenger' ? 'Passageiro' : item.sender_type === 'driver' ? 'Motorista' : 'Admin'})
+            </Text>
+          )}
+          <Text style={[
+            styles.messageText,
+            isOwn ? styles.ownMessageText : styles.otherMessageText
+          ]}>
+            {item.message}
+          </Text>
+          <Text style={[
+            styles.messageTime,
+            isOwn ? styles.ownMessageTime : styles.otherMessageTime
+          ]}>
+            {formatTime(item.timestamp)}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const characterCount = newMessage.length;
+  const isNearLimit = characterCount > 200;
+  const isAtLimit = characterCount >= 250;
+
+  return (
+    <KeyboardAvoidingView 
+      style={[styles.container, style]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Ionicons name="chatbubbles" size={20} color="#4CAF50" />
+          <Text style={styles.headerTitle}>Chat da Viagem</Text>
+        </View>
+        {onClose && (
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="close" size={20} color="#666" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Messages List */}
+      <View style={styles.messagesContainer}>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="#4CAF50" />
+            <Text style={styles.loadingText}>Carregando mensagens...</Text>
+          </View>
+        ) : messages.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="chatbubble-outline" size={50} color="#666" />
+            <Text style={styles.emptyText}>Nenhuma mensagem ainda</Text>
+            <Text style={styles.emptySubtext}>Inicie a conversa!</Text>
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.messagesList}
+          />
+        )}
+      </View>
+
+      {/* Input Area */}
+      <View style={styles.inputContainer}>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={[
+              styles.textInput,
+              isAtLimit && styles.textInputLimit
+            ]}
+            placeholder="Digite sua mensagem..."
+            placeholderTextColor="#666"
+            value={newMessage}
+            onChangeText={setNewMessage}
+            multiline
+            maxLength={250}
+            editable={!sending}
+          />
+          <View style={styles.inputFooter}>
+            <Text style={[
+              styles.characterCount,
+              isNearLimit && styles.characterCountWarning,
+              isAtLimit && styles.characterCountLimit
+            ]}>
+              {characterCount}/250
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                (!newMessage.trim() || sending || isAtLimit) && styles.sendButtonDisabled
+              ]}
+              onPress={sendMessage}
+              disabled={!newMessage.trim() || sending || isAtLimit}
+            >
+              {sending ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="send" size={20} color="#fff" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
 
   const MAX_MESSAGE_LENGTH = 250;
 
