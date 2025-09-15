@@ -146,7 +146,7 @@ export default function PassengerDashboard() {
   const [progressAnim] = useState(new Animated.Value(0));
   
   // Google Maps integration
-  const { getDirections, geocodeAddress, calculateTripPrice } = useGoogleMaps();
+  const { getDirections, geocodeAddress, reverseGeocode, calculateTripPrice } = useGoogleMaps();
 
   useEffect(() => {
     loadUserData();
