@@ -542,6 +542,16 @@ export default function PassengerDashboard() {
     showAlert('Ajuda', 'Entre em contato conosco:\n\nEmail: suporte@transportdf.com\nTelefone: (61) 3333-4444\n\nHorário de atendimento:\nSegunda a Sexta: 8h às 18h\nSábado: 8h às 12h');
   };
 
+  const handleViewPhoto = (photoUri: string | null, driverName: string) => {
+    if (!photoUri) {
+      showAlert('Foto não disponível', `Foto do motorista ${driverName} não está disponível.`);
+      return;
+    }
+    
+    // For now, just show an alert. In a full implementation, you might want to open a modal with the image
+    showAlert('Foto do Motorista', `Visualizando foto de ${driverName}`);
+  };
+
   const pendingReports = myReports.filter(report => report.response_allowed && report.admin_message);
 
   return (
