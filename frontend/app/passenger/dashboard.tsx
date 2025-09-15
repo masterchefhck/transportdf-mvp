@@ -159,7 +159,7 @@ export default function PassengerDashboard() {
   // Autocomplete states
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   
   // Google Maps integration
   const { getDirections, geocodeAddress, reverseGeocode, calculateTripPrice } = useGoogleMaps();
