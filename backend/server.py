@@ -900,6 +900,12 @@ async def create_rating(rating_data: RatingCreate, current_user: User = Depends(
     
     await db.ratings.insert_one(rating.dict())
     
+    # Mark the trip as rated by passenger
+    await db.trips.update_one(
+        {"id": rating_data.trip_id},
+        {"$set": {"passenger_rating_given": rating_data.rating, "rated": True}}
+    )
+    
     # Update user's average rating
     new_average = await calculate_user_rating(rating_data.rated_user_id)
     await db.users.update_one(
