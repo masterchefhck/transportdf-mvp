@@ -244,15 +244,65 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
     return points;
   };
 
-  const handlePlaceSelect = (data: any, details: any) => {
-    if (details?.geometry?.location) {
-      const coords = {
+  // Web-compatible place search function
+  const searchPlaces = async (input: string) => {
+    if (!input.trim() || !GOOGLE_MAPS_API_KEY) return;
+    
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_MAPS_API_KEY}&language=pt-BR&components=country:br`
+      );
+      const data = await response.json();
+      
+      if (data.predictions) {
+        setSearchSuggestions(data.predictions);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Error searching places:', error);
+    }
+  };
+
+  const handlePlaceSelect = async (data: any, details?: any) => {
+    if (Platform.OS !== 'web' && details && details.geometry && details.geometry.location) {
+      // Native implementation
+      const destination = {
         latitude: details.geometry.location.lat,
         longitude: details.geometry.location.lng,
       };
       
-      setDestination(coords);
+      setDestination(destination);
       setDestinationAddress(data.description);
+      
+      if (userLocation) {
+        calculateRoute();
+      }
+    } else {
+      // Web implementation - get place details
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${data.place_id}&key=${GOOGLE_MAPS_API_KEY}&fields=geometry,name,formatted_address`
+        );
+        const detailData = await response.json();
+        
+        if (detailData.result && detailData.result.geometry) {
+          const destination = {
+            latitude: detailData.result.geometry.location.lat,
+            longitude: detailData.result.geometry.location.lng,
+          };
+          
+          setDestination(destination);
+          setDestinationAddress(data.description);
+          setShowSuggestions(false);
+          
+          if (userLocation) {
+            calculateRoute();
+          }
+        }
+      } catch (error) {
+        console.error('Error getting place details:', error);
+        Alert.alert('Erro', 'Não foi possível obter detalhes do local selecionado.');
+      }
     }
   };
 
