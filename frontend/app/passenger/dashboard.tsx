@@ -1710,15 +1710,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   currentTripCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2a2a2a',
     margin: 20,
     borderRadius: 15,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
   },
   tripHeader: {
     flexDirection: 'row',
