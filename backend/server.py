@@ -322,6 +322,93 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     """Calculate distance between two points in kilometers"""
     return geodesic((lat1, lon1), (lat2, lon2)).kilometers
 
+# Mock Google Maps functions for demo
+def generate_mock_route_steps(origin_lat: float, origin_lng: float, dest_lat: float, dest_lng: float) -> List[RouteStep]:
+    """Generate realistic mock turn-by-turn directions for Brasília"""
+    
+    # Sample Brasília landmarks and routes
+    brasilia_routes = {
+        "asa_norte_to_asa_sul": [
+            {"instruction": "Siga em direção ao sul pela W3 Norte", "distance": "1.2 km", "duration": "3 mins"},
+            {"instruction": "Continue pela Ponte JK", "distance": "800 m", "duration": "2 mins"},
+            {"instruction": "Vire à direita na W3 Sul", "distance": "900 m", "duration": "3 mins"},
+            {"instruction": "Chegue ao destino à esquerda", "distance": "200 m", "duration": "1 min"}
+        ],
+        "centro_to_taguatinga": [
+            {"instruction": "Siga pela Esplanada dos Ministérios", "distance": "1.5 km", "duration": "4 mins"},
+            {"instruction": "Continue pela via EPIA", "distance": "8.2 km", "duration": "12 mins"},
+            {"instruction": "Pegue a saída para Taguatinga Centro", "distance": "1.1 km", "duration": "3 mins"},
+            {"instruction": "Vire à direita na Avenida Central", "distance": "500 m", "duration": "2 mins"}
+        ],
+        "plano_piloto_to_gama": [
+            {"instruction": "Siga pela via S1", "distance": "2.1 km", "duration": "5 mins"},
+            {"instruction": "Continue pela BR-060", "distance": "18.5 km", "duration": "22 mins"},
+            {"instruction": "Pegue a saída para Gama", "distance": "2.2 km", "duration": "4 mins"},
+            {"instruction": "Chegue ao destino", "distance": "300 m", "duration": "1 min"}
+        ]
+    }
+    
+    # Determine route type based on coordinates (simplified logic)
+    distance = calculate_distance(origin_lat, origin_lng, dest_lat, dest_lng)
+    
+    if distance < 3:
+        route_key = "asa_norte_to_asa_sul"
+    elif distance < 10:
+        route_key = "centro_to_taguatinga"
+    else:
+        route_key = "plano_piloto_to_gama"
+    
+    steps = []
+    current_lat, current_lng = origin_lat, origin_lng
+    route_data = brasilia_routes[route_key]
+    
+    for i, step_data in enumerate(route_data):
+        # Calculate intermediate points
+        progress = (i + 1) / len(route_data)
+        next_lat = origin_lat + (dest_lat - origin_lat) * progress
+        next_lng = origin_lng + (dest_lng - origin_lng) * progress
+        
+        step = RouteStep(
+            instruction=step_data["instruction"],
+            distance=step_data["distance"],
+            duration=step_data["duration"],
+            start_location=RoutePoint(lat=current_lat, lng=current_lng),
+            end_location=RoutePoint(lat=next_lat, lng=next_lng)
+        )
+        steps.append(step)
+        current_lat, current_lng = next_lat, next_lng
+    
+    return steps
+
+def generate_mock_polyline(origin_lat: float, origin_lng: float, dest_lat: float, dest_lng: float) -> str:
+    """Generate a simplified encoded polyline for route visualization"""
+    # This is a simplified polyline encoding - in real implementation, would use Google's polyline encoding
+    # For demo purposes, we'll create a basic route line
+    return f"demo_polyline_{origin_lat}_{origin_lng}_to_{dest_lat}_{dest_lng}"
+
+def calculate_realistic_duration(distance_km: float) -> int:
+    """Calculate realistic travel time in seconds based on Brasília traffic patterns"""
+    base_speed_kmh = 25  # Average speed considering traffic in Brasília
+    if distance_km < 2:
+        base_speed_kmh = 20  # Slower in city center
+    elif distance_km > 15:
+        base_speed_kmh = 35  # Faster on highways
+    
+    duration_seconds = int((distance_km / base_speed_kmh) * 3600)
+    return max(duration_seconds, 300)  # Minimum 5 minutes
+
+def format_duration(seconds: int) -> str:
+    """Format duration in seconds to human readable format"""
+    if seconds < 60:
+        return f"{seconds} seg"
+    elif seconds < 3600:
+        minutes = int(seconds / 60)
+        return f"{minutes} min"
+    else:
+        hours = int(seconds / 3600)
+        minutes = int((seconds % 3600) / 60)
+        return f"{hours}h {minutes}min"
+
 async def calculate_user_rating(user_id: str) -> float:
     """Calculate average rating for a user and handle reset after 100 trips"""
     # Count total trips for this user (as driver)
