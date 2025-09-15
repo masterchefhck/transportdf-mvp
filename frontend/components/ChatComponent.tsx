@@ -86,7 +86,22 @@ export default function ChatComponent({
         `${API_URL}/api/trips/${tripId}/chat/messages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessages(response.data);
+      
+      const newMessages = response.data;
+      
+      // Check for new messages by other users
+      if (previousMessageCount > 0 && newMessages.length > previousMessageCount) {
+        const newMessagesByOthers = newMessages.slice(previousMessageCount).filter(
+          (msg: ChatMessage) => msg.sender_id !== currentUserId
+        );
+        
+        if (newMessagesByOthers.length > 0 && onNewMessage) {
+          onNewMessage(newMessagesByOthers.length);
+        }
+      }
+      
+      setPreviousMessageCount(newMessages.length);
+      setMessages(newMessages);
     } catch (error) {
       console.error('Error loading messages:', error);
     }
