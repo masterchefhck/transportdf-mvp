@@ -1581,8 +1581,6 @@ export default function PassengerDashboard() {
         <GoogleMapView
           onTripRequest={handleGoogleMapTripRequest}
           onClose={() => setShowGoogleMapModal(false)}
-          isForMe={tripIsForMe}
-          passengerName={tripPassengerName}
         />
       </Modal>
 
