@@ -157,6 +157,7 @@ export default function PassengerDashboard() {
     const interval = setInterval(() => {
       checkCurrentTrip(); // Check for trip status updates
       loadAdminMessages(); // Check for new admin messages
+      checkForNewMessages(); // Check for new chat messages
     }, 5000); // 5 seconds polling
 
     return () => clearInterval(interval);
