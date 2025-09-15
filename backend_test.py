@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for Transport App Brasília MVP - Bug Fixes Testing
-Testing the bug fixes implemented as per review request:
-- BUG 1: User information not appearing in GET /api/trips/my
-- BUG 3: Messages not persisted/synchronized in chat system
-- Chat endpoints functionality and polling
+Backend Test Suite for Transport App Brasília MVP - Current Bug Fixes Testing
+Testing the bug fixes implemented as per current review request:
+- BUG 1: Driver dashboard - informações do passageiro não aparecem
+- BUG 2: Admin dashboard - informações dos usuários nas viagens
+- Enhanced GET /api/trips/my endpoint with user aggregation
+- Enhanced GET /api/admin/trips endpoint with complete user information
 """
 
 import asyncio
