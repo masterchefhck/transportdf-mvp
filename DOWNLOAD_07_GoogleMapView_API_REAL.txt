@@ -1,0 +1,844 @@
+// ARQUIVO: C:\transportdf-mvp\frontend\components\GoogleMapView.tsx
+// VERSÃO COM GOOGLE PLACES API REAL - Como Uber/99
+
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  Dimensions,
+  Keyboard,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+
+const { width, height } = Dimensions.get('window');
+
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
+interface GoogleMapViewProps {
+  onTripRequest: (tripData: {
+    origin: Coordinates;
+    destination: Coordinates;
+    originAddress: string;
+    destinationAddress: string;
+    estimatedPrice: number;
+    distance: string;
+    duration: string;
+  }) => void;
+  onClose: () => void;
+}
+
+interface PlacePrediction {
+  place_id: string;
+  description: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
+  types: string[];
+}
+
+interface PlaceDetails {
+  place_id: string;
+  geometry: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+  formatted_address: string;
+  name: string;
+}
+
+const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose }) => {
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [destination, setDestination] = useState<Coordinates | null>(null);
+  const [destinationAddress, setDestinationAddress] = useState('');
+  const [originAddress, setOriginAddress] = useState('');
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(true);
+  const [searchResults, setSearchResults] = useState<PlacePrediction[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
+
+  const inputRef = useRef<TextInput>(null);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Google Maps API Key
+  const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  useEffect(() => {
+    if (userLocation && destination) {
+      calculateRoute();
+    }
+  }, [userLocation, destination]);
+
+  const getCurrentLocation = async () => {
+    try {
+      setLocationLoading(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permissão Necessária', 'Para solicitar uma viagem, precisamos acessar sua localização.');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const userCoords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+
+      setUserLocation(userCoords);
+
+      // Get address for current location using Google Reverse Geocoding
+      await reverseGeocodeLocation(userCoords);
+
+    } catch (error) {
+      console.error('Error getting location:', error);
+      Alert.alert('Erro de Localização', 'Não foi possível obter sua localização. Verifique se o GPS está ativo.');
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  // Google Reverse Geocoding API
+  const reverseGeocodeLocation = async (coords: Coordinates) => {
+    if (!GOOGLE_MAPS_API_KEY) {
+      setOriginAddress('Sua localização atual');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.latitude},${coords.longitude}&key=${GOOGLE_MAPS_API_KEY}&language=pt-BR&region=BR`
+      );
+      
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.results.length > 0) {
+        const address = data.results[0].formatted_address;
+        setOriginAddress(address);
+      } else {
+        setOriginAddress('Sua localização atual');
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+      setOriginAddress('Sua localização atual');
+    }
+  };
+
+  // Google Places Autocomplete API
+  const searchPlaces = async (input: string) => {
+    if (!GOOGLE_MAPS_API_KEY || input.length < 2) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    setSearching(true);
+
+    try {
+      // Use current location as bias for better results
+      const locationBias = userLocation 
+        ? `&location=${userLocation.latitude},${userLocation.longitude}&radius=50000`
+        : '';
+
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_MAPS_API_KEY}&language=pt-BR&components=country:br${locationBias}&types=establishment|geocode`
+      );
+      
+      const data = await response.json();
+      
+      if (data.status === 'OK') {
+        setSearchResults(data.predictions || []);
+        setShowResults((data.predictions || []).length > 0);
+      } else {
+        console.error('Places API Error:', data.status, data.error_message);
+        setSearchResults([]);
+        setShowResults(false);
+      }
+    } catch (error) {
+      console.error('Error searching places:', error);
+      setSearchResults([]);
+      setShowResults(false);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Google Place Details API
+  const getPlaceDetails = async (placeId: string): Promise<PlaceDetails | null> => {
+    if (!GOOGLE_MAPS_API_KEY) return null;
+
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${GOOGLE_MAPS_API_KEY}&language=pt-BR&fields=place_id,geometry,formatted_address,name`
+      );
+      
+      const data = await response.json();
+      
+      if (data.status === 'OK') {
+        return data.result;
+      } else {
+        console.error('Place Details API Error:', data.status, data.error_message);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting place details:', error);
+      return null;
+    }
+  };
+
+  const handleSearchChange = (text: string) => {
+    setDestinationAddress(text);
+    
+    // Clear previous timeout
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+
+    // Debounce search - similar to Uber
+    searchTimeout.current = setTimeout(() => {
+      searchPlaces(text);
+    }, 300);
+  };
+
+  const handleLocationSelect = async (prediction: PlacePrediction) => {
+    setLoading(true);
+    setShowResults(false);
+    setInputFocused(false);
+    Keyboard.dismiss();
+
+    try {
+      // Get place details to get coordinates
+      const placeDetails = await getPlaceDetails(prediction.place_id);
+      
+      if (placeDetails) {
+        const coords = {
+          latitude: placeDetails.geometry.location.lat,
+          longitude: placeDetails.geometry.location.lng,
+        };
+        
+        setDestination(coords);
+        setDestinationAddress(placeDetails.name || prediction.structured_formatting.main_text);
+      } else {
+        Alert.alert('Erro', 'Não foi possível obter detalhes do local selecionado.');
+      }
+    } catch (error) {
+      console.error('Error selecting location:', error);
+      Alert.alert('Erro', 'Erro ao selecionar localização.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateRoute = async () => {
+    if (!userLocation || !destination || !GOOGLE_MAPS_API_KEY) return;
+
+    try {
+      setLoading(true);
+      
+      // Google Directions API for accurate distance and time
+      const origin = `${userLocation.latitude},${userLocation.longitude}`;
+      const dest = `${destination.latitude},${destination.longitude}`;
+      
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}&key=${GOOGLE_MAPS_API_KEY}&mode=driving&language=pt-BR&region=BR`
+      );
+      
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.routes.length > 0) {
+        const route = data.routes[0];
+        const leg = route.legs[0];
+        
+        // Calculate estimated price based on real distance
+        const distanceInKm = leg.distance.value / 1000;
+        const basePrice = 4.00;
+        const pricePerKm = 2.80;
+        const price = basePrice + (distanceInKm * pricePerKm);
+        
+        // Add surge pricing simulation (5-15% variation)
+        const surge = 1 + (Math.random() * 0.1 + 0.05);
+        const finalPrice = price * surge;
+        
+        setEstimatedPrice(Math.round(finalPrice * 100) / 100);
+      } else {
+        // Fallback to simple distance calculation
+        const distance = calculateDistance(userLocation, destination);
+        const price = 4.00 + (distance * 2.80);
+        setEstimatedPrice(Math.round(price * 100) / 100);
+      }
+      
+    } catch (error) {
+      console.error('Error calculating route:', error);
+      // Fallback calculation
+      const distance = calculateDistance(userLocation, destination);
+      const price = 4.00 + (distance * 2.80);
+      setEstimatedPrice(Math.round(price * 100) / 100);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Haversine formula for fallback distance calculation
+  const calculateDistance = (point1: Coordinates, point2: Coordinates): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (point2.latitude - point1.latitude) * Math.PI / 180;
+    const dLon = (point2.longitude - point1.longitude) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(point1.latitude * Math.PI / 180) * Math.cos(point2.latitude * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const handleConfirmTrip = async () => {
+    if (!userLocation || !destination || !destinationAddress) {
+      Alert.alert('Dados Incompletos', 'Por favor, selecione um destino para continuar.');
+      return;
+    }
+
+    const distance = calculateDistance(userLocation, destination);
+    const duration = Math.max(8, Math.round(distance * 2.5));
+
+    onTripRequest({
+      origin: userLocation,
+      destination,
+      originAddress,
+      destinationAddress,
+      estimatedPrice,
+      distance: `${distance.toFixed(1)} km`,
+      duration: `${duration} min`,
+    });
+  };
+
+  const resetDestination = () => {
+    setDestination(null);
+    setDestinationAddress('');
+    setEstimatedPrice(0);
+    setShowResults(false);
+    setInputFocused(false);
+    setSearchResults([]);
+  };
+
+  const handleInputFocus = () => {
+    setInputFocused(true);
+    if (destinationAddress.length >= 2) {
+      searchPlaces(destinationAddress);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Delay to allow selection
+    setTimeout(() => {
+      setInputFocused(false);
+      if (!destination) {
+        setShowResults(false);
+      }
+    }, 200);
+  };
+
+  // Check if Google Maps API key is configured
+  if (!GOOGLE_MAPS_API_KEY) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="warning" size={60} color="#FF9800" />
+          <Text style={styles.errorTitle}>Configuração Necessária</Text>
+          <Text style={styles.errorText}>
+            Chave do Google Maps não configurada.{'\n\n'}
+            Adicione EXPO_PUBLIC_GOOGLE_MAPS_API_KEY no arquivo .env
+          </Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>Fechar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header - Estilo Uber */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={onClose} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Para onde?</Text>
+      </View>
+
+      {/* Search Section - Estilo Uber/99 */}
+      <View style={styles.searchSection}>
+        {/* Current Location */}
+        <View style={styles.locationRow}>
+          <View style={styles.locationIndicator}>
+            <View style={styles.originDot} />
+          </View>
+          <View style={styles.locationContent}>
+            <Text style={styles.locationLabel}>DE</Text>
+            <Text style={styles.locationText} numberOfLines={2}>
+              {locationLoading ? 'Obtendo localização...' : originAddress}
+            </Text>
+          </View>
+          {locationLoading && (
+            <ActivityIndicator size="small" color="#007AFF" style={styles.locationLoader} />
+          )}
+        </View>
+
+        {/* Divider Line */}
+        <View style={styles.dividerLine} />
+
+        {/* Destination Input */}
+        <View style={styles.locationRow}>
+          <View style={styles.locationIndicator}>
+            <View style={styles.destinationDot} />
+          </View>
+          <View style={styles.locationContent}>
+            <Text style={styles.locationLabel}>PARA</Text>
+            <TextInput
+              ref={inputRef}
+              style={styles.destinationInput}
+              placeholder="Para onde você quer ir?"
+              placeholderTextColor="#666"
+              value={destinationAddress}
+              onChangeText={handleSearchChange}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              returnKeyType="search"
+              autoCorrect={false}
+              autoCapitalize="words"
+            />
+          </View>
+          <View style={styles.inputActions}>
+            {searching && (
+              <ActivityIndicator size="small" color="#007AFF" style={styles.searchLoader} />
+            )}
+            {destinationAddress.length > 0 && !searching && (
+              <TouchableOpacity onPress={resetDestination} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color="#666" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </View>
+
+      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+        {/* Search Results from Google Places API */}
+        {showResults && searchResults.length > 0 && (
+          <View style={styles.resultsSection}>
+            <Text style={styles.resultsSectionTitle}>Resultados</Text>
+            {searchResults.map((prediction, index) => (
+              <TouchableOpacity
+                key={prediction.place_id}
+                style={styles.resultItem}
+                onPress={() => handleLocationSelect(prediction)}
+              >
+                <View style={styles.resultIcon}>
+                  <Ionicons 
+                    name={prediction.types.includes('establishment') ? 'business' : 'location'} 
+                    size={18} 
+                    color="#007AFF" 
+                  />
+                </View>
+                <View style={styles.resultContent}>
+                  <Text style={styles.resultName}>{prediction.structured_formatting.main_text}</Text>
+                  <Text style={styles.resultAddress} numberOfLines={1}>
+                    {prediction.structured_formatting.secondary_text}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#C7C7CC" />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Map Placeholder com info da rota */}
+        {destination && estimatedPrice > 0 && (
+          <View style={styles.routePreview}>
+            <View style={styles.routeHeader}>
+              <Ionicons name="map" size={24} color="#007AFF" />
+              <Text style={styles.routeTitle}>Prévia da Rota</Text>
+            </View>
+            
+            <View style={styles.routeDetails}>
+              <View style={styles.routeInfo}>
+                <Text style={styles.routeDistance}>
+                  {userLocation ? `${calculateDistance(userLocation, destination).toFixed(1)} km` : '-- km'}
+                </Text>
+                <Text style={styles.routeDuration}>
+                  {userLocation ? `${Math.max(8, Math.round(calculateDistance(userLocation, destination) * 2.5))} min` : '-- min'}
+                </Text>
+              </View>
+              
+              <View style={styles.priceContainer}>
+                <Text style={styles.priceLabel}>Preço estimado</Text>
+                <Text style={styles.priceValue}>R$ {estimatedPrice.toFixed(2)}</Text>
+                <Text style={styles.priceNote}>Pode variar</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Empty state when no search */}
+        {!showResults && !inputFocused && destinationAddress.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="search" size={60} color="#C7C7CC" />
+            <Text style={styles.emptyStateTitle}>Buscar destino</Text>
+            <Text style={styles.emptyStateText}>
+              Digite o nome do local, endereço ou ponto de referência onde você quer ir
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Bottom Action Button - Estilo Uber */}
+      {destination && estimatedPrice > 0 && (
+        <View style={styles.bottomAction}>
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleConfirmTrip}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Text style={styles.confirmButtonText}>Confirmar Viagem</Text>
+                <Text style={styles.confirmButtonPrice}>R$ {estimatedPrice.toFixed(2)}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Loading Overlay */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>
+            {destination ? 'Calculando melhor rota...' : 'Processando...'}
+          </Text>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F8F8',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+  },
+  searchSection: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    marginBottom: 8,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  locationIndicator: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  originDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#34C759',
+  },
+  destinationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF3B30',
+  },
+  dividerLine: {
+    marginLeft: 28,
+    marginRight: 16,
+    height: 1,
+    backgroundColor: '#E5E5EA',
+    marginVertical: 4,
+  },
+  locationContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  locationLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#8E8E93',
+    marginBottom: 2,
+  },
+  locationText: {
+    fontSize: 16,
+    color: '#000',
+    fontWeight: '400',
+  },
+  destinationInput: {
+    fontSize: 16,
+    color: '#000',
+    fontWeight: '400',
+    padding: 0,
+    margin: 0,
+  },
+  locationLoader: {
+    marginRight: 8,
+  },
+  inputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchLoader: {
+    marginRight: 4,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  content: {
+    flex: 1,
+  },
+  resultsSection: {
+    backgroundColor: '#fff',
+    marginBottom: 8,
+  },
+  resultsSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  resultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
+  },
+  resultIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  resultContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  resultName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+    marginBottom: 2,
+  },
+  resultAddress: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  routePreview: {
+    backgroundColor: '#fff',
+    marginBottom: 8,
+    padding: 16,
+  },
+  routeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  routeTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginLeft: 8,
+  },
+  routeDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  routeInfo: {
+    flex: 1,
+  },
+  routeDistance: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 2,
+  },
+  routeDuration: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  priceLabel: {
+    fontSize: 12,
+    color: '#8E8E93',
+    marginBottom: 2,
+  },
+  priceValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#34C759',
+    marginBottom: 2,
+  },
+  priceNote: {
+    fontSize: 11,
+    color: '#8E8E93',
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 60,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  bottomAction: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  confirmButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  confirmButtonPrice: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(248,248,248,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: 20,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 40,
+    lineHeight: 24,
+  },
+  closeButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
+
+export default GoogleMapView;
