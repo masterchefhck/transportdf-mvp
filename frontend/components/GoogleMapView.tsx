@@ -447,11 +447,11 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
             <Text style={styles.loadingText}>Obtendo sua localização...</Text>
           </View>
         ) : (
-          Platform.OS !== 'web' && MapView ? (
-            <MapView
+          Platform.OS !== 'web' && nativeMapComponents.MapView ? (
+            <nativeMapComponents.MapView
               ref={mapRef}
               style={styles.map}
-              provider={PROVIDER_GOOGLE}
+              provider={nativeMapComponents.PROVIDER_GOOGLE}
               region={region}
               showsUserLocation={true}
               showsMyLocationButton={false}
@@ -460,7 +460,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
             >
               {/* Origin Marker */}
               {userLocation && (
-                <Marker
+                <nativeMapComponents.Marker
                   coordinate={userLocation}
                   title="Sua localização"
                   description={originAddress}
@@ -470,7 +470,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
               
               {/* Destination Marker */}
               {destination && (
-                <Marker
+                <nativeMapComponents.Marker
                   coordinate={destination}
                   title="Destino"
                   description={destinationAddress}
@@ -480,14 +480,14 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
               
               {/* Route Polyline */}
               {route && (
-                <Polyline
+                <nativeMapComponents.Polyline
                   coordinates={route.coordinates}
                   strokeColor="#2196F3"
                   strokeWidth={4}
                   lineDashPattern={[1]}
                 />
               )}
-            </MapView>
+            </nativeMapComponents.MapView>
           ) : (
             // Web-compatible map placeholder
             <View style={[styles.map, styles.webMapPlaceholder]}>
