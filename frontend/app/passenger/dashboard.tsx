@@ -1118,6 +1118,10 @@ export default function PassengerDashboard() {
               <TouchableOpacity 
                 style={styles.skipButton} 
                 onPress={() => {
+                  // Mark this trip as handled to prevent modal reappearing
+                  if (completedTrip) {
+                    setRatedTripIds(prev => new Set([...prev, completedTrip.id]));
+                  }
                   setShowRatingModal(false);
                   setRating(5);
                   setRatingReason('');
