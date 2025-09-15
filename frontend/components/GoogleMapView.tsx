@@ -65,8 +65,33 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
   const autocompleteRef = useRef<any>(null);
   const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [nativeMapComponents, setNativeMapComponents] = useState<any>({});
 
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  // Load native components only on mobile platforms
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      const loadNativeComponents = async () => {
+        try {
+          const mapModule = await import('react-native-maps');
+          const placesModule = await import('react-native-google-places-autocomplete');
+          
+          setNativeMapComponents({
+            MapView: mapModule.default,
+            Marker: mapModule.Marker,
+            PROVIDER_GOOGLE: mapModule.PROVIDER_GOOGLE,
+            Polyline: mapModule.Polyline,
+            GooglePlacesAutocomplete: placesModule.GooglePlacesAutocomplete,
+          });
+        } catch (error) {
+          console.warn('Failed to load native map components:', error);
+        }
+      };
+      
+      loadNativeComponents();
+    }
+  }, []);
 
   useEffect(() => {
     getCurrentLocation();
