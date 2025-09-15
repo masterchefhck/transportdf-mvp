@@ -40,7 +40,7 @@ from datetime import datetime
 import sys
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://ridemate-18.preview.emergentagent.com')
+BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://rideshare-app-91.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 class ReviewRequestTestSuite:

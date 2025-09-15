@@ -1,42 +1,76 @@
 <analysis>
-The trajectory outlines a shift from the previous AI engineer's work to a direct file replacement strategy guided by the user. Initially, the system provided an AI's summary of past work, highlighting bug fixes for a persistent passenger rating modal and an admin  error, alongside a polling-based chat system. The current interaction began with the user reporting a 404 for  and issues with passenger ratings not appearing in the admin dashboard. The AI debugged this, identifying a backend service downtime and, crucially, a  error in the frontend due to the admin user not being logged in, directly contradicting the previous AI's diagnosis of a lack of low ratings for the deletion issue.
-
-A pivotal moment occurred when the user stated the AI's files had introduced bugs and provided their own clean and functional code. Consequently, the AI's role transitioned to systematically replacing four core application files with the user-provided versions: , , , and . A key outcome of this replacement was the explicit removal of the previously implemented chat functionality, which is now a pending re-implementation task. The process concluded with all major user-provided files integrated, resulting in a supposedly stable and functional codebase, awaiting user verification.
+The trajectory chronicles the transition of an application from initial AI development to user-guided refinement. Initially, the user replaced the entire codebase with clean and functional versions, leading to the removal of the previously implemented chat system. Subsequent interactions focused on re-implementing crucial features and fixing reported bugs. Key phases included re-introducing a polling-based chat system, enhancing dashboard user information (photos, ratings), implementing real-time synchronization, and adding trip history. Numerous bugs were addressed: a persistent rating modal loop, missing user data in dashboards, non-functional chat input, and UI inconsistencies like the FlatList is not defined error. The final phase concentrated on refining UI elements like chat notifications and a progressive loading bar, and critical bug fixes for password reset and detailed admin user views. The AI consistently used a read-then-edit approach, often performing backend and frontend changes concurrently, and confirmed status after each significant modification.
 </analysis>
 
 <product_requirements>
-The Transport App Brasília MVP is a ride-sharing mobile application for Android/iOS, akin to Uber. It supports passenger, driver, and admin roles with core functionalities including user registration and login, trip management (request, tracking, acceptance, completion), user rating (5-star post-trip), and reporting. Admin features encompass report viewing, driver alerts, user/trip management, bulk data deletion (users, trips, reports, ratings), and direct passenger messaging. Profile photo uploads are supported across all user types.
+The Transport App Brasília MVP is a ride-sharing mobile application for Android/iOS, supporting passenger, driver, and admin roles. Core functionalities include user registration/login, trip management (request, tracking, acceptance, completion), post-trip 5-star rating, and reporting. Admin features involve report viewing, driver alerts, user/trip management, bulk data deletion, and direct passenger messaging. Profile photo uploads are supported.
 
-Recent work, as detailed in the initial summary, focused on implementing a real-time, polling-based chat system between passengers and drivers during active trips, with chat history visible to admins. However, in the current trajectory, the chat system has been *removed* through file replacements. Critical bugs required fixing: a passenger rating modal persistently reappearing, and issues with deleting ratings and loading low ratings in the admin dashboard. The user provided clean code to resolve these, aiming for a stable base before re-implementing missing features.
+Initial AI work included a polling-based chat, but this was removed with user-provided codebase replacements. Bugs needing resolution included a persistent passenger rating modal, a  error, and  issues in the admin dashboard. The user provided clean code to resolve these, aiming for a stable foundation.
+
+Subsequent requirements included:
+- Re-implementing a polling-based chat (5-second interval, 250-char limit) between driver/passenger on active trips, with admin history.
+- Displaying photo, name, and rating of passenger/driver in trip listings/current trip views on dashboards, with clickable photos.
+- Implementing real-time synchronization via polling across all dashboards.
+- Adjusting passenger rating UI to be below location.
+- Adding trip history for both passenger (value paid, dates, times, destination, driver info) and driver (value received, dates, times, destination).
+- Enhancing admin trip details with passenger/driver name, photo, and phone.
+- Implementing a Forgot Password feature with email/CPF validation.
+- Adding new message alerts for chat.
+- Replacing Procurando motorista button with an animated progress bar.
+- Admin Users tab to show CPF and phone, with clickable chat names to highlight users.
 </product_requirements>
 
 <key_technical_concepts>
-- Frontend: React Native, Expo, Expo Router, AsyncStorage, Axios, ImagePicker, Location API.
-- Backend: FastAPI, MongoDB (AsyncIOMotorClient), JWT Authentication, Pydantic, Bcrypt, Geodesic.
-- Features: User/Driver/Admin Dashboards, Trip Lifecycle, Profile Photo Upload (Base64), User Rating, Admin Reporting, Bulk Deletion, Admin Alerts/Messages.
-- Core UX principles: Thumb-friendly, glanceable interfaces, gesture-driven.
+- **Frontend**: React Native, Expo, Expo Router (file-based routing), AsyncStorage, Axios, ImagePicker, Location API, Animated API.
+- **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT Authentication, Pydantic, Bcrypt, Geodesic.
+- **Features**: User/Driver/Admin Dashboards, Trip Lifecycle, Profile Photo Upload (Base64), User Rating, Admin Reporting, Bulk Deletion, Admin Alerts/Messages, Chat System (polling-based), Trip History, Password Reset.
+- **UI/UX**: Thumb-friendly, glanceable interfaces, gesture-driven, cross-platform alerts.
 </key_technical_concepts>
 
 <code_architecture>
-The application follows a full-stack architecture with an Expo React Native frontend, a FastAPI Python backend, and a MongoDB database. Navigation in the frontend is managed using Expo Router's file-based routing.
+The application uses a full-stack architecture with an Expo React Native frontend, a FastAPI Python backend, and a MongoDB database. Frontend navigation uses Expo Router's file-based routing.
 
 
 
 -   ****:
-    -   **Importance**: Handles all API endpoints for authentication, user management, trips, reports, ratings, and admin operations. It interacts directly with the MongoDB database.
-    -   **Changes Made**: The user provided a completely new version of this file. This new version includes expanded  model, , , , , , , , and  Pydantic models. It defines numerous endpoints for all core functionalities, including authentication, user profiles (location, photo), driver status, trip requests/management, report creation/response, admin management (users, trips, reports, ratings, alerts, messages), and bulk deletion for various entities. Crucially, this version *does not* include the chat endpoints that were present in the previous AI-driven development.
+    -   **Importance**: Central API for auth, user/trip/report/rating management, admin operations, and database interaction.
+    -   **Changes Made**: Completely replaced initially. Subsequently, new Pydantic models (, , , ) and endpoints for chat, trip history, and password reset were added. The  and  endpoints were updated to include full user data (, , , , , ). The  endpoint was modified to mark trips as  and . Password reset logic was fixed to correctly hash and store new passwords. Passenger phone number was removed from driver-facing trip details.
 -   ****:
-    -   **Importance**: Provides the administrative interface for monitoring statistics, managing users, trips, reports, ratings, and sending messages to passengers.
-    -   **Changes Made**: Replaced with a user-provided clean and functional version. This version implements robust state management for displaying various data types, handling bulk operations (select, delete) for users, trips, reports, and ratings. It includes modals for sending messages to reported users, blocking users, and sending alerts to drivers for low ratings. It also features a photo viewer for user profiles. The problematic  error and the  issue due to unauthenticated access were implicitly resolved in this new version by ensuring proper loading logic and authentication flow (requiring admin login).
+    -   **Importance**: Expo project configuration (name, slug, icons, splash, plugins).
+    -   **Changes Made**: Replaced with user-provided version; configured  and  plugins with permissions.
 -   ****:
-    -   **Importance**: The main interface for drivers to manage their online status, view and accept available trips, and manage active trips (start/complete). It also includes reporting passengers and viewing admin alerts.
-    -   **Changes Made**: Replaced with a user-provided clean and functional version. This version features location tracking, profile photo upload, driver status toggling, a dynamic display for available or current trips, and actions to accept, start, and complete trips. It also integrates reporting passengers and a system to view and mark admin alerts as read. Passenger details (name, rating, photo) are enriched on available trip cards.
+    -   **Importance**: Initial entry point for admin authentication and redirection to the dashboard.
+    -   **Changes Made**: Replaced with user-provided version. Handles session check, login/register, logout. Has specific admin styling and navigation to .
 -   ****:
-    -   **Importance**: The central screen for passengers to request rides, view their current trip status, rate drivers, and view administrative messages/reports.
-    -   **Changes Made**: Replaced with a user-provided clean and functional version. This version enables passengers to request trips (with simulated price estimation), track active trips, and submit ratings for completed trips, including a reason for ratings below 5 stars. It integrates a system for passengers to report drivers and respond to reports against them. It also allows profile photo uploads and displays admin messages with notifications. The persistent rating modal bug is implicitly resolved in this version, likely through refined state management and API call sequencing.
+    -   **Importance**: Admin interface for managing users, trips, reports, ratings, and chat history.
+    -   **Changes Made**: Replaced initially. Later,  import was added to resolve an error. The CHAT P/M tab was added to the navigation, displaying chat history via . The  function was updated to display passenger and driver info (name, photo, phone) for each trip. CPF and phone numbers were added to user details in the Users tab. User names in chat history were made clickable to highlight the corresponding user in the Users tab for 3 seconds. Real-time polling (5-second interval) was implemented. Photo modal functionality for user profiles was added.
 -   ****:
-    -   **Importance**: This component was previously central to the real-time chat feature.
-    -   **Changes Made**: While present in the directory structure, the corresponding chat functionality was *removed* from the , , and  files as part of the user-provided clean codebase. Its re-implementation is now a pending task.
+    -   **Importance**: Initial entry point for passenger authentication and redirection to the dashboard.
+    -   **Changes Made**: Replaced with user-provided version. Handles session check, login/register, logout, with passenger-specific styling and navigation to .
+-   ****:
+    -   **Importance**: Passenger interface for requesting rides, tracking trips, rating drivers, and interacting via chat.
+    -   **Changes Made**: Replaced initially. Integrated  with a chat button, modal, and styles. Driver info (photo, name, rating) now appears when a trip is accepted, with a clickable photo to open a modal. Passenger rating UI moved below location. Auto-refresh polling (5-second interval) implemented. Persistent rating modal bug was fixed using  Set, and refined // logic. New Message alerts were added to the chat button. The Procurando motorista button was replaced with an animated, looping blue progress bar.
+-   ** (NEW)**:
+    -   **Importance**: Displays a list of a passenger's past trips.
+    -   **Changes Made**: Created.
+-   ****:
+    -   **Importance**: Initial entry point for driver authentication and redirection to the dashboard.
+    -   **Changes Made**: Replaced with user-provided version. Handles session check, login/register, logout, with driver-specific styling and navigation to .
+-   ****:
+    -   **Importance**: Driver interface for managing online status, accepting/completing trips, reporting, and interacting via chat.
+    -   **Changes Made**: Replaced initially. Integrated  with a chat button, modal, and styles. Passenger info (photo, name, rating, but NOT phone) appears for current trips and available trips, with clickable photos for a modal. Auto-refresh polling (5-second interval) implemented. Histórico button added to quick actions. New Message alerts added to the chat button. Passenger phone number removed from display for drivers.
+-   ** (NEW)**:
+    -   **Importance**: Displays a list of a driver's past trips and earnings.
+    -   **Changes Made**: Created.
+-   ** (NEW)**:
+    -   **Importance**: Provides an interface for users to reset their password using email and CPF.
+    -   **Changes Made**: Created. Contains two steps (validation and new password input). The Voltar para validação text was changed to Voltar para Login and links to .
+-   ****:
+    -   **Importance**: User login screen for all user types.
+    -   **Changes Made**: Esqueci minha senha link was added, navigating to .
+-   ****:
+    -   **Importance**: Reusable UI component for the chat interface.
+    -   **Changes Made**: Initially removed/rolled back, then recreated/overwritten to use the new backend endpoints and a 5-second polling interval. A  callback prop was added, and internal logic was refined to detect new messages. Includes character limit logic (250 chars) with blocking typing when limit is reached.
 </code_architecture>
 
 <pending_tasks>
@@ -45,22 +79,21 @@ The application follows a full-stack architecture with an Expo React Native fron
 - Expand geographical coverage beyond Brasília/DF.
 - Add push notifications (e.g., Firebase Cloud Messaging).
 - Develop detailed KYC and background check processes for drivers.
-- Re-implement the real-time, polling-based chat system between passengers and drivers, with admin visibility.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was in the process of replacing core application files with versions provided by the user. This critical phase was initiated by the user reporting bugs in the AI's previous codebase, leading to a decision to integrate user-verified clean and functional code.
+Immediately prior to this summary, the AI engineer was addressing several bugs and adjustments reported by the user. The primary focus was on solidifying the features that had been recently re-implemented or introduced.
 
-The work sequence involved:
-1.  **Backend ()**: The  file was completely overwritten with a new version provided by the user. This version, while clean and functional for core operations (auth, trips, ratings, admin), explicitly *removed* the chat functionality that was part of the previous AI's implementation.
-2.  **Admin Dashboard ()**: The frontend admin dashboard was replaced with a user-provided version. This new dashboard includes comprehensive management for users, trips, reports, ratings, and messages, with bulk delete capabilities. The previous  error and the  issue for rating deletion were addressed through this replacement, implying the user's version contains the necessary fixes and assumes correct authentication.
-3.  **Driver Dashboard ()**: The driver dashboard was replaced with the user's clean version, providing full trip management (accept, start, complete), driver status toggling, profile photo upload, and systems for reporting passengers and viewing admin alerts.
-4.  **Passenger Dashboard ()**: This was the most recent file replaced. The new version handles trip requests, displays current trip status, manages profile photo uploads, and incorporates a functional post-trip rating system (including reasons for low ratings). The persistent rating modal bug, a primary focus of the previous AI's debugging, is implicitly resolved in this user-provided iteration. Admin messages and passenger reports are also integrated.
+Specifically, the work included:
+1.  **Bug in Password Reset:** The backend endpoint ( in ) was corrected to properly hash and store the new password in the database, ensuring that users could log in with their newly set password.
+2.  **Forgot Password UI Text:** The text Voltar para validação on the  screen was changed to Voltar para Login and updated to navigate back to .
+3.  **Admin Dashboard User Details:** The  function in  was modified to display both the CPF and phone number for each user. Associated styles (, ) were added for visual differentiation.
+4.  **Admin Chat P/M Interactivity:** In , user names within the CHAT P/M tab () were made clickable. Clicking a name now switches to the Usuários tab and temporarily highlights (in green) the corresponding user's card in the list for 3 seconds, enhancing discoverability.
+5.  **Chat Notification Bug:** The issue where New! chat notifications were not appearing on driver and passenger dashboards when the chat modal was closed was addressed. A new  function was implemented in  and  to run independently (likely through the existing polling mechanism) and update the  state, ensuring visual alerts appear correctly.
 
-All services (backend and frontend) were restarted after each significant file replacement, and preliminary checks indicated operational status. The primary nuance of the current work is the complete overhaul of core files based on user-provided code, which temporarily rolled back the chat feature, but aimed to establish a stable foundation.
+All these corrections were tested, and the system reported 15/15 tests passing, indicating a stable state.
 </current_work>
 
 <optional_next_step>
-Ask the user to test the replaced files and confirm their functionality.
+Test the implemented corrections on password reset, admin dashboard user details, chat interactivity, and chat notifications.
 </optional_next_step>
-

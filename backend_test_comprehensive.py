@@ -15,7 +15,7 @@ import time
 import random
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://ridemate-18.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://rideshare-app-91.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 class CompleteDashboardTestSuite:
