@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
-  routeInfo: {
+  webRouteInfo: {
     marginTop: 16,
     padding: 16,
     backgroundColor: '#2a2a2a',
