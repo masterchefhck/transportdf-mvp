@@ -1871,7 +1871,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 12,
-    color: '#333',
+    color: '#888',
     marginTop: 4,
   },
   modalOverlay: {
