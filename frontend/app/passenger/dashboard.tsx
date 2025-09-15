@@ -494,14 +494,29 @@ export default function PassengerDashboard() {
         }
       );
 
+      // Show success message
       showAlert('Sucesso', 'Avaliação enviada com sucesso!');
+      
+      // Clear all rating related states
       setShowRatingModal(false);
       setRating(5);
       setRatingReason('');
       setCompletedTrip(null);
-    } catch (error) {
+      
+      // Force refresh of trip data to get updated status
+      setTimeout(() => {
+        checkCurrentTrip();
+      }, 1000);
+      
+    } catch (error: any) {
       console.error('Error submitting rating:', error);
-      showAlert('Erro', 'Erro ao enviar avaliação');
+      if (error.response?.status === 400 && error.response?.data?.detail?.includes('already exists')) {
+        showAlert('Erro', 'Você já avaliou esta viagem');
+        setShowRatingModal(false);
+        setCompletedTrip(null);
+      } else {
+        showAlert('Erro', 'Erro ao enviar avaliação');
+      }
     }
   };
 
