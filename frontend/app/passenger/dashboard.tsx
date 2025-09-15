@@ -100,7 +100,6 @@ export default function PassengerDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const [pickupAddress, setPickupAddress] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
   const [estimatedPrice, setEstimatedPrice] = useState(0);
   const [loading, setLoading] = useState(false);
