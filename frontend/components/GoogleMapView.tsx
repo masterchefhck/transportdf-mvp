@@ -507,7 +507,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
                     <Text style={styles.locationText}>Destino: {destinationAddress}</Text>
                   </View>
                   {route && (
-                    <View style={styles.routeInfo}>
+                    <View style={styles.webRouteInfo}>
                       <Text style={styles.routeText}>Distância: {route.distance}</Text>
                       <Text style={styles.routeText}>Tempo: {route.duration}</Text>
                     </View>
