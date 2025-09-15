@@ -2261,4 +2261,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  destinationInputContainer: {
+    position: 'relative',
+    zIndex: 1000,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  suggestionsContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    marginTop: 4,
+    maxHeight: 200,
+    borderWidth: 1,
+    borderColor: '#333',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1001,
+  },
+  suggestionsList: {
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  suggestionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  suggestionText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  suggestionName: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  suggestionArea: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 2,
+  },
 });
