@@ -998,7 +998,9 @@ export default function PassengerDashboard() {
             {/* Current Trip Details */}
             <View style={styles.currentTripCard}>
               <View style={styles.tripHeader}>
-                <Text style={styles.currentTripTitle}>Viagem Atual</Text>
+                <Text style={styles.currentTripTitle}>
+                  {currentTrip.is_for_another_person ? `Viagem de ${currentTrip.passenger_name}` : 'Viagem Atual'}
+                </Text>
                 <Text style={styles.priceText}>R$ {currentTrip.estimated_price?.toFixed(2) || '0.00'}</Text>
               </View>
 
