@@ -1723,7 +1723,7 @@ const styles = StyleSheet.create({
   tripTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   tripDetails: {
     marginBottom: 16,
