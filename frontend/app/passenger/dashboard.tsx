@@ -1063,7 +1063,7 @@ export default function PassengerDashboard() {
             
             <TouchableOpacity
               style={styles.requestButton}
-              onPress={() => setShowGoogleMapModal(true)}
+              onPress={() => setShowTripTypeModal(true)}
             >
               <Ionicons name="add" size={24} color="#fff" />
               <Text style={styles.requestButtonText}>Solicitar Viagem</Text>
