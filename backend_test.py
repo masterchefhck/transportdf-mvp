@@ -181,20 +181,22 @@ class BugFixTestSuite:
         if status == 200 and isinstance(data, list) and len(data) > 0:
             trip = data[0]  # Get the first trip
             
-            # Check if driver information is included
+            # Check if driver information is included (BUG 1 fix)
             required_driver_fields = ['driver_name', 'driver_photo', 'driver_rating', 'driver_phone']
             has_driver_info = all(field in trip for field in required_driver_fields)
             
             if has_driver_info:
                 success = True
-                details = f"Status: {status}, Driver info present: {[field for field in required_driver_fields if field in trip]}"
+                driver_values = {field: trip.get(field) for field in required_driver_fields}
+                details = f"Status: {status}, Driver info complete: {driver_values}"
             else:
                 missing_fields = [field for field in required_driver_fields if field not in trip]
-                details = f"Status: {status}, Missing driver fields: {missing_fields}"
+                present_fields = [field for field in required_driver_fields if field in trip]
+                details = f"Status: {status}, Present: {present_fields}, Missing: {missing_fields}"
         else:
             details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
             
-        self.log_test("BUG 1: GET /api/trips/my - Driver Info for Passenger", success, details)
+        self.log_test("BUG 1: Driver Dashboard - Passenger Info in GET /api/trips/my", success, details)
         return success
         
     async def test_bug1_trips_my_driver_info(self):
@@ -207,20 +209,22 @@ class BugFixTestSuite:
         if status == 200 and isinstance(data, list) and len(data) > 0:
             trip = data[0]  # Get the first trip
             
-            # Check if passenger information is included
+            # Check if passenger information is included (BUG 1 fix)
             required_passenger_fields = ['passenger_name', 'passenger_photo', 'passenger_rating', 'passenger_phone']
             has_passenger_info = all(field in trip for field in required_passenger_fields)
             
             if has_passenger_info:
                 success = True
-                details = f"Status: {status}, Passenger info present: {[field for field in required_passenger_fields if field in trip]}"
+                passenger_values = {field: trip.get(field) for field in required_passenger_fields}
+                details = f"Status: {status}, Passenger info complete: {passenger_values}"
             else:
                 missing_fields = [field for field in required_passenger_fields if field not in trip]
-                details = f"Status: {status}, Missing passenger fields: {missing_fields}"
+                present_fields = [field for field in required_passenger_fields if field in trip]
+                details = f"Status: {status}, Present: {present_fields}, Missing: {missing_fields}"
         else:
             details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
             
-        self.log_test("BUG 1: GET /api/trips/my - Passenger Info for Driver", success, details)
+        self.log_test("BUG 1: Driver Dashboard - Passenger Info in GET /api/trips/my", success, details)
         return success
         
     async def test_bug3_chat_send_and_persist(self):
