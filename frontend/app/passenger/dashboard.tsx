@@ -152,6 +152,114 @@ export default function PassengerDashboard() {
   // Google Maps integration
   const { getDirections, geocodeAddress, reverseGeocode, calculateTripPrice } = useGoogleMaps();
 
+  // Comprehensive Brasília locations for autocomplete
+  const brasiliaLocations = [
+    // Main Areas
+    { name: 'Asa Norte', area: 'Plano Piloto', coords: { lat: -15.7801, lng: -47.8827 } },
+    { name: 'Asa Sul', area: 'Plano Piloto', coords: { lat: -15.8267, lng: -47.8934 } },
+    { name: 'Taguatinga', area: 'Região Administrativa', coords: { lat: -15.8270, lng: -48.0427 } },
+    { name: 'Ceilândia', area: 'Região Administrativa', coords: { lat: -15.8190, lng: -48.1076 } },
+    { name: 'Gama', area: 'Região Administrativa', coords: { lat: -16.0209, lng: -48.0647 } },
+    { name: 'Sobradinho', area: 'Região Administrativa', coords: { lat: -15.6536, lng: -47.7863 } },
+    { name: 'Planaltina', area: 'Região Administrativa', coords: { lat: -15.4523, lng: -47.6142 } },
+    
+    // Transportation Hubs
+    { name: 'Aeroporto Internacional de Brasília (JK)', area: 'Transporte', coords: { lat: -15.8711, lng: -47.9178 } },
+    { name: 'Rodoviária do Plano Piloto', area: 'Transporte', coords: { lat: -15.7945, lng: -47.8828 } },
+    { name: 'Estação Central do Metrô', area: 'Transporte', coords: { lat: -15.7942, lng: -47.8822 } },
+    
+    // Shopping Centers
+    { name: 'Shopping Conjunto Nacional', area: 'Shopping', coords: { lat: -15.7942, lng: -47.8922 } },
+    { name: 'Shopping Brasília', area: 'Shopping', coords: { lat: -15.7642, lng: -47.8822 } },
+    { name: 'Shopping Iguatemi', area: 'Shopping', coords: { lat: -15.7842, lng: -47.8922 } },
+    { name: 'Shopping Taguatinga', area: 'Shopping', coords: { lat: -15.8370, lng: -48.0527 } },
+    { name: 'Shopping JK Iguatemi', area: 'Shopping', coords: { lat: -15.8042, lng: -47.8622 } },
+    
+    // Government & Landmarks
+    { name: 'Esplanada dos Ministérios', area: 'Governo', coords: { lat: -15.7942, lng: -47.8822 } },
+    { name: 'Congresso Nacional', area: 'Governo', coords: { lat: -15.7998, lng: -47.8635 } },
+    { name: 'Palácio do Planalto', area: 'Governo', coords: { lat: -15.7987, lng: -47.8606 } },
+    { name: 'Supremo Tribunal Federal', area: 'Governo', coords: { lat: -15.8016, lng: -47.8616 } },
+    { name: 'Catedral de Brasília', area: 'Turismo', coords: { lat: -15.7942, lng: -47.8755 } },
+    { name: 'Torre de TV', area: 'Turismo', coords: { lat: -15.7902, lng: -47.8922 } },
+    
+    // Hospitals
+    { name: 'Hospital de Base do DF', area: 'Saúde', coords: { lat: -15.7642, lng: -47.8922 } },
+    { name: 'Hospital Sarah Kubitschek', area: 'Saúde', coords: { lat: -15.7742, lng: -47.8822 } },
+    { name: 'Hospital Universitário de Brasília (HUB)', area: 'Saúde', coords: { lat: -15.7642, lng: -47.8722 } },
+    
+    // Universities
+    { name: 'Universidade de Brasília (UnB)', area: 'Educação', coords: { lat: -15.7642, lng: -47.8722 } },
+    { name: 'Campus Darcy Ribeiro - UnB', area: 'Educação', coords: { lat: -15.7642, lng: -47.8722 } },
+    
+    // Commercial Areas
+    { name: 'W3 Norte', area: 'Comercial', coords: { lat: -15.7701, lng: -47.8827 } },
+    { name: 'W3 Sul', area: 'Comercial', coords: { lat: -15.8167, lng: -47.8934 } },
+    { name: 'Setor Comercial Norte (SCN)', area: 'Comercial', coords: { lat: -15.7842, lng: -47.8822 } },
+    { name: 'Setor Comercial Sul (SCS)', area: 'Comercial', coords: { lat: -15.8042, lng: -47.8822 } },
+    
+    // Residential Areas
+    { name: 'Lago Norte', area: 'Residencial', coords: { lat: -15.7342, lng: -47.8422 } },
+    { name: 'Lago Sul', area: 'Residencial', coords: { lat: -15.8442, lng: -47.8422 } },
+    { name: 'Sudoeste', area: 'Residencial', coords: { lat: -15.7942, lng: -47.9022 } },
+    { name: 'Noroeste', area: 'Residencial', coords: { lat: -15.7642, lng: -47.8822 } },
+    
+    // Other Areas
+    { name: 'Vicente Pires', area: 'Região Administrativa', coords: { lat: -15.8042, lng: -48.0322 } },
+    { name: 'Águas Claras', area: 'Região Administrativa', coords: { lat: -15.8342, lng: -48.0122 } },
+    { name: 'Guará', area: 'Região Administrativa', coords: { lat: -15.8242, lng: -47.9522 } },
+    { name: 'Núcleo Bandeirante', area: 'Região Administrativa', coords: { lat: -15.8642, lng: -47.9622 } },
+    { name: 'Candangolândia', area: 'Região Administrativa', coords: { lat: -15.8542, lng: -47.9422 } },
+    { name: 'Santa Maria', area: 'Região Administrativa', coords: { lat: -16.0042, lng: -48.0322 } },
+    { name: 'São Sebastião', area: 'Região Administrativa', coords: { lat: -15.9042, lng: -47.7822 } },
+    { name: 'Paranoá', area: 'Região Administrativa', coords: { lat: -15.7342, lng: -47.7222 } },
+    { name: 'Itapoã', area: 'Região Administrativa', coords: { lat: -15.7542, lng: -47.7422 } },
+  ];
+
+  // Search suggestions based on user input
+  const searchDestinations = (query: string) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const filtered = brasiliaLocations.filter(location =>
+      location.name.toLowerCase().includes(query.toLowerCase()) ||
+      location.area.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 8); // Limit to 8 suggestions
+
+    setSuggestions(filtered);
+    setShowSuggestions(filtered.length > 0);
+  };
+
+  // Handle destination input with debounced search
+  const handleDestinationChange = (text: string) => {
+    setDestinationAddress(text);
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Debounce search to avoid too many requests
+    const timeout = setTimeout(() => {
+      searchDestinations(text);
+    }, 300);
+    
+    setSearchTimeout(timeout);
+  };
+
+  // Handle suggestion selection
+  const handleSuggestionSelect = (suggestion: any) => {
+    setDestinationAddress(suggestion.name);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    
+    // Auto-calculate price when destination is selected
+    calculateEstimatePrice(suggestion);
+  };
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
