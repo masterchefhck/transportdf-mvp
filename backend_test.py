@@ -41,10 +41,10 @@ from datetime import datetime
 import sys
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://ridemate-18.preview.emergentagent.com')
+BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://ridemate-18.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
-class RatingModalBugFixTestSuite:
+class NewFeaturesTestSuite:
     def __init__(self):
         self.session = None
         self.test_results = []
@@ -123,14 +123,14 @@ class RatingModalBugFixTestSuite:
             return False
             
     async def setup_test_users(self):
-        """Setup test users for rating modal bug fix testing"""
+        """Setup test users for new features testing"""
         import time
         timestamp = str(int(time.time()))
         
         users_to_create = [
-            ("passenger", "Ana Carolina Silva", f"ana.rating.{timestamp}@test.com"),
-            ("driver", "Carlos Eduardo Santos", f"carlos.rating.{timestamp}@test.com"),
-            ("admin", "Admin Rating Test", f"admin.rating.{timestamp}@test.com")
+            ("passenger", "Maria Silva Santos", f"maria.newfeatures.{timestamp}@test.com"),
+            ("driver", "João Carlos Oliveira", f"joao.newfeatures.{timestamp}@test.com"),
+            ("admin", "Admin New Features", f"admin.newfeatures.{timestamp}@test.com")
         ]
         
         success_count = 0
@@ -141,7 +141,7 @@ class RatingModalBugFixTestSuite:
         return success_count == len(users_to_create)
         
     async def create_test_trip(self):
-        """Create a test trip for rating modal bug fix testing"""
+        """Create a test trip for new features testing"""
         # Passenger requests trip
         trip_data = {
             "passenger_id": self.users['passenger']['id'],
@@ -187,74 +187,178 @@ class RatingModalBugFixTestSuite:
         else:
             self.log_test("Driver Start Trip", False, f"Status: {status}, Error: {data}")
             return False
-            
-    async def complete_trip(self):
-        """Driver completes the trip"""
-        trip_id = self.trips['test_trip']['id']
-        status, data = await self.make_request('PUT', f'/trips/{trip_id}/complete', None, self.tokens['driver'])
-        
-        if status == 200:
-            self.log_test("Driver Complete Trip", True, "Trip completed successfully")
-            return True
-        else:
-            self.log_test("Driver Complete Trip", False, f"Status: {status}, Error: {data}")
-            return False
-            
-    async def test_trip_status_before_rating(self):
-        """Test that trip status is 'completed' and no rating fields exist yet"""
-        status, data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
-        
-        success = False
-        details = f"Status: {status}"
-        
-        if status == 200 and isinstance(data, list) and len(data) > 0:
-            trip = data[0]  # Get the first trip
-            
-            # Check trip status is completed
-            is_completed = trip.get('status') == 'completed'
-            
-            # Check that rating fields don't exist yet (before rating)
-            has_no_rated_flag = trip.get('rated') is None or trip.get('rated') == False
-            has_no_passenger_rating = trip.get('passenger_rating_given') is None
-            
-            if is_completed and has_no_rated_flag and has_no_passenger_rating:
-                success = True
-                details = f"Status: {status}, Trip completed: {is_completed}, No rating flags: rated={trip.get('rated')}, passenger_rating_given={trip.get('passenger_rating_given')}"
-            else:
-                details = f"Status: {status}, Trip completed: {is_completed}, rated: {trip.get('rated')}, passenger_rating_given: {trip.get('passenger_rating_given')}"
-        else:
-            details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
-            
-        self.log_test("Trip Status Before Rating", success, details)
-        return success
-        
-    async def test_create_rating_success(self):
-        """Test POST /api/ratings/create successfully creates rating and marks trip"""
-        trip_id = self.trips['test_trip']['id']
-        driver_id = self.users['driver']['id']
-        
-        rating_data = {
-            "trip_id": trip_id,
-            "rated_user_id": driver_id,
-            "rating": 5,
-            "reason": None  # 5 stars doesn't require reason
+
+    # ==========================================
+    # NEW FEATURES TESTS
+    # ==========================================
+    
+    async def test_forgot_password_validation(self):
+        """Test POST /api/auth/forgot-password endpoint validation"""
+        # Test with valid email and CPF
+        valid_request = {
+            "email": self.users['passenger']['email'],
+            "cpf": self.users['passenger']['cpf']
         }
         
-        status, data = await self.make_request('POST', '/ratings/create', rating_data, self.tokens['passenger'])
+        status, data = await self.make_request('POST', '/auth/forgot-password', valid_request)
+        
+        success = status == 200 and 'user_id' in data
+        details = f"Status: {status}, Response: {data}"
+        
+        self.log_test("Forgot Password - Valid Credentials", success, details)
+        return success
+        
+    async def test_forgot_password_invalid_credentials(self):
+        """Test POST /api/auth/forgot-password with invalid credentials"""
+        # Test with invalid email and CPF combination
+        invalid_request = {
+            "email": "invalid@test.com",
+            "cpf": "000.000.000-00"
+        }
+        
+        status, data = await self.make_request('POST', '/auth/forgot-password', invalid_request)
+        
+        # Should return 404 for invalid credentials
+        success = status == 404
+        details = f"Status: {status}, Expected: 404, Response: {data}"
+        
+        self.log_test("Forgot Password - Invalid Credentials", success, details)
+        return success
+        
+    async def test_reset_password_functionality(self):
+        """Test POST /api/auth/reset-password endpoint"""
+        # First validate credentials
+        valid_request = {
+            "email": self.users['driver']['email'],
+            "cpf": self.users['driver']['cpf']
+        }
+        
+        status, data = await self.make_request('POST', '/auth/forgot-password', valid_request)
+        
+        if status != 200:
+            self.log_test("Reset Password - Validation Failed", False, f"Validation failed: {status}")
+            return False
+            
+        # Now reset password
+        reset_request = {
+            "email": self.users['driver']['email'],
+            "cpf": self.users['driver']['cpf'],
+            "new_password": "newpassword123",
+            "confirm_password": "newpassword123"
+        }
+        
+        status, data = await self.make_request('POST', '/auth/reset-password', reset_request)
         
         success = status == 200
         details = f"Status: {status}, Response: {data}"
         
-        if success:
-            # Store rating ID for later tests
-            self.rating_id = data.get('rating_id')
-            
-        self.log_test("Create Rating Success", success, details)
+        self.log_test("Reset Password - Success", success, details)
         return success
         
-    async def test_trip_marked_as_rated(self):
-        """Test that trip is now marked as rated=true and has passenger_rating_given"""
-        status, data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
+    async def test_reset_password_mismatch(self):
+        """Test POST /api/auth/reset-password with password mismatch"""
+        reset_request = {
+            "email": self.users['passenger']['email'],
+            "cpf": self.users['passenger']['cpf'],
+            "new_password": "newpassword123",
+            "confirm_password": "differentpassword123"
+        }
+        
+        status, data = await self.make_request('POST', '/auth/reset-password', reset_request)
+        
+        # Should return 400 for password mismatch
+        success = status == 400
+        details = f"Status: {status}, Expected: 400, Response: {data}"
+        
+        self.log_test("Reset Password - Password Mismatch", success, details)
+        return success
+        
+    async def test_chat_message_send(self):
+        """Test POST /api/trips/{trip_id}/chat/send endpoint"""
+        trip_id = self.trips['test_trip']['id']
+        
+        # Passenger sends message
+        message_data = {
+            "message": "Olá, estou chegando no local de embarque!"
+        }
+        
+        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['passenger'])
+        
+        success = status == 200
+        details = f"Status: {status}, Response: {data}"
+        
+        self.log_test("Chat - Passenger Send Message", success, details)
+        return success
+        
+    async def test_chat_message_driver_send(self):
+        """Test driver sending chat message"""
+        trip_id = self.trips['test_trip']['id']
+        
+        # Driver sends message
+        message_data = {
+            "message": "Perfeito! Estou a caminho, chego em 5 minutos."
+        }
+        
+        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['driver'])
+        
+        success = status == 200
+        details = f"Status: {status}, Response: {data}"
+        
+        self.log_test("Chat - Driver Send Message", success, details)
+        return success
+        
+    async def test_chat_message_character_limit(self):
+        """Test chat message character limit validation"""
+        trip_id = self.trips['test_trip']['id']
+        
+        # Create message longer than 250 characters
+        long_message = "A" * 251
+        message_data = {
+            "message": long_message
+        }
+        
+        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['passenger'])
+        
+        # Should return 422 for validation error
+        success = status == 422
+        details = f"Status: {status}, Expected: 422, Message length: {len(long_message)}"
+        
+        self.log_test("Chat - Character Limit Validation", success, details)
+        return success
+        
+    async def test_chat_messages_retrieval(self):
+        """Test GET /api/trips/{trip_id}/chat/messages endpoint"""
+        trip_id = self.trips['test_trip']['id']
+        
+        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages', None, self.tokens['passenger'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200 and isinstance(data, list):
+            # Should have at least 2 messages from previous tests
+            message_count = len(data)
+            has_messages = message_count >= 2
+            
+            if has_messages and len(data) > 0:
+                # Check message structure
+                first_message = data[0]
+                required_fields = ['id', 'trip_id', 'sender_id', 'sender_name', 'sender_type', 'message', 'timestamp']
+                has_required_fields = all(field in first_message for field in required_fields)
+                
+                success = has_required_fields
+                details = f"Status: {status}, Messages: {message_count}, Structure valid: {has_required_fields}"
+            else:
+                details = f"Status: {status}, Messages: {message_count}, Expected: >= 2"
+        else:
+            details = f"Status: {status}, Response type: {type(data)}"
+            
+        self.log_test("Chat - Messages Retrieval", success, details)
+        return success
+        
+    async def test_trip_info_without_passenger_phone(self):
+        """Test GET /api/trips/my returns driver info without passenger phone for driver"""
+        status, data = await self.make_request('GET', '/trips/my', None, self.tokens['driver'])
         
         success = False
         details = f"Status: {status}"
@@ -262,46 +366,25 @@ class RatingModalBugFixTestSuite:
         if status == 200 and isinstance(data, list) and len(data) > 0:
             trip = data[0]  # Get the first trip
             
-            # Check that trip is now marked as rated
-            is_rated = trip.get('rated') == True
-            has_passenger_rating = trip.get('passenger_rating_given') == 5
+            # Check that passenger info is present but phone is excluded
+            has_passenger_name = 'passenger_name' in trip
+            has_passenger_rating = 'passenger_rating' in trip
+            has_no_passenger_phone = 'passenger_phone' not in trip
             
-            if is_rated and has_passenger_rating:
+            if has_passenger_name and has_passenger_rating and has_no_passenger_phone:
                 success = True
-                details = f"Status: {status}, Trip marked as rated: {is_rated}, passenger_rating_given: {has_passenger_rating}"
+                details = f"Status: {status}, Has name: {has_passenger_name}, Has rating: {has_passenger_rating}, No phone: {has_no_passenger_phone}"
             else:
-                details = f"Status: {status}, rated: {trip.get('rated')}, passenger_rating_given: {trip.get('passenger_rating_given')}"
+                details = f"Status: {status}, Name: {has_passenger_name}, Rating: {has_passenger_rating}, Phone present: {not has_no_passenger_phone}"
         else:
             details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
             
-        self.log_test("Trip Marked as Rated", success, details)
+        self.log_test("Trip Info - No Passenger Phone for Driver", success, details)
         return success
         
-    async def test_duplicate_rating_prevention(self):
-        """Test that duplicate rating attempts are prevented (400 error)"""
-        trip_id = self.trips['test_trip']['id']
-        driver_id = self.users['driver']['id']
-        
-        # Try to create another rating for the same trip
-        rating_data = {
-            "trip_id": trip_id,
-            "rated_user_id": driver_id,
-            "rating": 4,
-            "reason": "Segunda tentativa de avaliação"
-        }
-        
-        status, data = await self.make_request('POST', '/ratings/create', rating_data, self.tokens['passenger'])
-        
-        # Should fail with 400 (duplicate rating)
-        success = status == 400
-        details = f"Status: {status}, Expected: 400 (duplicate rating), Response: {data}"
-        
-        self.log_test("Duplicate Rating Prevention", success, details)
-        return success
-        
-    async def test_rating_with_reason_required(self):
-        """Test that ratings below 5 stars require a reason"""
-        # Create a second trip to test rating with reason
+    async def test_trip_status_requested_for_progress_bar(self):
+        """Test trip with 'requested' status for progress bar animation"""
+        # Create a new trip that stays in 'requested' status
         trip_data = {
             "passenger_id": self.users['passenger']['id'],
             "pickup_latitude": -15.8267,
@@ -313,111 +396,76 @@ class RatingModalBugFixTestSuite:
             "estimated_price": 18.00
         }
         
-        # Create second trip
-        status, trip_response = await self.make_request('POST', '/trips/request', trip_data, self.tokens['passenger'])
+        status, data = await self.make_request('POST', '/trips/request', trip_data, self.tokens['passenger'])
+        
         if status != 200:
-            self.log_test("Create Second Trip for Rating Test", False, f"Failed to create trip: {status}")
+            self.log_test("Create Trip for Progress Bar Test", False, f"Failed to create trip: {status}")
             return False
             
-        trip2_id = trip_response['id']
+        # Check that trip status is 'requested'
+        status, trips_data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
         
-        # Accept, start and complete second trip
-        await self.make_request('PUT', f'/trips/{trip2_id}/accept', None, self.tokens['driver'])
-        await self.make_request('PUT', f'/trips/{trip2_id}/start', None, self.tokens['driver'])
-        await self.make_request('PUT', f'/trips/{trip2_id}/complete', None, self.tokens['driver'])
+        success = False
+        details = f"Status: {status}"
         
-        # Try to rate with 3 stars but no reason (should fail)
-        rating_data_no_reason = {
-            "trip_id": trip2_id,
-            "rated_user_id": self.users['driver']['id'],
-            "rating": 3,
-            "reason": None
-        }
-        
-        status1, data1 = await self.make_request('POST', '/ratings/create', rating_data_no_reason, self.tokens['passenger'])
-        
-        # Should fail with 400 (reason required)
-        reason_validation_works = status1 == 400
-        
-        # Now try with reason (should succeed)
-        rating_data_with_reason = {
-            "trip_id": trip2_id,
-            "rated_user_id": self.users['driver']['id'],
-            "rating": 3,
-            "reason": "Motorista chegou atrasado e dirigiu muito rápido"
-        }
-        
-        status2, data2 = await self.make_request('POST', '/ratings/create', rating_data_with_reason, self.tokens['passenger'])
-        
-        rating_with_reason_works = status2 == 200
-        
-        success = reason_validation_works and rating_with_reason_works
-        details = f"No reason (3 stars): {status1} (expected 400), With reason: {status2} (expected 200)"
-        
-        self.log_test("Rating with Reason Required", success, details)
+        if status == 200 and isinstance(trips_data, list):
+            # Find the newly created trip
+            requested_trips = [t for t in trips_data if t.get('status') == 'requested']
+            
+            if len(requested_trips) > 0:
+                success = True
+                details = f"Status: {status}, Requested trips found: {len(requested_trips)}"
+            else:
+                all_statuses = [t.get('status') for t in trips_data]
+                details = f"Status: {status}, No requested trips, All statuses: {all_statuses}"
+        else:
+            details = f"Status: {status}, Response type: {type(trips_data)}"
+            
+        self.log_test("Trip Status - Requested for Progress Bar", success, details)
         return success
         
-    async def test_admin_can_see_low_ratings(self):
-        """Test that admin can see ratings below 5 stars"""
-        status, data = await self.make_request('GET', '/ratings/low', None, self.tokens['admin'])
+    async def test_admin_chat_aggregation(self):
+        """Test GET /api/admin/chats endpoint for admin dashboard"""
+        status, data = await self.make_request('GET', '/admin/chats', None, self.tokens['admin'])
         
         success = False
         details = f"Status: {status}"
         
         if status == 200 and isinstance(data, list):
-            # Should have at least one low rating (the 3-star rating we just created)
-            low_ratings = [r for r in data if r.get('rating', 5) < 5]
-            has_low_ratings = len(low_ratings) > 0
+            # Should have at least one chat conversation
+            chat_count = len(data)
+            has_chats = chat_count > 0
             
-            if has_low_ratings:
-                success = True
-                rating_info = {r['rating']: r.get('reason', 'No reason') for r in low_ratings}
-                details = f"Status: {status}, Low ratings found: {len(low_ratings)}, Ratings: {rating_info}"
+            if has_chats and len(data) > 0:
+                # Check chat structure
+                first_chat = data[0]
+                required_fields = ['trip_id', 'trip_status', 'pickup_address', 'destination_address', 
+                                 'message_count', 'passenger', 'driver']
+                has_required_fields = all(field in first_chat for field in required_fields)
+                
+                success = has_required_fields
+                details = f"Status: {status}, Chats: {chat_count}, Structure valid: {has_required_fields}"
             else:
-                details = f"Status: {status}, Total ratings: {len(data)}, Low ratings: 0"
+                details = f"Status: {status}, Chats: {chat_count}, Expected: > 0"
         else:
-            details = f"Status: {status}, Response: {data}"
+            details = f"Status: {status}, Response type: {type(data)}"
             
-        self.log_test("Admin Can See Low Ratings", success, details)
+        self.log_test("Admin - Chat Aggregation", success, details)
         return success
         
-    async def test_driver_rating_updated(self):
-        """Test that driver's average rating is updated after receiving ratings"""
-        status, data = await self.make_request('GET', '/users/rating', None, self.tokens['driver'])
-        
-        success = False
-        details = f"Status: {status}"
-        
-        if status == 200 and 'rating' in data:
-            driver_rating = data['rating']
-            # Driver received 5 stars and 3 stars, so average should be 4.0
-            expected_rating = 4.0
-            rating_is_correct = abs(driver_rating - expected_rating) < 0.1  # Allow small floating point differences
-            
-            if rating_is_correct:
-                success = True
-                details = f"Status: {status}, Driver rating: {driver_rating}, Expected: {expected_rating}"
-            else:
-                details = f"Status: {status}, Driver rating: {driver_rating}, Expected: {expected_rating}, Difference: {abs(driver_rating - expected_rating)}"
-        else:
-            details = f"Status: {status}, Response: {data}"
-            
-        self.log_test("Driver Rating Updated", success, details)
-        return success
-        
-    async def run_rating_modal_bug_fix_scenario(self):
-        """Run the complete rating modal bug fix testing scenario"""
-        print("\n🎯 EXECUTING RATING MODAL BUG FIX TESTING SCENARIO")
+    async def run_new_features_scenario(self):
+        """Run the complete new features testing scenario"""
+        print("\n🎯 EXECUTING NEW FEATURES TESTING SCENARIO")
         print("=" * 70)
-        print("Testing: Modal de avaliação persistente no passenger dashboard")
-        print("Focus: Verificar que modal aparece apenas UMA vez após avaliação")
+        print("Testing: Novos ajustes implementados conforme review request")
+        print("Focus: Chat alerts, password reset, progress bar, user info")
         
         # Step 1: Setup users
         print("\nStep 1: Creating test users...")
         if not await self.setup_test_users():
             return False
             
-        # Step 2: Create and complete trip
+        # Step 2: Create and accept trip for chat testing
         print("Step 2: Creating test trip...")
         if not await self.create_test_trip():
             return False
@@ -430,50 +478,47 @@ class RatingModalBugFixTestSuite:
         if not await self.start_trip():
             return False
             
-        print("Step 5: Driver completing trip...")
-        if not await self.complete_trip():
-            return False
-            
-        # Step 6: Test rating modal bug fix (sequential execution for proper order)
-        print("Step 6: Testing rating modal bug fix...")
+        # Step 5: Test new features (sequential execution for proper order)
+        print("Step 5: Testing new features...")
         
-        # Test 1: Check trip status before rating
-        test1_success = await self.test_trip_status_before_rating()
+        # Test password reset functionality
+        test1_success = await self.test_forgot_password_validation()
+        test2_success = await self.test_forgot_password_invalid_credentials()
+        test3_success = await self.test_reset_password_functionality()
+        test4_success = await self.test_reset_password_mismatch()
         
-        # Test 2: Create first rating
-        test2_success = await self.test_create_rating_success()
+        # Test chat functionality with new message alerts
+        test5_success = await self.test_chat_message_send()
+        test6_success = await self.test_chat_message_driver_send()
+        test7_success = await self.test_chat_message_character_limit()
+        test8_success = await self.test_chat_messages_retrieval()
         
-        # Test 3: Check trip is marked as rated
-        test3_success = await self.test_trip_marked_as_rated()
+        # Test user info without passenger phone
+        test9_success = await self.test_trip_info_without_passenger_phone()
         
-        # Test 4: Try duplicate rating (should fail)
-        test4_success = await self.test_duplicate_rating_prevention()
+        # Test progress bar status
+        test10_success = await self.test_trip_status_requested_for_progress_bar()
         
-        # Test 5: Test rating with reason validation
-        test5_success = await self.test_rating_with_reason_required()
-        
-        # Test 6: Admin can see low ratings
-        test6_success = await self.test_admin_can_see_low_ratings()
-        
-        # Test 7: Driver rating updated
-        test7_success = await self.test_driver_rating_updated()
+        # Test admin chat aggregation
+        test11_success = await self.test_admin_chat_aggregation()
         
         results = [test1_success, test2_success, test3_success, test4_success, 
-                  test5_success, test6_success, test7_success]
+                  test5_success, test6_success, test7_success, test8_success,
+                  test9_success, test10_success, test11_success]
         
         # Count successful tests
         successful_tests = sum(1 for result in results if result is True)
         total_tests = len(results)
         
-        print(f"\nRating modal bug fix tests: {successful_tests}/{total_tests} passed")
+        print(f"\nNew features tests: {successful_tests}/{total_tests} passed")
         return successful_tests == total_tests
         
     async def run_all_tests(self):
-        """Run all rating modal bug fix tests"""
-        print("🚀 STARTING RATING MODAL BUG FIX TEST SUITE")
+        """Run all new features tests"""
+        print("🚀 STARTING NEW FEATURES TEST SUITE")
         print("=" * 70)
-        print("Focus: Correção do bug do modal de avaliação persistente")
-        print("Objetivo: Modal deve aparecer apenas UMA vez após trip completed")
+        print("Focus: Teste dos novos ajustes implementados")
+        print("Objetivo: Validar chat alerts, reset senha, barra progresso, info usuários")
         
         await self.setup_session()
         
@@ -483,12 +528,12 @@ class RatingModalBugFixTestSuite:
                 print("❌ Health check failed, aborting tests")
                 return
                 
-            # Run rating modal bug fix scenario
-            scenario_success = await self.run_rating_modal_bug_fix_scenario()
+            # Run new features scenario
+            scenario_success = await self.run_new_features_scenario()
             
             # Print summary
             print("\n" + "=" * 70)
-            print("📊 RATING MODAL BUG FIX TEST SUMMARY")
+            print("📊 NEW FEATURES TEST SUMMARY")
             print("=" * 70)
             
             passed = sum(1 for result in self.test_results if result['success'])
@@ -501,19 +546,21 @@ class RatingModalBugFixTestSuite:
             print(f"Success Rate: {success_rate:.1f}%")
             
             if scenario_success:
-                print("\n🎉 RATING MODAL BUG FIX COMPLETELY FUNCTIONAL!")
-                print("✅ POST /api/ratings/create marca trip como rated=true")
-                print("✅ Adiciona passenger_rating_given com valor da avaliação")
-                print("✅ Previne criação de avaliações duplicadas (400 error)")
-                print("✅ Validação de motivo obrigatório para ratings < 5 estrelas")
-                print("✅ GET /api/trips/my retorna trip com rated=true após avaliação")
-                print("✅ Sistema de avaliações funcionando corretamente")
-                print("\n🔧 BACKEND CORRECTIONS WORKING:")
-                print("   - Trip.rated flag prevents modal from reappearing")
-                print("   - Trip.passenger_rating_given stores rating value")
-                print("   - Duplicate rating protection active")
+                print("\n🎉 NEW FEATURES COMPLETELY FUNCTIONAL!")
+                print("✅ POST /api/auth/forgot-password - Validação email+CPF funcionando")
+                print("✅ POST /api/auth/reset-password - Reset de senha funcionando")
+                print("✅ POST /api/trips/{trip_id}/chat/send - Envio de mensagens funcionando")
+                print("✅ GET /api/trips/{trip_id}/chat/messages - Recuperação de mensagens funcionando")
+                print("✅ GET /api/trips/my - Informações sem telefone do passageiro para driver")
+                print("✅ Trip status 'requested' - Suporte para barra de progresso")
+                print("✅ GET /api/admin/chats - Agregação de chats para admin")
+                print("\n🔧 BACKEND NEW FEATURES WORKING:")
+                print("   - Password reset 2-step process functional")
+                print("   - Chat system with character limit validation")
+                print("   - User info filtering (no passenger phone for driver)")
+                print("   - Trip status management for UI progress indicators")
             else:
-                print("\n⚠️  Some rating modal bug fix issues detected")
+                print("\n⚠️  Some new features issues detected")
                 
             # Print failed tests
             failed_tests = [result for result in self.test_results if not result['success']]
@@ -527,7 +574,7 @@ class RatingModalBugFixTestSuite:
 
 async def main():
     """Main test execution"""
-    test_suite = RatingModalBugFixTestSuite()
+    test_suite = NewFeaturesTestSuite()
     await test_suite.run_all_tests()
 
 if __name__ == "__main__":
