@@ -227,6 +227,63 @@ class BugFixTestSuite:
         self.log_test("BUG 1: Driver Dashboard - Passenger Info in GET /api/trips/my", success, details)
         return success
         
+    async def test_bug2_admin_trips_complete_user_info(self):
+        """BUG 2: Test GET /api/admin/trips returns complete user information for both passenger and driver"""
+        status, data = await self.make_request('GET', '/admin/trips', None, self.tokens['admin'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200 and isinstance(data, list) and len(data) > 0:
+            trip = data[0]  # Get the first trip
+            
+            # Check if both passenger and driver information is included (BUG 2 fix)
+            required_passenger_fields = ['passenger_name', 'passenger_phone', 'passenger_photo', 'passenger_rating']
+            required_driver_fields = ['driver_name', 'driver_phone', 'driver_photo', 'driver_rating']
+            
+            has_passenger_info = all(field in trip for field in required_passenger_fields)
+            has_driver_info = all(field in trip for field in required_driver_fields)
+            
+            if has_passenger_info and has_driver_info:
+                success = True
+                participant_info = {
+                    'passenger': {field: trip.get(field) for field in required_passenger_fields},
+                    'driver': {field: trip.get(field) for field in required_driver_fields}
+                }
+                details = f"Status: {status}, Complete participant info: {participant_info}"
+            else:
+                missing_passenger = [field for field in required_passenger_fields if field not in trip]
+                missing_driver = [field for field in required_driver_fields if field not in trip]
+                details = f"Status: {status}, Missing passenger: {missing_passenger}, Missing driver: {missing_driver}"
+        else:
+            details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
+            
+        self.log_test("BUG 2: Admin Dashboard - Complete User Info in GET /api/admin/trips", success, details)
+        return success
+        
+    async def test_mongodb_aggregation_functionality(self):
+        """Test that MongoDB aggregations are working correctly for user data"""
+        # Test passenger view (should have driver info)
+        passenger_status, passenger_data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
+        
+        # Test driver view (should have passenger info)  
+        driver_status, driver_data = await self.make_request('GET', '/trips/my', None, self.tokens['driver'])
+        
+        # Test admin view (should have both)
+        admin_status, admin_data = await self.make_request('GET', '/admin/trips', None, self.tokens['admin'])
+        
+        success = passenger_status == 200 and driver_status == 200 and admin_status == 200
+        
+        aggregation_results = {
+            'passenger_endpoint': passenger_status == 200 and len(passenger_data) > 0,
+            'driver_endpoint': driver_status == 200 and len(driver_data) > 0,
+            'admin_endpoint': admin_status == 200 and len(admin_data) > 0
+        }
+        
+        details = f"Aggregation results: {aggregation_results}"
+        self.log_test("MongoDB Aggregation Functionality", success, details)
+        return success
+        
     async def test_bug3_chat_send_and_persist(self):
         """BUG 3: Test chat message sending and persistence"""
         trip_id = self.trips['test_trip']['id']
