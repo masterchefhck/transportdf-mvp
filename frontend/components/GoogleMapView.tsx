@@ -39,8 +39,11 @@ interface GoogleMapViewProps {
     estimatedPrice: number;
     distance: string;
     duration: string;
+    passengerName?: string;
   }) => void;
   onClose: () => void;
+  isForMe?: boolean;
+  passengerName?: string;
 }
 
 const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose }) => {
