@@ -1100,6 +1100,7 @@ export default function DriverDashboard() {
           currentUserId={user?.id || ''}
           currentUserType="driver"
           onClose={() => setShowChatModal(false)}
+          onNewMessage={() => setNewMessageAlert(true)}
         />
       </Modal>
 
