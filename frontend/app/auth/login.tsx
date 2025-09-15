@@ -244,6 +244,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  forgotPasswordText: {
+    color: '#888',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
   registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
