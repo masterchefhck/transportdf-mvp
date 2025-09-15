@@ -85,7 +85,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(true);
   
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
   const autocompleteRef = useRef<any>(null);
   const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
