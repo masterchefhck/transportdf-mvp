@@ -249,7 +249,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Chat Endpoints Implementation"
+    - "All dashboard and trip history improvements tested and working"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
