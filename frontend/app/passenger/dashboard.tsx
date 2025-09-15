@@ -1551,6 +1551,13 @@ export default function PassengerDashboard() {
         />
       </Modal>
 
+      {/* Trip Type Modal */}
+      <TripTypeModal
+        visible={showTripTypeModal}
+        onClose={() => setShowTripTypeModal(false)}
+        onConfirm={handleTripTypeConfirm}
+      />
+
       {/* Google Map Modal */}
       <Modal 
         visible={showGoogleMapModal} 
@@ -1560,6 +1567,8 @@ export default function PassengerDashboard() {
         <GoogleMapView
           onTripRequest={handleGoogleMapTripRequest}
           onClose={() => setShowGoogleMapModal(false)}
+          isForMe={tripIsForMe}
+          passengerName={tripPassengerName}
         />
       </Modal>
 
