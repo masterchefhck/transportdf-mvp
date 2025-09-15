@@ -1215,10 +1215,10 @@ async def reset_password(request: PasswordReset):
     # Hash new password
     hashed_password = bcrypt.hashpw(request.new_password.encode('utf-8'), bcrypt.gensalt())
     
-    # Update password in database
+    # Update password in database (store as decoded string)
     await db.users.update_one(
         {"id": user["id"]},
-        {"$set": {"password": hashed_password}}
+        {"$set": {"password": hashed_password.decode('utf-8')}}
     )
     
     return {"message": "Senha alterada com sucesso"}
