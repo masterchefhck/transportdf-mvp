@@ -781,6 +781,26 @@ export default function AdminDashboard() {
                   <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
                 </TouchableOpacity>
               )}
+              
+              {/* Admin Full Promotion - Only for Admin Full users */}
+              {isAdminFull && user.user_type === 'admin' && !user.is_admin_full && (
+                <TouchableOpacity
+                  style={styles.promoteButton}
+                  onPress={() => handlePromoteToAdminFull(user)}
+                >
+                  <Ionicons name="star" size={16} color="#FFD700" />
+                </TouchableOpacity>
+              )}
+              
+              {/* Delete Admin - Only Admin Full can delete other admins */}
+              {isAdminFull && user.user_type === 'admin' && user.id !== currentUser?.id && (
+                <TouchableOpacity
+                  style={styles.deleteAdminButton}
+                  onPress={() => handleDeleteAdmin(user)}
+                >
+                  <Ionicons name="trash" size={16} color="#f44336" />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         ))}
