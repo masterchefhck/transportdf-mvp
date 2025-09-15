@@ -1844,6 +1844,18 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 2,
   },
+  userCpf: {
+    fontSize: 12,
+    color: '#4CAF50',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  userPhone: {
+    fontSize: 12,
+    color: '#2196F3',
+    marginTop: 2,
+    fontWeight: '500',
+  },
   userType: {
     fontSize: 14,
     color: '#888',
