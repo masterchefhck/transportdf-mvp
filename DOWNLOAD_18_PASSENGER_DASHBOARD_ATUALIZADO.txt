@@ -1,0 +1,118 @@
+// TRECHO PARA ATUALIZAR NO PASSENGER DASHBOARD
+// SUBSTITUA a seção de imports e estados do GoogleMapView
+
+// ========== IMPORTS (ADICIONAR) ==========
+import TripTypeModal from '../../components/TripTypeModal';
+
+// ========== ESTADOS (MODIFICAR) ==========
+// Substitua:
+// const [showGoogleMapModal, setShowGoogleMapModal] = useState(false);
+
+// Por:
+const [showTripTypeModal, setShowTripTypeModal] = useState(false);
+const [showGoogleMapModal, setShowGoogleMapModal] = useState(false);
+const [tripIsForMe, setTripIsForMe] = useState(true);
+const [tripPassengerName, setTripPassengerName] = useState('');
+
+// ========== FUNÇÕES (ADICIONAR) ==========
+// Adicione estas funções antes do handleGoogleMapTripRequest:
+
+const handleTripTypeConfirm = (isForMe: boolean, passengerName?: string) => {
+  setTripIsForMe(isForMe);
+  setTripPassengerName(passengerName || '');
+  setShowTripTypeModal(false);
+  setShowGoogleMapModal(true);
+};
+
+// ========== MODIFICAR handleGoogleMapTripRequest ==========
+// Substitua a função handleGoogleMapTripRequest existente por:
+
+const handleGoogleMapTripRequest = async (tripData: {
+  origin: { latitude: number; longitude: number };
+  destination: { latitude: number; longitude: number };
+  originAddress: string;
+  destinationAddress: string;
+  estimatedPrice: number;
+  distance: string;
+  duration: string;
+  passengerName?: string;
+}) => {
+  setLoading(true);
+  try {
+    const token = await AsyncStorage.getItem('access_token');
+    
+    // Dados para enviar ao backend
+    const requestData = {
+      passenger_id: user?.id,
+      pickup_latitude: tripData.origin.latitude,
+      pickup_longitude: tripData.origin.longitude,
+      pickup_address: tripData.originAddress,
+      destination_latitude: tripData.destination.latitude,
+      destination_longitude: tripData.destination.longitude,
+      destination_address: tripData.destinationAddress,
+      estimated_price: tripData.estimatedPrice,
+      // Se for para outra pessoa, adicionar informações extras
+      ...(tripData.passengerName && {
+        passenger_name: tripData.passengerName,
+        requested_by: user?.name,
+        is_for_another_person: true
+      })
+    };
+
+    const response = await axios.post(
+      `${API_URL}/api/trips/request`,
+      requestData,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (response.data) {
+      setCurrentTrip(response.data);
+      setShowGoogleMapModal(false);
+      
+      const successMessage = tripData.passengerName 
+        ? `Corrida solicitada para ${tripData.passengerName}!\nPreço estimado: R$ ${tripData.estimatedPrice.toFixed(2)}\nDistância: ${tripData.distance} • Tempo: ${tripData.duration}`
+        : `Corrida solicitada!\nPreço estimado: R$ ${tripData.estimatedPrice.toFixed(2)}\nDistância: ${tripData.distance} • Tempo: ${tripData.duration}`;
+      
+      showAlert('Sucesso', successMessage);
+    }
+  } catch (error: any) {
+    console.error('Erro ao solicitar corrida:', error);
+    const errorMessage = error.response?.data?.detail || 'Erro ao solicitar corrida';
+    showAlert('Erro', errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// ========== MODIFICAR BOTÃO "Solicitar Viagem" ==========
+// Substitua:
+// onPress={() => setShowGoogleMapModal(true)}
+
+// Por:
+onPress={() => setShowTripTypeModal(true)}
+
+// ========== MODAIS (SUBSTITUIR A SEÇÃO DOS MODAIS) ==========
+// Substitua o modal do GoogleMapView existente por:
+
+{/* Trip Type Modal */}
+<TripTypeModal
+  visible={showTripTypeModal}
+  onClose={() => setShowTripTypeModal(false)}
+  onConfirm={handleTripTypeConfirm}
+/>
+
+{/* Google Map Modal */}
+<Modal 
+  visible={showGoogleMapModal} 
+  animationType="slide" 
+  presentationStyle="pageSheet"
+>
+  <GoogleMapView
+    onTripRequest={handleGoogleMapTripRequest}
+    onClose={() => setShowGoogleMapModal(false)}
+    isForMe={tripIsForMe}
+    passengerName={tripPassengerName}
+  />
+</Modal>
