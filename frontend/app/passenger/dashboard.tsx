@@ -2098,12 +2098,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  addressHint: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 8,
-    fontStyle: 'italic',
-  },
 });
