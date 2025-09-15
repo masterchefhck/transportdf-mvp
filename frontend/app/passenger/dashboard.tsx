@@ -737,7 +737,26 @@ export default function PassengerDashboard() {
 
             <View style={styles.tripStatus}>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(currentTrip.status) }]}>
-                <Text style={styles.statusText}>{getStatusText(currentTrip.status)}</Text>
+                {currentTrip.status === 'requested' ? (
+                  <View style={styles.searchingContainer}>
+                    <Text style={styles.searchingText}>Procurando motorista...</Text>
+                    <View style={styles.progressBarContainer}>
+                      <Animated.View 
+                        style={[
+                          styles.progressBar,
+                          {
+                            width: progressAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: ['0%', '100%'],
+                            }),
+                          }
+                        ]} 
+                      />
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={styles.statusText}>{getStatusText(currentTrip.status)}</Text>
+                )}
               </View>
               <Text style={styles.priceText}>R$ {currentTrip.estimated_price.toFixed(2)}</Text>
             </View>
