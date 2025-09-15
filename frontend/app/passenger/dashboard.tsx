@@ -1572,7 +1572,7 @@ export default function PassengerDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#f5f5f5',
   },
   header: {
     flexDirection: 'row',
