@@ -2002,6 +2002,14 @@ const styles = StyleSheet.create({
   unblockButton: {
     padding: 8,
   },
+  promoteButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  deleteAdminButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
   reportCard: {
     backgroundColor: '#2a2a2a',
     borderRadius: 12,
