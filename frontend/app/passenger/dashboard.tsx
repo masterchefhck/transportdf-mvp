@@ -135,6 +135,9 @@ export default function PassengerDashboard() {
   const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string>('');
   const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
 
+  // Track rated trips to prevent modal loops
+  const [ratedTripIds, setRatedTripIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
