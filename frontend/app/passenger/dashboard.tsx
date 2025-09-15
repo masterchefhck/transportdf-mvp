@@ -470,8 +470,7 @@ export default function PassengerDashboard() {
           `Corrida solicitada! Preço estimado: R$ ${estimatedPrice.toFixed(2)}\n${route ? `Distância: ${route.distance} • Tempo: ${route.duration}` : ''}`
         );
         
-        // Start progress animation
-        startProgressAnimation();
+        setShowRequestModal(false);
       }
     } catch (error: any) {
       console.error('Erro ao solicitar corrida:', error);
