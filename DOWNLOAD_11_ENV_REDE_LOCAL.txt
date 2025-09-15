@@ -1,0 +1,12 @@
+# ARQUIVO: C:\transportdf-mvp\frontend\.env
+# SUBSTITUA localhost pelo IP da sua máquina Windows
+
+# EXEMPLO (substitua 192.168.1.100 pelo SEU IP real):
+EXPO_PUBLIC_BACKEND_URL=http://192.168.1.100:8001
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=SUA_CHAVE_GOOGLE_MAPS_AQUI
+
+# COMO DESCOBRIR SEU IP:
+# 1. No CMD: ipconfig
+# 2. Procure "Adaptador Ethernet" ou "Adaptador Wi-Fi"  
+# 3. Anote o "Endereço IPv4"
+# 4. Substitua 192.168.1.100 acima pelo seu IP real
