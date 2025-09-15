@@ -598,6 +598,51 @@ export default function AdminDashboard() {
     }
   };
 
+  const handlePromoteToAdminFull = async (user: User) => {
+    showConfirm(
+      'Promover para Admin Full',
+      `Tem certeza que deseja promover ${user.name} para Administrador Full?\n\nEsta ação dará permissões totais ao usuário, incluindo gerenciar outros administradores.`,
+      async () => {
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/promote-to-full`,
+            { user_id: user.id },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', `${user.name} foi promovido para Administrador Full!`);
+          onRefresh();
+        } catch (error) {
+          console.error('Error promoting to admin full:', error);
+          showAlert('Erro', 'Erro ao promover usuário');
+        }
+      }
+    );
+  };
+
+  const handleDeleteAdmin = async (user: User) => {
+    showConfirm(
+      'Deletar Administrador',
+      `Tem certeza que deseja DELETAR o administrador ${user.name}?\n\nEsta ação é IRREVERSÍVEL e removerá completamente o usuário do sistema.`,
+      async () => {
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.delete(
+            `${API_URL}/api/admin/delete-admin/${user.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          showAlert('Sucesso', `Administrador ${user.name} foi deletado com sucesso!`);
+          onRefresh();
+        } catch (error) {
+          console.error('Error deleting admin:', error);
+          showAlert('Erro', 'Erro ao deletar administrador');
+        }
+      }
+    );
+  };
+
   const renderStats = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
