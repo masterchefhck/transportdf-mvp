@@ -130,6 +130,11 @@ export default function PassengerDashboard() {
   // Chat states
   const [showChatModal, setShowChatModal] = useState(false);
 
+  // Photo modal states
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string>('');
+  const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
