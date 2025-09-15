@@ -653,18 +653,28 @@ export default function PassengerDashboard() {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('access_token');
+      
+      // Dados para enviar ao backend
+      const requestData = {
+        passenger_id: user?.id,
+        pickup_latitude: tripData.origin.latitude,
+        pickup_longitude: tripData.origin.longitude,
+        pickup_address: tripData.originAddress,
+        destination_latitude: tripData.destination.latitude,
+        destination_longitude: tripData.destination.longitude,
+        destination_address: tripData.destinationAddress,
+        estimated_price: tripData.estimatedPrice,
+        // Se for para outra pessoa, adicionar informações extras
+        ...(tripData.passengerName && {
+          passenger_name: tripData.passengerName,
+          requested_by: user?.name,
+          is_for_another_person: true
+        })
+      };
+
       const response = await axios.post(
         `${API_URL}/api/trips/request`,
-        {
-          passenger_id: user?.id,
-          pickup_latitude: tripData.origin.latitude,
-          pickup_longitude: tripData.origin.longitude,
-          pickup_address: tripData.originAddress,
-          destination_latitude: tripData.destination.latitude,
-          destination_longitude: tripData.destination.longitude,
-          destination_address: tripData.destinationAddress,
-          estimated_price: tripData.estimatedPrice,
-        },
+        requestData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
