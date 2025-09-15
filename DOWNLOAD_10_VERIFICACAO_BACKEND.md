@@ -4,7 +4,7 @@
 
 Seu frontend ainda está tentando conectar com o ambiente **CLOUD/PREVIEW**:
 ```
-EXPO_PUBLIC_BACKEND_URL=https://transportdf.preview.emergentagent.com
+EXPO_PUBLIC_BACKEND_URL=https://brasilia-rider.preview.emergentagent.com
 ```
 
 Mas você quer rodar **LOCALMENTE** no seu Docker/container Windows.
