@@ -323,7 +323,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
 
   const handlePlaceSelect = async (data: any, details?: any) => {
     if (Platform.OS !== 'web' && details && details.geometry && details.geometry.location) {
-      // Native implementation
+      // Native implementation with GooglePlacesAutocomplete
       const destination = {
         latitude: details.geometry.location.lat,
         longitude: details.geometry.location.lng,
@@ -336,29 +336,43 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
         calculateRoute();
       }
     } else {
-      // Web implementation - get place details
-      try {
-        const response = await fetch(
-          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${data.place_id}&key=${GOOGLE_MAPS_API_KEY}&fields=geometry,name,formatted_address`
-        );
-        const detailData = await response.json();
-        
-        if (detailData.result && detailData.result.geometry) {
-          const destination = {
-            latitude: detailData.result.geometry.location.lat,
-            longitude: detailData.result.geometry.location.lng,
-          };
+      // Web/Universal implementation
+      let destination: any = null;
+      
+      // Check if it's a popular destination (with geometry already included)
+      if (data.geometry && data.geometry.location) {
+        destination = {
+          latitude: data.geometry.location.lat,
+          longitude: data.geometry.location.lng,
+        };
+      } else if (GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY !== 'SUA_CHAVE_GOOGLE_MAPS_AQUI') {
+        // Try to get place details from Google API
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${data.place_id}&key=${GOOGLE_MAPS_API_KEY}&fields=geometry,name,formatted_address`
+          );
+          const detailData = await response.json();
           
-          setDestination(destination);
-          setDestinationAddress(data.description);
-          setShowSuggestions(false);
-          
-          if (userLocation) {
-            fetchRoute(userLocation, destination);
+          if (detailData.result && detailData.result.geometry) {
+            destination = {
+              latitude: detailData.result.geometry.location.lat,
+              longitude: detailData.result.geometry.location.lng,
+            };
           }
+        } catch (error) {
+          console.error('Error getting place details:', error);
         }
-      } catch (error) {
-        console.error('Error getting place details:', error);
+      }
+      
+      if (destination) {
+        setDestination(destination);
+        setDestinationAddress(data.description);
+        setShowSuggestions(false);
+        
+        if (userLocation) {
+          calculateRoute();
+        }
+      } else {
         Alert.alert('Erro', 'Não foi possível obter detalhes do local selecionado.');
       }
     }
