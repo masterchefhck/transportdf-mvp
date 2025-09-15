@@ -32,6 +32,10 @@ async def debug_chat_sync():
         
         async with session.post(f"{API_BASE}/auth/register", json=passenger_data) as response:
             passenger_auth = await response.json()
+            print(f"Passenger registration response: {passenger_auth}")
+            if response.status != 200:
+                print(f"Failed to register passenger: {response.status}")
+                return
             passenger_token = passenger_auth['access_token']
             passenger_id = passenger_auth['user']['id']
             print(f"Passenger registered: {passenger_id}")
