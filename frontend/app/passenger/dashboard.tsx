@@ -1945,4 +1945,69 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 2,
   },
+  // New styles for updated layout
+  currentTripContainer: {
+    flex: 1,
+  },
+  mapView: {
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  currentTripTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  driverInfoSection: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 12,
+  },
+  driverInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  currentDriverPhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 16,
+  },
+  defaultCurrentDriverPhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#333',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  currentDriverDetails: {
+    flex: 1,
+  },
+  currentDriverName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  currentDriverRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  currentDriverRatingText: {
+    fontSize: 16,
+    color: '#FF9800',
+    fontWeight: 'bold',
+  },
 });
