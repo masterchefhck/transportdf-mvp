@@ -1780,13 +1780,13 @@ const styles = StyleSheet.create({
   noTripTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#333',
     marginTop: 20,
     marginBottom: 8,
   },
   noTripSubtitle: {
     fontSize: 16,
-    color: '#888',
+    color: '#666',
     textAlign: 'center',
     marginBottom: 40,
   },
