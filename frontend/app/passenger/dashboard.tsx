@@ -1878,4 +1878,28 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     maxHeight: '100%',
   },
+  // Searching driver animation styles
+  searchingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  searchingText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  progressBarContainer: {
+    width: 120,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 2,
+  },
 });
