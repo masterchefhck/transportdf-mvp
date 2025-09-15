@@ -1034,6 +1034,15 @@ export default function PassengerDashboard() {
                 </View>
               )}
 
+              {currentTrip.is_for_another_person && (
+                <View style={styles.passengerInfoCard}>
+                  <Ionicons name="person" size={16} color="#007AFF" />
+                  <Text style={styles.passengerInfoText}>
+                    Solicitada por você para: {currentTrip.passenger_name}
+                  </Text>
+                </View>
+              )}
+
               {/* Trip Status and Actions */}
               <View style={styles.tripActions}>
                 {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && (
