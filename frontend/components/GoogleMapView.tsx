@@ -299,8 +299,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
             key: GOOGLE_MAPS_API_KEY,
             language: 'pt-BR',
             components: 'country:br',
-            location: `${region.latitude},${region.longitude}`,
-            radius: 50000, // 50km radius around Brasília
+            // Removed location and radius to allow searches throughout Brazil
           }}
           requestUrl={{
             useOnPlatform: 'web',
