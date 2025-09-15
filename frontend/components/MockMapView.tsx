@@ -437,6 +437,63 @@ const styles = StyleSheet.create({
     color: '#888',
     marginLeft: 4,
   },
+  // Fallback map styles
+  fallbackMap: {
+    backgroundColor: '#1a1a1a',
+    position: 'relative',
+    height: MAP_HEIGHT,
+    width: '100%',
+  },
+  gridContainer: {
+    flex: 1,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  gridCell: {
+    flex: 1,
+    borderWidth: 0.5,
+    borderColor: '#2a2a2a',
+  },
+  mapMarker: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ translateX: -12 }, { translateY: -12 }],
+  },
+  originMarker: {
+    width: 24,
+    height: 24,
+  },
+  destinationMarker: {
+    width: 24,
+    height: 24,
+  },
+  currentLocationMarker: {
+    width: 24,
+    height: 24,
+  },
+  markerLabel: {
+    fontSize: 8,
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  routeLine: {
+    position: 'absolute',
+    top: '50%',
+    left: '10%',
+    right: '10%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ translateY: -10 }],
+  },
+  routeText: {
+    fontSize: 16,
+    color: '#2196F3',
+  },
 });
 
 export default MockMapView;
