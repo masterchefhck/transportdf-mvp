@@ -326,18 +326,35 @@ export default function PassengerDashboard() {
         (trip: Trip) => trip.status === 'requested' || trip.status === 'accepted' || trip.status === 'in_progress'
       );
 
-      // Check for recently completed trips that need rating
-      const recentlyCompleted = response.data.find(
-        (trip: Trip) => trip.status === 'completed' && !trip.rated && !trip.passenger_rating_given
+      // Find completed trips that might need rating
+      const completedTrips = response.data.filter(
+        (trip: Trip) => trip.status === 'completed'
       );
+
+      // Check for trips that need rating (not already shown or rated)
+      const needsRating = completedTrips.find((trip: Trip) => {
+        // Trip needs rating if:
+        // 1. NOT already rated (rated !== true)
+        // 2. NOT has passenger_rating_given 
+        // 3. NOT in our local ratedTripIds set (prevents showing again)
+        // 4. Modal is not already showing
+        const notRated = trip.rated !== true && !trip.passenger_rating_given;
+        const notInLocalSet = !ratedTripIds.has(trip.id);
+        const modalNotShowing = !showRatingModal;
+        
+        return notRated && notInLocalSet && modalNotShowing;
+      });
 
       if (activeTrip) {
         setCurrentTrip(activeTrip);
-      } else if (recentlyCompleted && !showRatingModal) {
-        // Only show rating modal if not already showing and trip just completed
-        setCompletedTrip(recentlyCompleted);
+      } else if (needsRating) {
+        // Show rating modal for this trip
+        setCompletedTrip(needsRating);
         setShowRatingModal(true);
         setCurrentTrip(null);
+        
+        // Add to local set to prevent showing again
+        setRatedTripIds(prev => new Set([...prev, needsRating.id]));
       } else {
         setCurrentTrip(null);
       }
