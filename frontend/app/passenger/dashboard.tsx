@@ -2014,4 +2014,12 @@ const styles = StyleSheet.create({
     color: '#FF9800',
     fontWeight: 'bold',
   },
+  addressHint: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
 });
