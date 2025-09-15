@@ -22,6 +22,7 @@ import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import ChatComponent from '../../components/ChatComponent';
 import TripMapView from '../../components/TripMapView';
+import GoogleMapView from '../../components/GoogleMapView';
 import { useGoogleMaps } from '../../components/useGoogleMaps';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
