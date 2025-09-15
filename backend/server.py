@@ -530,16 +530,64 @@ async def complete_trip(trip_id: str, current_user: User = Depends(get_current_u
     
     return {"message": "Trip completed"}
 
-@api_router.get("/trips/my", response_model=List[Trip])
+@api_router.get("/trips/my")
 async def get_my_trips(current_user: User = Depends(get_current_user)):
+    """Get current user's trips with complete user information"""
     if current_user.user_type == UserType.PASSENGER:
-        trips = await db.trips.find({"passenger_id": current_user.id}).sort("requested_at", -1).to_list(50)
+        # Get trips with driver details for passenger
+        pipeline = [
+            {"$match": {"passenger_id": current_user.id}},
+            {"$lookup": {
+                "from": "users",
+                "localField": "driver_id",
+                "foreignField": "id",
+                "as": "driver"
+            }},
+            {"$sort": {"requested_at": -1}},
+            {"$limit": 50}
+        ]
     elif current_user.user_type == UserType.DRIVER:
-        trips = await db.trips.find({"driver_id": current_user.id}).sort("requested_at", -1).to_list(50)
+        # Get trips with passenger details for driver
+        pipeline = [
+            {"$match": {"driver_id": current_user.id}},
+            {"$lookup": {
+                "from": "users",
+                "localField": "passenger_id",
+                "foreignField": "id",
+                "as": "passenger"
+            }},
+            {"$sort": {"requested_at": -1}},
+            {"$limit": 50}
+        ]
     else:
         raise HTTPException(status_code=403, detail="Invalid user type")
     
-    return [Trip(**trip) for trip in trips]
+    trips = await db.trips.aggregate(pipeline).to_list(50)
+    
+    # Process results to include user details
+    result = []
+    for trip in trips:
+        if current_user.user_type == UserType.PASSENGER:
+            driver = trip["driver"][0] if trip["driver"] else {}
+            trip_data = {
+                **trip,
+                "driver_name": driver.get("name"),
+                "driver_photo": driver.get("profile_photo"),
+                "driver_rating": driver.get("rating"),
+                "driver_phone": driver.get("phone")
+            }
+        else:  # DRIVER
+            passenger = trip["passenger"][0] if trip["passenger"] else {}
+            trip_data = {
+                **trip,
+                "passenger_name": passenger.get("name"),
+                "passenger_photo": passenger.get("profile_photo"),
+                "passenger_rating": passenger.get("rating"),
+                "passenger_phone": passenger.get("phone")
+            }
+        result.append(trip_data)
+    
+    return result
 
 # Report endpoints
 @api_router.post("/reports/create")
