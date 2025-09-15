@@ -629,6 +629,39 @@ export default function PassengerDashboard() {
     }
   };
 
+  const checkForNewMessages = async () => {
+    if (!currentTrip?.id || showChatModal) return; // Don't check if chat is open
+    
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(
+        `${API_URL}/api/trips/${currentTrip.id}/chat/messages`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const messages = response.data;
+      if (messages.length > 0) {
+        // Check for messages from driver (other user)
+        const lastMessageFromOther = messages
+          .filter((msg: any) => msg.sender_id !== user?.id)
+          .pop();
+        
+        if (lastMessageFromOther) {
+          const lastMessageTime = new Date(lastMessageFromOther.timestamp).getTime();
+          const currentTime = new Date().getTime();
+          const timeDiff = currentTime - lastMessageTime;
+          
+          // Show alert if message is less than 10 seconds old
+          if (timeDiff < 10000) {
+            setNewMessageAlert(true);
+          }
+        }
+      }
+    } catch (error) {
+      // Silently fail - chat might not be available
+    }
+  };
+
   const pendingReports = myReports.filter(report => report.response_allowed && report.admin_message);
 
   return (
