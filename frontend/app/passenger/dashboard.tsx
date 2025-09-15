@@ -879,7 +879,7 @@ export default function PassengerDashboard() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Solicitar Viagem</Text>
+              <Text style={styles.modalTitle}>Para onde vamos?</Text>
               <TouchableOpacity
                 onPress={() => setShowRequestModal(false)}
                 style={styles.closeButton}
@@ -888,22 +888,28 @@ export default function PassengerDashboard() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="radio-button-on" size={20} color="#4CAF50" />
-              <TextInput
-                style={styles.input}
-                placeholder="Ex: Asa Norte, W3 Sul, Taguatinga, Centro..."
-                placeholderTextColor="#666"
-                value={pickupAddress}
-                onChangeText={setPickupAddress}
-              />
+            {/* Current Location Display */}
+            <View style={styles.currentLocationCard}>
+              <View style={styles.currentLocationRow}>
+                <Ionicons name="navigate" size={20} color="#4CAF50" />
+                <Text style={styles.currentLocationText}>
+                  {location ? 'Sua localização atual' : 'Obtendo localização...'}
+                </Text>
+                <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+              </View>
+              {location && (
+                <Text style={styles.locationDetails}>
+                  📍 {location.coords.latitude.toFixed(4)}, {location.coords.longitude.toFixed(4)}
+                </Text>
+              )}
             </View>
 
+            {/* Destination Input */}
             <View style={styles.inputContainer}>
               <Ionicons name="location" size={20} color="#f44336" />
               <TextInput
                 style={styles.input}
-                placeholder="Ex: Asa Sul, Gama, Aeroporto, Shopping..."
+                placeholder="Digite o destino (ex: Asa Sul, Taguatinga...)"
                 placeholderTextColor="#666"
                 value={destinationAddress}
                 onChangeText={setDestinationAddress}
@@ -911,8 +917,24 @@ export default function PassengerDashboard() {
               />
             </View>
 
+            {/* Quick Destination Buttons */}
+            <View style={styles.quickDestinationsContainer}>
+              <Text style={styles.quickDestinationsTitle}>Destinos populares:</Text>
+              <View style={styles.quickDestinationsGrid}>
+                {['Asa Sul', 'Taguatinga', 'Gama', 'Aeroporto', 'Ceilândia', 'Sobradinho'].map((destination) => (
+                  <TouchableOpacity
+                    key={destination}
+                    style={styles.quickDestinationButton}
+                    onPress={() => setDestinationAddress(destination)}
+                  >
+                    <Text style={styles.quickDestinationText}>{destination}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
             <Text style={styles.addressHint}>
-              💡 Você pode usar nomes de bairros, pontos de referência ou endereços de Brasília
+              💡 Sua localização atual será usada como ponto de partida
             </Text>
 
             {estimatedPrice > 0 && (
