@@ -1828,12 +1828,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 25,
     width: '90%',
     maxWidth: 400,
-    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
