@@ -81,6 +81,34 @@ const MockMapView: React.FC<MockMapViewProps> = ({
   const destinationSvg = latLngToSvg(destination.lat, destination.lng);
   const currentLocationSvg = currentLocation ? latLngToSvg(currentLocation.lat, currentLocation.lng) : null;
 
+  // Generate mock route path for SVG
+  const generateRoutePath = () => {
+    if (!route) return '';
+    
+    const points = [originSvg];
+    
+    // Add some intermediate waypoints for a more realistic route
+    const steps = 5;
+    for (let i = 1; i < steps; i++) {
+      const progress = i / steps;
+      // Add some curve to make it look like a real route
+      const curveFactor = Math.sin(progress * Math.PI) * 20;
+      const x = originSvg.x + (destinationSvg.x - originSvg.x) * progress + curveFactor;
+      const y = originSvg.y + (destinationSvg.y - originSvg.y) * progress + curveFactor * 0.5;
+      points.push({ x, y });
+    }
+    
+    points.push(destinationSvg);
+    
+    // Create SVG path
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      path += ` L ${points[i].x} ${points[i].y}`;
+    }
+    
+    return path;
+  };
+
   // Fallback map rendering without SVG
   const renderFallbackMap = () => {
     return (
