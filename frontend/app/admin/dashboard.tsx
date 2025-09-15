@@ -158,6 +158,15 @@ export default function AdminDashboard() {
     loadData();
   }, []);
 
+  // Auto-refresh data every 5 seconds for real-time sync
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadData(); // Refresh all admin data
+    }, 5000); // 5 seconds polling
+
+    return () => clearInterval(interval);
+  }, []);
+
   const loadUserData = async () => {
     try {
       const userData = await AsyncStorage.getItem('user');
