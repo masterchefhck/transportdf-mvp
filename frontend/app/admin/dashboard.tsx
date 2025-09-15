@@ -177,7 +177,9 @@ export default function AdminDashboard() {
     try {
       const userData = await AsyncStorage.getItem('user');
       if (userData) {
-        setUser(JSON.parse(userData));
+        const user = JSON.parse(userData);
+        setUser(user);
+        setIsAdminFull(user.is_admin_full === true);
       }
     } catch (error) {
       console.log('Error loading user data:', error);
