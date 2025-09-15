@@ -693,7 +693,10 @@ export default function AdminDashboard() {
         </View>
         
         {users.map(user => (
-          <View key={user.id} style={styles.userCard}>
+          <View key={user.id} style={[
+            styles.userCard,
+            highlightedUserId === user.id && styles.highlightedUserCard
+          ]}>
             <View style={styles.userInfo}>
               {user.user_type !== 'admin' && (
                 <TouchableOpacity
