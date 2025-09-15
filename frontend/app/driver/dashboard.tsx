@@ -794,7 +794,7 @@ export default function DriverDashboard() {
             {/* Passenger Info Section */}
             {currentTrip.passenger_name && (
               <View style={styles.passengerInfoSection}>
-                <Text style={styles.sectionTitle}>Passageiro</Text>
+                <Text style={styles.passengerSectionTitle}>Passageiro</Text>
                 <View style={styles.passengerInfoCard}>
                   <TouchableOpacity
                     onPress={() => handleViewPhoto(currentTrip.passenger_photo, currentTrip.passenger_name)}
