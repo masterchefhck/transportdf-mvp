@@ -2412,6 +2412,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  clickableUserName: {
+    textDecorationLine: 'underline',
+    color: '#FF9800',
+  },
   chatUserType: {
     fontSize: 12,
     color: '#888',
