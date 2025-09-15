@@ -2014,6 +2014,10 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 4,
   },
+  adminFullBadge: {
+    color: '#FFD700',
+    fontSize: 16,
+  },
   reportCard: {
     backgroundColor: '#2a2a2a',
     borderRadius: 12,
