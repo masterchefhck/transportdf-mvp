@@ -1716,4 +1716,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  // Current trip passenger info styles
+  passengerInfoSection: {
+    marginTop: 16,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2196F3',
+    marginBottom: 8,
+  },
+  passengerInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  currentPassengerPhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  defaultCurrentPassengerPhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#333',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  currentPassengerDetails: {
+    flex: 1,
+  },
+  currentPassengerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  currentPassengerRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+  },
+  currentPassengerRatingText: {
+    fontSize: 14,
+    color: '#FF9800',
+    fontWeight: 'bold',
+  },
+  currentPassengerPhone: {
+    fontSize: 12,
+    color: '#888',
+  },
 });
