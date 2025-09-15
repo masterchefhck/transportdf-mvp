@@ -131,6 +131,9 @@ export default function DriverDashboard() {
   const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string>('');
   const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
 
+  // Radar animation
+  const radarRotation = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
