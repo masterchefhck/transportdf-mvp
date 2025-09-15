@@ -1447,6 +1447,7 @@ async def mock_reverse_geocode(lat: float, lng: float, current_user: User = Depe
         "status": "OK"
     }
 
+# Password reset endpoints
 @api_router.post("/auth/forgot-password")
 async def validate_reset_credentials(request: PasswordResetRequest):
     """Validate email and CPF for password reset"""
