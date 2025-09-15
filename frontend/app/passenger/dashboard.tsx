@@ -1577,11 +1577,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   // Rating display styles
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   userRating: {
     flexDirection: 'row',
     alignItems: 'center',
