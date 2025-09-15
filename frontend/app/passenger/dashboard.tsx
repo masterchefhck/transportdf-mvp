@@ -1670,11 +1670,11 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   locationText: {
     fontSize: 14,
-    color: '#666',
+    color: '#888',
     marginTop: 2,
   },
   headerActions: {
