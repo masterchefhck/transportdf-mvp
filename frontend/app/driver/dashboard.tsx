@@ -883,7 +883,6 @@ export default function DriverDashboard() {
           </View>
         ) : isOnline ? (
           <View style={styles.availableTripsContainer}>
-            <Text style={styles.sectionTitle}>Corridas Disponíveis</Text>
             {availableTrips.length > 0 ? (
               <FlatList
                 data={availableTrips}
@@ -896,13 +895,21 @@ export default function DriverDashboard() {
               />
             ) : (
               <View style={styles.noTripsContainer}>
-                <Ionicons name="car-outline" size={60} color="#666" />
-                <Text style={styles.noTripsText}>
-                  Nenhuma corrida disponível no momento
-                </Text>
-                <Text style={styles.noTripsSubtext}>
-                  Aguarde novas solicitações...
-                </Text>
+                {/* Animated Radar */}
+                <View style={styles.radarContainer}>
+                  <View style={styles.radarOuter}>
+                    <View style={styles.radarMiddle}>
+                      <View style={styles.radarInner}>
+                        <View style={styles.radarCenter} />
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.radarSweep} />
+                </View>
+                
+                {/* Car Icon and Messages */}
+                <Ionicons name="car-outline" size={60} color="#4CAF50" style={styles.carIcon} />
+                <Text style={styles.noTripsText}>Aguarde novas corridas</Text>
               </View>
             )}
           </View>
