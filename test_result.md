@@ -274,6 +274,33 @@ test_plan:
       - working: true
         agent: "testing"
         comment: "🎯 SISTEMA DE CHAT COMPLETO TESTADO CONFORME REVIEW REQUEST ESPECÍFICO - 100% SUCESSO! Executei teste abrangente final do sistema de chat implementado com taxa de sucesso perfeita de 100% (17/17 testes passaram). CENÁRIO COMPLETO EXECUTADO CONFORME SOLICITADO: ✅ Criação de usuários (1 passageiro, 1 motorista, 1 admin) - todos registrados com sucesso, ✅ Fluxo completo da viagem com chat: passageiro solicita viagem → motorista aceita → ambos enviam mensagens via chat → admin visualiza histórico no dashboard, ✅ VALIDAÇÕES ESPECÍFICAS TESTADAS: Chat só aparece quando viagem é 'accepted' ou 'in_progress' (400 para trips 'requested'), limite de 250 caracteres respeitado (422 para mensagens longas), mensagens sincronizadas entre participantes (ordenação cronológica perfeita), admin consegue ver histórico completo via /api/admin/chats, ✅ ENDPOINTS TESTADOS: POST /api/trips/{trip_id}/chat/send (passageiro e motorista enviam com sucesso, admin negado 403), GET /api/trips/{trip_id}/chat/messages (recuperação para participantes e admin), GET /api/admin/chats (agregação de conversas com dados completos), GET /api/admin/trips (informações completas de usuários funcionando). ✅ CORREÇÃO APLICADA: Corrigido problema de serialização MongoDB ObjectId no endpoint /api/admin/trips durante teste. SISTEMA DE CHAT COMPLETAMENTE FUNCIONAL E PRODUCTION-READY!"
+      - working: true
+        agent: "testing"
+        comment: "🎯 TESTE COMPLETO FINAL CONFORME REVIEW REQUEST - 100% SUCESSO! Executei teste abrangente de TODAS as melhorias dos dashboards e histórico de viagens com taxa de sucesso perfeita de 100% (18/18 testes passaram). CENÁRIO COMPLETO EXECUTADO: ✅ SISTEMA DE CHAT COMPLETO: POST /api/trips/{trip_id}/chat/send (passageiro e motorista enviam mensagens, limite 250 chars validado, admin corretamente negado 403), GET /api/trips/{trip_id}/chat/messages (recuperação para participantes e admin), GET /api/admin/chats (agregação de conversas com dados completos), polling automático funcionando. ✅ MELHORIAS DOS DASHBOARDS: GET /api/admin/trips retornando informações completas de usuários (foto, nome, rating), sistema de fotos de perfil funcionando (upload/retrieve), sistema de rating operacional (1.0-5.0). ✅ HISTÓRICO DE VIAGENS: GET /api/passengers/trip-history (dados completos com informações do motorista), GET /api/drivers/trip-history (cálculo correto de ganhos do motorista 80% do valor), estrutura completa com preços, datas, informações dos usuários. ✅ SINCRONIZAÇÃO TEMPO REAL: Endpoints de polling funcionando para passageiro, motorista e admin (/api/trips/my, /api/admin/trips). TODOS OS ENDPOINTS CRÍTICOS TESTADOS E FUNCIONANDO PERFEITAMENTE!"
+
+  - task: "Dashboard Improvements Complete"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ MELHORIAS DOS DASHBOARDS COMPLETAMENTE TESTADAS! Executei testes específicos das melhorias implementadas: ✅ GET /api/admin/trips retornando informações completas de usuários (passenger_name, passenger_phone, passenger_photo, passenger_rating, driver_name, driver_phone, driver_photo, driver_rating) - Status 200, 86 trips com dados completos, ✅ Sistema de fotos de perfil funcionando perfeitamente (PUT /api/users/profile-photo upload com base64, GET /api/users/me retrieve), ✅ Sistema de rating operacional (GET /api/users/rating retornando valores válidos 1.0-5.0). Todas as informações completas de usuários sendo exibidas corretamente nos dashboards."
+
+  - task: "Trip History Complete"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ HISTÓRICO DE VIAGENS COMPLETAMENTE TESTADO! Executei testes específicos dos endpoints de histórico: ✅ GET /api/passengers/trip-history funcionando perfeitamente (Status 200, 1 trip com campos obrigatórios: id, pickup_address, destination_address, estimated_price, final_price, requested_at, completed_at, driver_name, driver_photo, driver_rating), ✅ GET /api/drivers/trip-history funcionando com cálculo correto de ganhos (Status 200, 1 trip com driver_earnings = 80% do final_price, campos completos incluindo passenger_name, passenger_photo). Estrutura completa de dados validada com preços, datas e informações dos usuários."
 
   - task: "Sistema de Avaliações"
     implemented: true
