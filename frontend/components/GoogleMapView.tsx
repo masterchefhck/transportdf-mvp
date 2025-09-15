@@ -15,30 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
-// Conditional imports for platform compatibility
-let MapView: any = null;
-let Marker: any = null;
-let PROVIDER_GOOGLE: any = null;
-let Polyline: any = null;
-let GooglePlacesAutocomplete: any = null;
-let GooglePlacesAutocompleteRef: any = null;
-
-if (Platform.OS !== 'web') {
-  try {
-    const mapModule = require('react-native-maps');
-    MapView = mapModule.default;
-    Marker = mapModule.Marker;
-    PROVIDER_GOOGLE = mapModule.PROVIDER_GOOGLE;
-    Polyline = mapModule.Polyline;
-    
-    const placesModule = require('react-native-google-places-autocomplete');
-    GooglePlacesAutocomplete = placesModule.GooglePlacesAutocomplete;
-    GooglePlacesAutocompleteRef = placesModule.GooglePlacesAutocompleteRef;
-  } catch (error) {
-    console.warn('Native maps modules not available:', error);
-  }
-}
-
 const { width, height } = Dimensions.get('window');
 
 interface Coordinates {
