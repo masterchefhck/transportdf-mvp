@@ -256,10 +256,10 @@ export default function ForgotPassword() {
 
               <TouchableOpacity
                 style={styles.backToValidationButton}
-                onPress={() => setStep('validate')}
+                onPress={() => router.replace('/auth/login')}
                 disabled={loading}
               >
-                <Text style={styles.backToValidationText}>← Voltar para validação</Text>
+                <Text style={styles.backToValidationText}>← Voltar para Login</Text>
               </TouchableOpacity>
             </View>
           )}
