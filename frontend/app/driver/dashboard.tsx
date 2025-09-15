@@ -141,6 +141,19 @@ export default function DriverDashboard() {
     }
   }, [isOnline]);
 
+  // Auto-refresh data every 5 seconds for real-time sync
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isOnline) {
+        loadAvailableTrips();
+        checkCurrentTrip();
+      }
+      loadMyAlerts(); // Always check for new alerts
+    }, 5000); // 5 seconds polling
+
+    return () => clearInterval(interval);
+  }, [isOnline]);
+
   const loadUserData = async () => {
     try {
       const token = await AsyncStorage.getItem('access_token');
