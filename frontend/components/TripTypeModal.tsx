@@ -1,0 +1,390 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+
+interface TripTypeModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: (isForMe: boolean, passengerName?: string) => void;
+}
+
+const TripTypeModal: React.FC<TripTypeModalProps> = ({ visible, onClose, onConfirm }) => {
+  const [selectedType, setSelectedType] = useState<'me' | 'other' | null>(null);
+  const [passengerName, setPassengerName] = useState('');
+
+  const resetModal = () => {
+    setSelectedType(null);
+    setPassengerName('');
+  };
+
+  const handleClose = () => {
+    resetModal();
+    onClose();
+  };
+
+  const handleConfirm = () => {
+    if (!selectedType) {
+      Alert.alert('Seleção necessária', 'Por favor, escolha para quem é a viagem.');
+      return;
+    }
+
+    if (selectedType === 'other') {
+      if (!passengerName.trim()) {
+        Alert.alert('Nome necessário', 'Por favor, digite o primeiro nome do(a) passageiro(a).');
+        return;
+      }
+      
+      if (passengerName.trim().length < 2) {
+        Alert.alert('Nome inválido', 'O nome deve ter pelo menos 2 caracteres.');
+        return;
+      }
+    }
+
+    const isForMe = selectedType === 'me';
+    const name = selectedType === 'other' ? passengerName.trim() : undefined;
+    
+    onConfirm(isForMe, name);
+    resetModal();
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={handleClose}
+    >
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView 
+          style={styles.content}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Nova Viagem</Text>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          {/* Main Content */}
+          <View style={styles.mainContent}>
+            <View style={styles.questionSection}>
+              <Ionicons name="car" size={60} color="#007AFF" />
+              <Text style={styles.questionTitle}>A viagem é para quem?</Text>
+              <Text style={styles.questionSubtitle}>
+                Escolha se você mesmo irá viajar ou se está solicitando para outra pessoa
+              </Text>
+            </View>
+
+            {/* Options */}
+            <View style={styles.optionsSection}>
+              {/* Para mim */}
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  selectedType === 'me' && styles.optionButtonSelected
+                ]}
+                onPress={() => setSelectedType('me')}
+              >
+                <View style={styles.optionContent}>
+                  <View style={styles.optionIcon}>
+                    <Ionicons 
+                      name="person" 
+                      size={24} 
+                      color={selectedType === 'me' ? '#007AFF' : '#8E8E93'} 
+                    />
+                  </View>
+                  <View style={styles.optionText}>
+                    <Text style={[
+                      styles.optionTitle,
+                      selectedType === 'me' && styles.optionTitleSelected
+                    ]}>
+                      Para mim
+                    </Text>
+                    <Text style={styles.optionDescription}>
+                      Você mesmo irá fazer esta viagem
+                    </Text>
+                  </View>
+                  <View style={styles.radioButton}>
+                    {selectedType === 'me' && (
+                      <View style={styles.radioButtonInner} />
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {/* Para outra pessoa */}
+              <TouchableOpacity
+                style={[
+                  styles.optionButton,
+                  selectedType === 'other' && styles.optionButtonSelected
+                ]}
+                onPress={() => setSelectedType('other')}
+              >
+                <View style={styles.optionContent}>
+                  <View style={styles.optionIcon}>
+                    <Ionicons 
+                      name="people" 
+                      size={24} 
+                      color={selectedType === 'other' ? '#007AFF' : '#8E8E93'} 
+                    />
+                  </View>
+                  <View style={styles.optionText}>
+                    <Text style={[
+                      styles.optionTitle,
+                      selectedType === 'other' && styles.optionTitleSelected
+                    ]}>
+                      Para outra pessoa
+                    </Text>
+                    <Text style={styles.optionDescription}>
+                      Você está solicitando a viagem para alguém
+                    </Text>
+                  </View>
+                  <View style={styles.radioButton}>
+                    {selectedType === 'other' && (
+                      <View style={styles.radioButtonInner} />
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Nome do passageiro (aparece apenas se "Para outra pessoa" estiver selecionado) */}
+            {selectedType === 'other' && (
+              <View style={styles.nameSection}>
+                <Text style={styles.nameLabel}>Nome do(a) passageiro(a)</Text>
+                <View style={styles.nameInputContainer}>
+                  <Ionicons name="person-outline" size={20} color="#8E8E93" />
+                  <TextInput
+                    style={styles.nameInput}
+                    placeholder="Digite o primeiro nome"
+                    placeholderTextColor="#C7C7CC"
+                    value={passengerName}
+                    onChangeText={setPassengerName}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    maxLength={30}
+                  />
+                </View>
+                <Text style={styles.nameHint}>
+                  Este nome será exibido para o motorista identificar o passageiro
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Bottom Button */}
+          <View style={styles.bottomSection}>
+            <TouchableOpacity
+              style={[
+                styles.confirmButton,
+                !selectedType && styles.confirmButtonDisabled
+              ]}
+              onPress={handleConfirm}
+              disabled={!selectedType}
+            >
+              <Text style={[
+                styles.confirmButtonText,
+                !selectedType && styles.confirmButtonTextDisabled
+              ]}>
+                Continuar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F8F8',
+  },
+  content: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+    textAlign: 'center',
+    marginRight: 40, // Compensate for close button
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  mainContent: {
+    flex: 1,
+    padding: 20,
+  },
+  questionSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  questionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000',
+    marginTop: 20,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  questionSubtitle: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 20,
+  },
+  optionsSection: {
+    marginBottom: 30,
+    gap: 16,
+  },
+  optionButton: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    padding: 16,
+  },
+  optionButtonSelected: {
+    borderColor: '#007AFF',
+    backgroundColor: '#F0F7FF',
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  optionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  optionText: {
+    flex: 1,
+    marginRight: 16,
+  },
+  optionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 4,
+  },
+  optionTitleSelected: {
+    color: '#007AFF',
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: '#8E8E93',
+    lineHeight: 20,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#C7C7CC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioButtonInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#007AFF',
+  },
+  nameSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+  },
+  nameLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 12,
+  },
+  nameInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F2F2F7',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  nameInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000',
+    marginLeft: 8,
+  },
+  nameHint: {
+    fontSize: 12,
+    color: '#8E8E93',
+    lineHeight: 16,
+  },
+  bottomSection: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  confirmButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: '#C7C7CC',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  confirmButtonTextDisabled: {
+    color: '#8E8E93',
+  },
+});
+
+export default TripTypeModal;
