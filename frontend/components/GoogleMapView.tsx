@@ -303,7 +303,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
           }}
           requestUrl={{
             useOnPlatform: 'web',
-            url: 'https://places.googleapis.com/v1/places:autocomplete',
+            url: 'https://maps.googleapis.com/maps/api/place/autocomplete/json',
           }}
           styles={{
             container: styles.autocompleteContainer,
