@@ -1565,12 +1565,12 @@ export default function PassengerDashboard() {
         />
       </Modal>
 
-      {/* Trip Type Modal */}
-      <TripTypeModal
+      {/* Trip Type Modal - TODO: Create TripTypeModal component */}
+      {/*<TripTypeModal
         visible={showTripTypeModal}
         onClose={() => setShowTripTypeModal(false)}
         onConfirm={handleTripTypeConfirm}
-      />
+      />*/}
 
       {/* Google Map Modal */}
       <Modal 
