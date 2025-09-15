@@ -990,6 +990,80 @@ export default function AdminDashboard() {
               <Text style={styles.addressText}>{trip.destination_address}</Text>
             </View>
 
+            {/* Users Information Section */}
+            {(trip.passenger_name || trip.driver_name) && (
+              <View style={styles.tripUsersSection}>
+                <Text style={styles.usersTitle}>Participantes</Text>
+                <View style={styles.usersContainer}>
+                  {/* Passenger Info */}
+                  {trip.passenger_name && (
+                    <View style={styles.userInfoCard}>
+                      <Text style={styles.userTypeLabel}>Passageiro</Text>
+                      <View style={styles.userInfo}>
+                        <TouchableOpacity
+                          onPress={() => handleViewPhoto(trip.passenger_photo, trip.passenger_name)}
+                          disabled={!trip.passenger_photo}
+                        >
+                          {trip.passenger_photo ? (
+                            <Image source={{ uri: trip.passenger_photo }} style={styles.userPhoto} />
+                          ) : (
+                            <View style={styles.defaultUserPhoto}>
+                              <Ionicons name="person" size={16} color="#4CAF50" />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                        <View style={styles.userDetails}>
+                          <Text style={styles.userName}>{trip.passenger_name}</Text>
+                          {trip.passenger_phone && (
+                            <Text style={styles.userPhone}>📞 {trip.passenger_phone}</Text>
+                          )}
+                          {trip.passenger_rating && (
+                            <View style={styles.userRatingRow}>
+                              <Ionicons name="star" size={12} color="#FF9800" />
+                              <Text style={styles.userRatingText}>{trip.passenger_rating.toFixed(1)}</Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Driver Info */}
+                  {trip.driver_name && (
+                    <View style={styles.userInfoCard}>
+                      <Text style={styles.userTypeLabel}>Motorista</Text>
+                      <View style={styles.userInfo}>
+                        <TouchableOpacity
+                          onPress={() => handleViewPhoto(trip.driver_photo, trip.driver_name)}
+                          disabled={!trip.driver_photo}
+                        >
+                          {trip.driver_photo ? (
+                            <Image source={{ uri: trip.driver_photo }} style={styles.userPhoto} />
+                          ) : (
+                            <View style={styles.defaultUserPhoto}>
+                              <Ionicons name="car" size={16} color="#2196F3" />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                        <View style={styles.userDetails}>
+                          <Text style={styles.userName}>{trip.driver_name}</Text>
+                          {trip.driver_phone && (
+                            <Text style={styles.userPhone}>📞 {trip.driver_phone}</Text>
+                          )}
+                          {trip.driver_rating && (
+                            <View style={styles.userRatingRow}>
+                              <Ionicons name="star" size={12} color="#FF9800" />
+                              <Text style={styles.userRatingText}>{trip.driver_rating.toFixed(1)}</Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
             <Text style={styles.tripDate}>
               {formatDateTime(trip.requested_at)}
             </Text>
