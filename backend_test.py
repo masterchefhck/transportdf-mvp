@@ -46,13 +46,12 @@ import sys
 BACKEND_URL = os.getenv('EXPO_PUBLIC_BACKEND_URL', 'https://rideshare-app-91.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
-class NewFeaturesTestSuite:
+class GoogleMapsTestSuite:
     def __init__(self):
         self.session = None
         self.test_results = []
         self.tokens = {}
         self.users = {}
-        self.trips = {}
         
     async def setup_session(self):
         """Setup HTTP session"""
@@ -63,7 +62,7 @@ class NewFeaturesTestSuite:
         if self.session:
             await self.session.close()
             
-    async def make_request(self, method, endpoint, data=None, token=None):
+    async def make_request(self, method, endpoint, data=None, token=None, params=None):
         """Make HTTP request with optional authentication"""
         url = f"{API_BASE}{endpoint}"
         headers = {'Content-Type': 'application/json'}
@@ -72,7 +71,7 @@ class NewFeaturesTestSuite:
             headers['Authorization'] = f'Bearer {token}'
             
         try:
-            async with self.session.request(method, url, json=data, headers=headers) as response:
+            async with self.session.request(method, url, json=data, headers=headers, params=params) as response:
                 response_data = await response.json()
                 return response.status, response_data
         except Exception as e:
@@ -125,14 +124,14 @@ class NewFeaturesTestSuite:
             return False
             
     async def setup_test_users(self):
-        """Setup test users for new features testing"""
+        """Setup test users for Google Maps testing"""
         import time
         timestamp = str(int(time.time()))
         
         users_to_create = [
-            ("passenger", "Maria Silva Santos", f"maria.newfeatures.{timestamp}@test.com"),
-            ("driver", "João Carlos Oliveira", f"joao.newfeatures.{timestamp}@test.com"),
-            ("admin", "Admin New Features", f"admin.newfeatures.{timestamp}@test.com")
+            ("passenger", "Maria Brasília Santos", f"maria.maps.{timestamp}@test.com"),
+            ("driver", "João Maps Oliveira", f"joao.maps.{timestamp}@test.com"),
+            ("admin", "Admin Maps", f"admin.maps.{timestamp}@test.com")
         ]
         
         success_count = 0
@@ -141,386 +140,512 @@ class NewFeaturesTestSuite:
                 success_count += 1
                 
         return success_count == len(users_to_create)
-        
-    async def create_test_trip(self):
-        """Create a test trip for new features testing"""
-        # Passenger requests trip
-        trip_data = {
-            "passenger_id": self.users['passenger']['id'],
-            "pickup_latitude": -15.7801,
-            "pickup_longitude": -47.9292,
-            "pickup_address": "Asa Norte, Brasília - DF",
-            "destination_latitude": -15.8267,
-            "destination_longitude": -47.9218,
-            "destination_address": "Asa Sul, Brasília - DF",
-            "estimated_price": 15.50
-        }
-        
-        status, data = await self.make_request('POST', '/trips/request', trip_data, self.tokens['passenger'])
-        
-        if status == 200:
-            self.trips['test_trip'] = data
-            self.log_test("Create Test Trip", True, f"Trip ID: {data['id']}")
-            return True
-        else:
-            self.log_test("Create Test Trip", False, f"Status: {status}, Error: {data}")
-            return False
-            
-    async def accept_trip(self):
-        """Driver accepts the test trip"""
-        trip_id = self.trips['test_trip']['id']
-        status, data = await self.make_request('PUT', f'/trips/{trip_id}/accept', None, self.tokens['driver'])
-        
-        if status == 200:
-            self.log_test("Driver Accept Trip", True, "Trip accepted successfully")
-            return True
-        else:
-            self.log_test("Driver Accept Trip", False, f"Status: {status}, Error: {data}")
-            return False
-            
-    async def start_trip(self):
-        """Driver starts the trip"""
-        trip_id = self.trips['test_trip']['id']
-        status, data = await self.make_request('PUT', f'/trips/{trip_id}/start', None, self.tokens['driver'])
-        
-        if status == 200:
-            self.log_test("Driver Start Trip", True, "Trip started successfully")
-            return True
-        else:
-            self.log_test("Driver Start Trip", False, f"Status: {status}, Error: {data}")
-            return False
 
     # ==========================================
-    # NEW FEATURES TESTS
+    # GOOGLE MAPS ENDPOINTS TESTS
     # ==========================================
     
-    async def test_forgot_password_validation(self):
-        """Test POST /api/auth/forgot-password endpoint validation"""
-        # Test with valid email and CPF
-        valid_request = {
-            "email": self.users['passenger']['email'],
-            "cpf": self.users['passenger']['cpf']
+    async def test_maps_directions_asa_norte_to_asa_sul(self):
+        """Test POST /api/maps/directions - Asa Norte to Asa Sul"""
+        route_data = {
+            "origin_lat": -15.7801,
+            "origin_lng": -47.8827,
+            "destination_lat": -15.8267,
+            "destination_lng": -47.8934
         }
         
-        status, data = await self.make_request('POST', '/auth/forgot-password', valid_request)
-        
-        success = status == 200 and 'user_id' in data
-        details = f"Status: {status}, Response: {data}"
-        
-        self.log_test("Forgot Password - Valid Credentials", success, details)
-        return success
-        
-    async def test_forgot_password_invalid_credentials(self):
-        """Test POST /api/auth/forgot-password with invalid credentials"""
-        # Test with invalid email and CPF combination
-        invalid_request = {
-            "email": "invalid@test.com",
-            "cpf": "000.000.000-00"
-        }
-        
-        status, data = await self.make_request('POST', '/auth/forgot-password', invalid_request)
-        
-        # Should return 404 for invalid credentials
-        success = status == 404
-        details = f"Status: {status}, Expected: 404, Response: {data}"
-        
-        self.log_test("Forgot Password - Invalid Credentials", success, details)
-        return success
-        
-    async def test_reset_password_functionality(self):
-        """Test POST /api/auth/reset-password endpoint"""
-        # First validate credentials
-        valid_request = {
-            "email": self.users['driver']['email'],
-            "cpf": self.users['driver']['cpf']
-        }
-        
-        status, data = await self.make_request('POST', '/auth/forgot-password', valid_request)
-        
-        if status != 200:
-            self.log_test("Reset Password - Validation Failed", False, f"Validation failed: {status}")
-            return False
-            
-        # Now reset password
-        reset_request = {
-            "email": self.users['driver']['email'],
-            "cpf": self.users['driver']['cpf'],
-            "new_password": "newpassword123",
-            "confirm_password": "newpassword123"
-        }
-        
-        status, data = await self.make_request('POST', '/auth/reset-password', reset_request)
-        
-        success = status == 200
-        details = f"Status: {status}, Response: {data}"
-        
-        self.log_test("Reset Password - Success", success, details)
-        return success
-        
-    async def test_reset_password_mismatch(self):
-        """Test POST /api/auth/reset-password with password mismatch"""
-        reset_request = {
-            "email": self.users['passenger']['email'],
-            "cpf": self.users['passenger']['cpf'],
-            "new_password": "newpassword123",
-            "confirm_password": "differentpassword123"
-        }
-        
-        status, data = await self.make_request('POST', '/auth/reset-password', reset_request)
-        
-        # Should return 400 for password mismatch
-        success = status == 400
-        details = f"Status: {status}, Expected: 400, Response: {data}"
-        
-        self.log_test("Reset Password - Password Mismatch", success, details)
-        return success
-        
-    async def test_chat_message_send(self):
-        """Test POST /api/trips/{trip_id}/chat/send endpoint"""
-        trip_id = self.trips['test_trip']['id']
-        
-        # Passenger sends message
-        message_data = {
-            "message": "Olá, estou chegando no local de embarque!"
-        }
-        
-        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['passenger'])
-        
-        success = status == 200
-        details = f"Status: {status}, Response: {data}"
-        
-        self.log_test("Chat - Passenger Send Message", success, details)
-        return success
-        
-    async def test_chat_message_driver_send(self):
-        """Test driver sending chat message"""
-        trip_id = self.trips['test_trip']['id']
-        
-        # Driver sends message
-        message_data = {
-            "message": "Perfeito! Estou a caminho, chego em 5 minutos."
-        }
-        
-        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['driver'])
-        
-        success = status == 200
-        details = f"Status: {status}, Response: {data}"
-        
-        self.log_test("Chat - Driver Send Message", success, details)
-        return success
-        
-    async def test_chat_message_character_limit(self):
-        """Test chat message character limit validation"""
-        trip_id = self.trips['test_trip']['id']
-        
-        # Create message longer than 250 characters
-        long_message = "A" * 251
-        message_data = {
-            "message": long_message
-        }
-        
-        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['passenger'])
-        
-        # Should return 422 for validation error
-        success = status == 422
-        details = f"Status: {status}, Expected: 422, Message length: {len(long_message)}"
-        
-        self.log_test("Chat - Character Limit Validation", success, details)
-        return success
-        
-    async def test_chat_messages_retrieval(self):
-        """Test GET /api/trips/{trip_id}/chat/messages endpoint"""
-        trip_id = self.trips['test_trip']['id']
-        
-        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages', None, self.tokens['passenger'])
+        status, data = await self.make_request('POST', '/maps/directions', route_data, self.tokens['passenger'])
         
         success = False
         details = f"Status: {status}"
         
-        if status == 200 and isinstance(data, list):
-            # Should have at least 2 messages from previous tests
-            message_count = len(data)
-            has_messages = message_count >= 2
+        if status == 200:
+            # Check response structure
+            required_fields = ['distance', 'duration', 'steps', 'overview_polyline', 'bounds']
+            has_required_fields = all(field in data for field in required_fields)
             
-            if has_messages and len(data) > 0:
-                # Check message structure
-                first_message = data[0]
-                required_fields = ['id', 'trip_id', 'sender_id', 'sender_name', 'sender_type', 'message', 'timestamp']
-                has_required_fields = all(field in first_message for field in required_fields)
+            if has_required_fields:
+                # Check if steps contain realistic Brasília directions
+                steps = data.get('steps', [])
+                has_steps = len(steps) > 0
                 
-                success = has_required_fields
-                details = f"Status: {status}, Messages: {message_count}, Structure valid: {has_required_fields}"
+                if has_steps:
+                    first_step = steps[0]
+                    step_fields = ['instruction', 'distance', 'duration', 'start_location', 'end_location']
+                    has_step_structure = all(field in first_step for field in step_fields)
+                    
+                    # Check for Brasília-specific content
+                    instruction = first_step.get('instruction', '').lower()
+                    has_brasilia_content = any(term in instruction for term in ['w3', 'norte', 'sul', 'ponte', 'jk'])
+                    
+                    success = has_step_structure and has_brasilia_content
+                    details = f"Status: {status}, Fields: {has_required_fields}, Steps: {len(steps)}, Brasília content: {has_brasilia_content}"
+                else:
+                    details = f"Status: {status}, No steps in response"
             else:
-                details = f"Status: {status}, Messages: {message_count}, Expected: >= 2"
+                missing_fields = [field for field in required_fields if field not in data]
+                details = f"Status: {status}, Missing fields: {missing_fields}"
         else:
-            details = f"Status: {status}, Response type: {type(data)}"
+            details = f"Status: {status}, Response: {data}"
             
-        self.log_test("Chat - Messages Retrieval", success, details)
+        self.log_test("Maps Directions - Asa Norte to Asa Sul", success, details)
         return success
         
-    async def test_trip_info_without_passenger_phone(self):
-        """Test GET /api/trips/my returns driver info without passenger phone for driver"""
-        status, data = await self.make_request('GET', '/trips/my', None, self.tokens['driver'])
-        
-        success = False
-        details = f"Status: {status}"
-        
-        if status == 200 and isinstance(data, list) and len(data) > 0:
-            trip = data[0]  # Get the first trip
-            
-            # Check that passenger info is present but phone is excluded
-            has_passenger_name = 'passenger_name' in trip
-            has_passenger_rating = 'passenger_rating' in trip
-            has_no_passenger_phone = 'passenger_phone' not in trip
-            
-            if has_passenger_name and has_passenger_rating and has_no_passenger_phone:
-                success = True
-                details = f"Status: {status}, Has name: {has_passenger_name}, Has rating: {has_passenger_rating}, No phone: {has_no_passenger_phone}"
-            else:
-                details = f"Status: {status}, Name: {has_passenger_name}, Rating: {has_passenger_rating}, Phone present: {not has_no_passenger_phone}"
-        else:
-            details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
-            
-        self.log_test("Trip Info - No Passenger Phone for Driver", success, details)
-        return success
-        
-    async def test_trip_status_requested_for_progress_bar(self):
-        """Test trip with 'requested' status for progress bar animation"""
-        # Create a new trip that stays in 'requested' status
-        trip_data = {
-            "passenger_id": self.users['passenger']['id'],
-            "pickup_latitude": -15.8267,
-            "pickup_longitude": -47.9218,
-            "pickup_address": "Asa Sul, Brasília - DF",
-            "destination_latitude": -15.7801,
-            "destination_longitude": -47.9292,
-            "destination_address": "Asa Norte, Brasília - DF",
-            "estimated_price": 18.00
+    async def test_maps_directions_centro_to_taguatinga(self):
+        """Test POST /api/maps/directions - Centro to Taguatinga"""
+        route_data = {
+            "origin_lat": -15.7942,
+            "origin_lng": -47.8822,
+            "destination_lat": -15.8270,
+            "destination_lng": -48.0427
         }
         
-        status, data = await self.make_request('POST', '/trips/request', trip_data, self.tokens['passenger'])
-        
-        if status != 200:
-            self.log_test("Create Trip for Progress Bar Test", False, f"Failed to create trip: {status}")
-            return False
-            
-        # Check that trip status is 'requested'
-        status, trips_data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
+        status, data = await self.make_request('POST', '/maps/directions', route_data, self.tokens['driver'])
         
         success = False
         details = f"Status: {status}"
         
-        if status == 200 and isinstance(trips_data, list):
-            # Find the newly created trip
-            requested_trips = [t for t in trips_data if t.get('status') == 'requested']
+        if status == 200:
+            # Check for longer distance route (Centro to Taguatinga)
+            distance_text = data.get('distance', '')
+            duration_text = data.get('duration', '')
+            steps = data.get('steps', [])
             
-            if len(requested_trips) > 0:
-                success = True
-                details = f"Status: {status}, Requested trips found: {len(requested_trips)}"
-            else:
-                all_statuses = [t.get('status') for t in trips_data]
-                details = f"Status: {status}, No requested trips, All statuses: {all_statuses}"
+            # Should have more steps for longer route
+            has_multiple_steps = len(steps) >= 3
+            
+            # Check for Taguatinga-specific directions
+            taguatinga_content = False
+            for step in steps:
+                instruction = step.get('instruction', '').lower()
+                if any(term in instruction for term in ['taguatinga', 'epia', 'central']):
+                    taguatinga_content = True
+                    break
+                    
+            success = has_multiple_steps and taguatinga_content
+            details = f"Status: {status}, Distance: {distance_text}, Duration: {duration_text}, Steps: {len(steps)}, Taguatinga content: {taguatinga_content}"
         else:
-            details = f"Status: {status}, Response type: {type(trips_data)}"
+            details = f"Status: {status}, Response: {data}"
             
-        self.log_test("Trip Status - Requested for Progress Bar", success, details)
+        self.log_test("Maps Directions - Centro to Taguatinga", success, details)
         return success
         
-    async def test_admin_chat_aggregation(self):
-        """Test GET /api/admin/chats endpoint for admin dashboard"""
-        status, data = await self.make_request('GET', '/admin/chats', None, self.tokens['admin'])
+    async def test_maps_directions_plano_piloto_to_gama(self):
+        """Test POST /api/maps/directions - Plano Piloto to Gama"""
+        route_data = {
+            "origin_lat": -15.7942,
+            "origin_lng": -47.8822,
+            "destination_lat": -16.0209,
+            "destination_lng": -48.0647
+        }
+        
+        status, data = await self.make_request('POST', '/maps/directions', route_data, self.tokens['admin'])
         
         success = False
         details = f"Status: {status}"
         
-        if status == 200 and isinstance(data, list):
-            # Should have at least one chat conversation
-            chat_count = len(data)
-            has_chats = chat_count > 0
+        if status == 200:
+            # Check for longest distance route (Plano Piloto to Gama)
+            distance_text = data.get('distance', '')
+            duration_text = data.get('duration', '')
+            steps = data.get('steps', [])
             
-            if has_chats and len(data) > 0:
-                # Check chat structure
-                first_chat = data[0]
-                required_fields = ['trip_id', 'trip_status', 'pickup_address', 'destination_address', 
-                                 'message_count', 'passenger', 'driver']
-                has_required_fields = all(field in first_chat for field in required_fields)
+            # Should have most steps for longest route
+            has_many_steps = len(steps) >= 4
+            
+            # Check for Gama-specific directions
+            gama_content = False
+            for step in steps:
+                instruction = step.get('instruction', '').lower()
+                if any(term in instruction for term in ['gama', 'br-060', 's1']):
+                    gama_content = True
+                    break
+                    
+            success = has_many_steps and gama_content
+            details = f"Status: {status}, Distance: {distance_text}, Duration: {duration_text}, Steps: {len(steps)}, Gama content: {gama_content}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Maps Directions - Plano Piloto to Gama", success, details)
+        return success
+        
+    async def test_maps_directions_authentication_required(self):
+        """Test POST /api/maps/directions requires authentication"""
+        route_data = {
+            "origin_lat": -15.7801,
+            "origin_lng": -47.8827,
+            "destination_lat": -15.8267,
+            "destination_lng": -47.8934
+        }
+        
+        # Test without token
+        status, data = await self.make_request('POST', '/maps/directions', route_data, None)
+        
+        # Should return 401 or 403 for unauthenticated request
+        success = status in [401, 403]
+        details = f"Status: {status}, Expected: 401 or 403, Response: {data}"
+        
+        self.log_test("Maps Directions - Authentication Required", success, details)
+        return success
+        
+    async def test_maps_distance_matrix_multiple_locations(self):
+        """Test POST /api/maps/distance-matrix with multiple Brasília locations"""
+        matrix_data = {
+            "origins": [
+                {"lat": -15.7801, "lng": -47.8827},  # Asa Norte
+                {"lat": -15.8267, "lng": -47.8934}   # Asa Sul
+            ],
+            "destinations": [
+                {"lat": -15.8270, "lng": -48.0427},  # Taguatinga
+                {"lat": -16.0209, "lng": -48.0647},  # Gama
+                {"lat": -15.6536, "lng": -47.7863}   # Sobradinho
+            ]
+        }
+        
+        status, data = await self.make_request('POST', '/maps/distance-matrix', matrix_data, self.tokens['passenger'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            # Check response structure
+            rows = data.get('rows', [])
+            has_correct_structure = len(rows) == 2  # 2 origins
+            
+            if has_correct_structure:
+                # Check each row has 3 destinations
+                all_rows_valid = True
+                for row in rows:
+                    elements = row.get('elements', [])
+                    if len(elements) != 3:  # 3 destinations
+                        all_rows_valid = False
+                        break
+                        
+                    # Check element structure
+                    for element in elements:
+                        required_fields = ['distance', 'duration', 'status']
+                        if not all(field in element for field in required_fields):
+                            all_rows_valid = False
+                            break
+                            
+                        # Check distance and duration have text and value
+                        distance = element.get('distance', {})
+                        duration = element.get('duration', {})
+                        if not ('text' in distance and 'value' in distance and 'text' in duration and 'value' in duration):
+                            all_rows_valid = False
+                            break
+                            
+                success = all_rows_valid
+                details = f"Status: {status}, Rows: {len(rows)}, Structure valid: {all_rows_valid}"
+            else:
+                details = f"Status: {status}, Expected 2 rows, got: {len(rows)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Maps Distance Matrix - Multiple Locations", success, details)
+        return success
+        
+    async def test_maps_distance_matrix_authentication_required(self):
+        """Test POST /api/maps/distance-matrix requires authentication"""
+        matrix_data = {
+            "origins": [{"lat": -15.7801, "lng": -47.8827}],
+            "destinations": [{"lat": -15.8267, "lng": -47.8934}]
+        }
+        
+        # Test without token
+        status, data = await self.make_request('POST', '/maps/distance-matrix', matrix_data, None)
+        
+        # Should return 401 or 403 for unauthenticated request
+        success = status in [401, 403]
+        details = f"Status: {status}, Expected: 401 or 403, Response: {data}"
+        
+        self.log_test("Maps Distance Matrix - Authentication Required", success, details)
+        return success
+        
+    async def test_maps_geocode_asa_norte(self):
+        """Test GET /api/maps/geocode/{address} - Asa Norte"""
+        address = "asa norte"
+        
+        status, data = await self.make_request('GET', f'/maps/geocode/{address}', None, self.tokens['passenger'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            # Check response structure
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                required_fields = ['formatted_address', 'geometry', 'place_id', 'types']
+                has_required_fields = all(field in result for field in required_fields)
                 
-                success = has_required_fields
-                details = f"Status: {status}, Chats: {chat_count}, Structure valid: {has_required_fields}"
+                if has_required_fields:
+                    # Check geometry has location with lat/lng
+                    geometry = result.get('geometry', {})
+                    location = geometry.get('location', {})
+                    has_coordinates = 'lat' in location and 'lng' in location
+                    
+                    # Check coordinates are reasonable for Brasília
+                    if has_coordinates:
+                        lat = location['lat']
+                        lng = location['lng']
+                        # Brasília coordinates should be around -15.7 to -16.1 lat, -47.8 to -48.1 lng
+                        coords_reasonable = (-16.1 <= lat <= -15.6) and (-48.2 <= lng <= -47.7)
+                        
+                        # Check address contains Brasília
+                        formatted_address = result.get('formatted_address', '').lower()
+                        has_brasilia = 'brasília' in formatted_address or 'brasilia' in formatted_address
+                        
+                        success = coords_reasonable and has_brasilia
+                        details = f"Status: {status}, Coords: ({lat}, {lng}), Reasonable: {coords_reasonable}, Has Brasília: {has_brasilia}"
+                    else:
+                        details = f"Status: {status}, Missing coordinates in geometry"
+                else:
+                    missing_fields = [field for field in required_fields if field not in result]
+                    details = f"Status: {status}, Missing fields: {missing_fields}"
             else:
-                details = f"Status: {status}, Chats: {chat_count}, Expected: > 0"
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
         else:
-            details = f"Status: {status}, Response type: {type(data)}"
+            details = f"Status: {status}, Response: {data}"
             
-        self.log_test("Admin - Chat Aggregation", success, details)
+        self.log_test("Maps Geocode - Asa Norte", success, details)
         return success
         
-    async def run_new_features_scenario(self):
-        """Run the complete new features testing scenario"""
-        print("\n🎯 EXECUTING NEW FEATURES TESTING SCENARIO")
+    async def test_maps_geocode_taguatinga(self):
+        """Test GET /api/maps/geocode/{address} - Taguatinga"""
+        address = "taguatinga"
+        
+        status, data = await self.make_request('GET', f'/maps/geocode/{address}', None, self.tokens['driver'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                geometry = result.get('geometry', {})
+                location = geometry.get('location', {})
+                
+                if 'lat' in location and 'lng' in location:
+                    lat = location['lat']
+                    lng = location['lng']
+                    # Taguatinga should be around -15.8, -48.0
+                    coords_reasonable = (-16.0 <= lat <= -15.7) and (-48.2 <= lng <= -47.9)
+                    
+                    formatted_address = result.get('formatted_address', '').lower()
+                    has_taguatinga = 'taguatinga' in formatted_address
+                    
+                    success = coords_reasonable and has_taguatinga
+                    details = f"Status: {status}, Coords: ({lat}, {lng}), Has Taguatinga: {has_taguatinga}"
+                else:
+                    details = f"Status: {status}, Missing coordinates"
+            else:
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Maps Geocode - Taguatinga", success, details)
+        return success
+        
+    async def test_maps_geocode_authentication_required(self):
+        """Test GET /api/maps/geocode/{address} requires authentication"""
+        address = "brasilia"
+        
+        # Test without token
+        status, data = await self.make_request('GET', f'/maps/geocode/{address}', None, None)
+        
+        # Should return 401 or 403 for unauthenticated request
+        success = status in [401, 403]
+        details = f"Status: {status}, Expected: 401 or 403, Response: {data}"
+        
+        self.log_test("Maps Geocode - Authentication Required", success, details)
+        return success
+        
+    async def test_maps_reverse_geocode_asa_sul(self):
+        """Test GET /api/maps/reverse-geocode - Asa Sul coordinates"""
+        params = {
+            "lat": -15.8267,
+            "lng": -47.8934
+        }
+        
+        status, data = await self.make_request('GET', '/maps/reverse-geocode', None, self.tokens['passenger'], params)
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                required_fields = ['formatted_address', 'geometry', 'place_id', 'types']
+                has_required_fields = all(field in result for field in required_fields)
+                
+                if has_required_fields:
+                    formatted_address = result.get('formatted_address', '').lower()
+                    # Should contain Brasília and some area reference
+                    has_brasilia = 'brasília' in formatted_address or 'brasilia' in formatted_address
+                    has_area_info = any(term in formatted_address for term in ['quadra', 'asa', 'sul', 'df'])
+                    
+                    # Check coordinates match input
+                    geometry = result.get('geometry', {})
+                    location = geometry.get('location', {})
+                    coords_match = (location.get('lat') == -15.8267 and location.get('lng') == -47.8934)
+                    
+                    success = has_brasilia and has_area_info and coords_match
+                    details = f"Status: {status}, Address: {formatted_address[:50]}..., Has Brasília: {has_brasilia}, Has area: {has_area_info}, Coords match: {coords_match}"
+                else:
+                    missing_fields = [field for field in required_fields if field not in result]
+                    details = f"Status: {status}, Missing fields: {missing_fields}"
+            else:
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Maps Reverse Geocode - Asa Sul", success, details)
+        return success
+        
+    async def test_maps_reverse_geocode_gama(self):
+        """Test GET /api/maps/reverse-geocode - Gama coordinates"""
+        params = {
+            "lat": -16.0209,
+            "lng": -48.0647
+        }
+        
+        status, data = await self.make_request('GET', '/maps/reverse-geocode', None, self.tokens['driver'], params)
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200:
+            results = data.get('results', [])
+            status_field = data.get('status', '')
+            
+            if status_field == 'OK' and len(results) > 0:
+                result = results[0]
+                formatted_address = result.get('formatted_address', '').lower()
+                
+                # Should contain Gama and Brasília
+                has_gama = 'gama' in formatted_address
+                has_brasilia = 'brasília' in formatted_address or 'brasilia' in formatted_address
+                
+                success = has_gama and has_brasilia
+                details = f"Status: {status}, Address: {formatted_address[:50]}..., Has Gama: {has_gama}, Has Brasília: {has_brasilia}"
+            else:
+                details = f"Status: {status}, API Status: {status_field}, Results: {len(results)}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Maps Reverse Geocode - Gama", success, details)
+        return success
+        
+    async def test_maps_reverse_geocode_authentication_required(self):
+        """Test GET /api/maps/reverse-geocode requires authentication"""
+        params = {
+            "lat": -15.7942,
+            "lng": -47.8822
+        }
+        
+        # Test without token
+        status, data = await self.make_request('GET', '/maps/reverse-geocode', None, None, params)
+        
+        # Should return 401 or 403 for unauthenticated request
+        success = status in [401, 403]
+        details = f"Status: {status}, Expected: 401 or 403, Response: {data}"
+        
+        self.log_test("Maps Reverse Geocode - Authentication Required", success, details)
+        return success
+        
+    async def test_maps_directions_invalid_coordinates(self):
+        """Test POST /api/maps/directions with invalid coordinates"""
+        # Test with coordinates outside Brazil
+        route_data = {
+            "origin_lat": 40.7128,  # New York
+            "origin_lng": -74.0060,
+            "destination_lat": 34.0522,  # Los Angeles
+            "destination_lng": -118.2437
+        }
+        
+        status, data = await self.make_request('POST', '/maps/directions', route_data, self.tokens['passenger'])
+        
+        # Should still work but return different route data
+        success = status == 200
+        details = f"Status: {status}"
+        
+        if success:
+            # Check that it still returns valid structure even with non-Brasília coordinates
+            required_fields = ['distance', 'duration', 'steps', 'overview_polyline', 'bounds']
+            has_required_fields = all(field in data for field in required_fields)
+            success = has_required_fields
+            details = f"Status: {status}, Valid structure: {has_required_fields}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Maps Directions - Invalid Coordinates Handling", success, details)
+        return success
+        
+    async def run_google_maps_scenario(self):
+        """Run the complete Google Maps testing scenario"""
+        print("\n🗺️  EXECUTING GOOGLE MAPS INTEGRATION TESTING SCENARIO")
         print("=" * 70)
-        print("Testing: Novos ajustes implementados conforme review request")
-        print("Focus: Chat alerts, password reset, progress bar, user info")
+        print("Testing: Google Maps mock endpoints with realistic Brasília data")
+        print("Focus: Directions, Distance Matrix, Geocoding, Reverse Geocoding")
         
         # Step 1: Setup users
         print("\nStep 1: Creating test users...")
         if not await self.setup_test_users():
             return False
             
-        # Step 2: Create and accept trip for chat testing
-        print("Step 2: Creating test trip...")
-        if not await self.create_test_trip():
-            return False
-            
-        print("Step 3: Driver accepting trip...")
-        if not await self.accept_trip():
-            return False
-            
-        print("Step 4: Driver starting trip...")
-        if not await self.start_trip():
-            return False
-            
-        # Step 5: Test new features (sequential execution for proper order)
-        print("Step 5: Testing new features...")
+        # Step 2: Test all Google Maps endpoints
+        print("Step 2: Testing Google Maps endpoints...")
         
-        # Test password reset functionality
-        test1_success = await self.test_forgot_password_validation()
-        test2_success = await self.test_forgot_password_invalid_credentials()
-        test3_success = await self.test_reset_password_functionality()
-        test4_success = await self.test_reset_password_mismatch()
+        # Test directions endpoints with realistic Brasília trips
+        test1_success = await self.test_maps_directions_asa_norte_to_asa_sul()
+        test2_success = await self.test_maps_directions_centro_to_taguatinga()
+        test3_success = await self.test_maps_directions_plano_piloto_to_gama()
+        test4_success = await self.test_maps_directions_authentication_required()
         
-        # Test chat functionality with new message alerts
-        test5_success = await self.test_chat_message_send()
-        test6_success = await self.test_chat_message_driver_send()
-        test7_success = await self.test_chat_message_character_limit()
-        test8_success = await self.test_chat_messages_retrieval()
+        # Test distance matrix endpoint
+        test5_success = await self.test_maps_distance_matrix_multiple_locations()
+        test6_success = await self.test_maps_distance_matrix_authentication_required()
         
-        # Test user info without passenger phone
-        test9_success = await self.test_trip_info_without_passenger_phone()
+        # Test geocoding endpoints
+        test7_success = await self.test_maps_geocode_asa_norte()
+        test8_success = await self.test_maps_geocode_taguatinga()
+        test9_success = await self.test_maps_geocode_authentication_required()
         
-        # Test progress bar status
-        test10_success = await self.test_trip_status_requested_for_progress_bar()
+        # Test reverse geocoding endpoints
+        test10_success = await self.test_maps_reverse_geocode_asa_sul()
+        test11_success = await self.test_maps_reverse_geocode_gama()
+        test12_success = await self.test_maps_reverse_geocode_authentication_required()
         
-        # Test admin chat aggregation
-        test11_success = await self.test_admin_chat_aggregation()
+        # Test error handling
+        test13_success = await self.test_maps_directions_invalid_coordinates()
         
         results = [test1_success, test2_success, test3_success, test4_success, 
                   test5_success, test6_success, test7_success, test8_success,
-                  test9_success, test10_success, test11_success]
+                  test9_success, test10_success, test11_success, test12_success,
+                  test13_success]
         
         # Count successful tests
         successful_tests = sum(1 for result in results if result is True)
         total_tests = len(results)
         
-        print(f"\nNew features tests: {successful_tests}/{total_tests} passed")
+        print(f"\nGoogle Maps tests: {successful_tests}/{total_tests} passed")
         return successful_tests == total_tests
         
     async def run_all_tests(self):
-        """Run all new features tests"""
-        print("🚀 STARTING NEW FEATURES TEST SUITE")
+        """Run all Google Maps tests"""
+        print("🚀 STARTING GOOGLE MAPS INTEGRATION TEST SUITE")
         print("=" * 70)
-        print("Focus: Teste dos novos ajustes implementados")
-        print("Objetivo: Validar chat alerts, reset senha, barra progresso, info usuários")
+        print("Focus: Testing Google Maps mock endpoints")
+        print("Objetivo: Validar directions, distance-matrix, geocode, reverse-geocode")
         
         await self.setup_session()
         
@@ -530,12 +655,12 @@ class NewFeaturesTestSuite:
                 print("❌ Health check failed, aborting tests")
                 return
                 
-            # Run new features scenario
-            scenario_success = await self.run_new_features_scenario()
+            # Run Google Maps scenario
+            scenario_success = await self.run_google_maps_scenario()
             
             # Print summary
             print("\n" + "=" * 70)
-            print("📊 NEW FEATURES TEST SUMMARY")
+            print("📊 GOOGLE MAPS INTEGRATION TEST SUMMARY")
             print("=" * 70)
             
             passed = sum(1 for result in self.test_results if result['success'])
@@ -548,21 +673,28 @@ class NewFeaturesTestSuite:
             print(f"Success Rate: {success_rate:.1f}%")
             
             if scenario_success:
-                print("\n🎉 NEW FEATURES COMPLETELY FUNCTIONAL!")
-                print("✅ POST /api/auth/forgot-password - Validação email+CPF funcionando")
-                print("✅ POST /api/auth/reset-password - Reset de senha funcionando")
-                print("✅ POST /api/trips/{trip_id}/chat/send - Envio de mensagens funcionando")
-                print("✅ GET /api/trips/{trip_id}/chat/messages - Recuperação de mensagens funcionando")
-                print("✅ GET /api/trips/my - Informações sem telefone do passageiro para driver")
-                print("✅ Trip status 'requested' - Suporte para barra de progresso")
-                print("✅ GET /api/admin/chats - Agregação de chats para admin")
-                print("\n🔧 BACKEND NEW FEATURES WORKING:")
-                print("   - Password reset 2-step process functional")
-                print("   - Chat system with character limit validation")
-                print("   - User info filtering (no passenger phone for driver)")
-                print("   - Trip status management for UI progress indicators")
+                print("\n🎉 GOOGLE MAPS INTEGRATION COMPLETELY FUNCTIONAL!")
+                print("✅ POST /api/maps/directions - Route planning with realistic Brasília directions")
+                print("✅ POST /api/maps/distance-matrix - Multiple location distance calculations")
+                print("✅ GET /api/maps/geocode/{address} - Address to coordinates conversion")
+                print("✅ GET /api/maps/reverse-geocode - Coordinates to address conversion")
+                print("✅ Authentication validation - All endpoints properly secured")
+                print("✅ Realistic Brasília data - Mock responses contain accurate local information")
+                print("\n🗺️  TESTED TRIP SCENARIOS:")
+                print("   ✅ Asa Norte → Asa Sul (short urban trip)")
+                print("   ✅ Centro → Taguatinga (medium distance trip)")
+                print("   ✅ Plano Piloto → Gama (long distance trip)")
+                print("   ✅ Common Brasília locations geocoding")
+                print("   ✅ Error handling with invalid data")
+                print("\n🔧 BACKEND GOOGLE MAPS FEATURES WORKING:")
+                print("   - Realistic turn-by-turn directions for Brasília")
+                print("   - Distance and duration calculations")
+                print("   - Multi-point distance matrix calculations")
+                print("   - Address geocoding with Brasília landmarks")
+                print("   - Coordinate reverse geocoding")
+                print("   - Proper authentication on all endpoints")
             else:
-                print("\n⚠️  Some new features issues detected")
+                print("\n⚠️  Some Google Maps integration issues detected")
                 
             # Print failed tests
             failed_tests = [result for result in self.test_results if not result['success']]
@@ -576,7 +708,7 @@ class NewFeaturesTestSuite:
 
 async def main():
     """Main test execution"""
-    test_suite = NewFeaturesTestSuite()
+    test_suite = GoogleMapsTestSuite()
     await test_suite.run_all_tests()
 
 if __name__ == "__main__":
