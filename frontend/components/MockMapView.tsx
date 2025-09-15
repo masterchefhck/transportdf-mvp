@@ -81,32 +81,161 @@ const MockMapView: React.FC<MockMapViewProps> = ({
   const destinationSvg = latLngToSvg(destination.lat, destination.lng);
   const currentLocationSvg = currentLocation ? latLngToSvg(currentLocation.lat, currentLocation.lng) : null;
 
-  // Generate mock route path
-  const generateRoutePath = () => {
-    if (!route) return '';
-    
-    const points = [originSvg];
-    
-    // Add some intermediate waypoints for a more realistic route
-    const steps = 5;
-    for (let i = 1; i < steps; i++) {
-      const progress = i / steps;
-      // Add some curve to make it look like a real route
-      const curveFactor = Math.sin(progress * Math.PI) * 20;
-      const x = originSvg.x + (destinationSvg.x - originSvg.x) * progress + curveFactor;
-      const y = originSvg.y + (destinationSvg.y - originSvg.y) * progress + curveFactor * 0.5;
-      points.push({ x, y });
-    }
-    
-    points.push(destinationSvg);
-    
-    // Create SVG path
-    let path = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      path += ` L ${points[i].x} ${points[i].y}`;
-    }
-    
-    return path;
+  // Fallback map rendering without SVG
+  const renderFallbackMap = () => {
+    return (
+      <View style={styles.fallbackMap}>
+        {/* Grid background */}
+        <View style={styles.gridContainer}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <View key={`row-${i}`} style={styles.gridRow}>
+              {Array.from({ length: 10 }, (_, j) => (
+                <View key={`cell-${i}-${j}`} style={styles.gridCell} />
+              ))}
+            </View>
+          ))}
+        </View>
+
+        {/* Origin marker */}
+        <View style={[styles.mapMarker, styles.originMarker, {
+          left: `${(originSvg.x / SCREEN_WIDTH) * 100}%`,
+          top: `${(originSvg.y / MAP_HEIGHT) * 100}%`,
+        }]}>
+          <Ionicons name="radio-button-on" size={16} color="#4CAF50" />
+          <Text style={styles.markerLabel}>ORIGEM</Text>
+        </View>
+
+        {/* Destination marker */}
+        <View style={[styles.mapMarker, styles.destinationMarker, {
+          left: `${(destinationSvg.x / SCREEN_WIDTH) * 100}%`,
+          top: `${(destinationSvg.y / MAP_HEIGHT) * 100}%`,
+        }]}>
+          <Ionicons name="location" size={16} color="#f44336" />
+          <Text style={styles.markerLabel}>DESTINO</Text>
+        </View>
+
+        {/* Current location marker */}
+        {currentLocationSvg && (
+          <View style={[styles.mapMarker, styles.currentLocationMarker, {
+            left: `${(currentLocationSvg.x / SCREEN_WIDTH) * 100}%`,
+            top: `${(currentLocationSvg.y / MAP_HEIGHT) * 100}%`,
+          }]}>
+            <Ionicons name="navigate" size={16} color="#2196F3" />
+          </View>
+        )}
+
+        {/* Route line representation */}
+        {route && (
+          <View style={styles.routeLine}>
+            <Text style={styles.routeText}>📍 ──── 🚗 ──── 📍</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  // SVG map rendering
+  const renderSvgMap = () => {
+    if (!Svg) return renderFallbackMap();
+
+    return (
+      <Svg width={SCREEN_WIDTH} height={MAP_HEIGHT} style={styles.map}>
+        {/* Background */}
+        <Path
+          d={`M 0 0 L ${SCREEN_WIDTH} 0 L ${SCREEN_WIDTH} ${MAP_HEIGHT} L 0 ${MAP_HEIGHT} Z`}
+          fill="#1a1a1a"
+          stroke="#333"
+          strokeWidth="1"
+        />
+        
+        {/* Grid lines */}
+        {Array.from({ length: 10 }, (_, i) => (
+          <Line
+            key={`v-${i}`}
+            x1={(SCREEN_WIDTH / 10) * i}
+            y1={0}
+            x2={(SCREEN_WIDTH / 10) * i}
+            y2={MAP_HEIGHT}
+            stroke="#2a2a2a"
+            strokeWidth="0.5"
+          />
+        ))}
+        {Array.from({ length: 8 }, (_, i) => (
+          <Line
+            key={`h-${i}`}
+            x1={0}
+            y1={(MAP_HEIGHT / 8) * i}
+            x2={SCREEN_WIDTH}
+            y2={(MAP_HEIGHT / 8) * i}
+            stroke="#2a2a2a"
+            strokeWidth="0.5"
+          />
+        ))}
+
+        {/* Route path */}
+        {route && (
+          <Path
+            d={generateRoutePath()}
+            fill="none"
+            stroke="#2196F3"
+            strokeWidth="3"
+            strokeDasharray="5,3"
+          />
+        )}
+
+        {/* Current location marker */}
+        {currentLocationSvg && (
+          <Circle
+            cx={currentLocationSvg.x}
+            cy={currentLocationSvg.y}
+            r={8}
+            fill="#4CAF50"
+            stroke="#fff"
+            strokeWidth="2"
+          />
+        )}
+
+        {/* Origin marker */}
+        <Circle
+          cx={originSvg.x}
+          cy={originSvg.y}
+          r={6}
+          fill="#4CAF50"
+          stroke="#fff"
+          strokeWidth="2"
+        />
+        <SvgText
+          x={originSvg.x}
+          y={originSvg.y - 15}
+          fontSize="10"
+          fill="#4CAF50"
+          textAnchor="middle"
+          fontWeight="bold"
+        >
+          ORIGEM
+        </SvgText>
+
+        {/* Destination marker */}
+        <Circle
+          cx={destinationSvg.x}
+          cy={destinationSvg.y}
+          r={6}
+          fill="#f44336"
+          stroke="#fff"
+          strokeWidth="2"
+        />
+        <SvgText
+          x={destinationSvg.x}
+          y={destinationSvg.y - 15}
+          fontSize="10"
+          fill="#f44336"
+          textAnchor="middle"
+          fontWeight="bold"
+        >
+          DESTINO
+        </SvgText>
+      </Svg>
+    );
   };
 
   return (
