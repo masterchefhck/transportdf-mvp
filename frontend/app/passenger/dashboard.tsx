@@ -1735,7 +1735,7 @@ const styles = StyleSheet.create({
   },
   addressText: {
     fontSize: 14,
-    color: '#333',
+    color: '#fff',
     marginLeft: 10,
     flex: 1,
   },
