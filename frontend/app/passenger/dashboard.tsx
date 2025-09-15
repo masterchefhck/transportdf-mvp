@@ -762,109 +762,78 @@ export default function PassengerDashboard() {
 
       <View style={styles.mainContent}>
         {currentTrip ? (
-          <View style={styles.currentTripCard}>
-            <View style={styles.tripHeader}>
-              <Ionicons name="car" size={24} color="#4CAF50" />
-              <Text style={styles.tripTitle}>Viagem Atual</Text>
-            </View>
-            
-            <View style={styles.tripDetails}>
-              <View style={styles.addressRow}>
-                <Ionicons name="radio-button-on" size={16} color="#4CAF50" />
-                <Text style={styles.addressText}>{currentTrip.pickup_address}</Text>
-              </View>
-              <View style={styles.addressRow}>
-                <Ionicons name="location" size={16} color="#f44336" />
-                <Text style={styles.addressText}>{currentTrip.destination_address}</Text>
-              </View>
-            </View>
+          <View style={styles.currentTripContainer}>
+            {/* Trip Map View */}
+            <TripMapView
+              trip={currentTrip}
+              currentLocation={location ? {
+                lat: location.coords.latitude,
+                lng: location.coords.longitude,
+              } : undefined}
+              showDirections={true}
+              style={styles.mapView}
+            />
 
-            {/* Driver Info Section */}
-            {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_name && (
-              <View style={styles.driverInfo}>
-                <Text style={styles.driverInfoTitle}>Seu Motorista</Text>
-                <View style={styles.driverDetails}>
-                  <TouchableOpacity
-                    onPress={() => handleViewPhoto(currentTrip.driver_photo, currentTrip.driver_name)}
-                    disabled={!currentTrip.driver_photo}
-                  >
-                    {currentTrip.driver_photo ? (
-                      <Image source={{ uri: currentTrip.driver_photo }} style={styles.driverPhoto} />
-                    ) : (
-                      <View style={styles.defaultDriverPhoto}>
-                        <Ionicons name="car" size={20} color="#666" />
+            {/* Current Trip Details */}
+            <View style={styles.currentTripCard}>
+              <View style={styles.tripHeader}>
+                <Text style={styles.currentTripTitle}>Viagem Atual</Text>
+                <Text style={styles.priceText}>R$ {currentTrip.estimated_price?.toFixed(2) || '0.00'}</Text>
+              </View>
+
+              {/* Driver Info Section */}
+              {currentTrip.driver_name && (
+                <View style={styles.driverInfoSection}>
+                  <Text style={styles.sectionTitle}>Motorista</Text>
+                  <View style={styles.driverInfoCard}>
+                    <TouchableOpacity
+                      onPress={() => handleViewPhoto(currentTrip.driver_photo, currentTrip.driver_name)}
+                      disabled={!currentTrip.driver_photo}
+                    >
+                      {currentTrip.driver_photo ? (
+                        <Image source={{ uri: currentTrip.driver_photo }} style={styles.currentDriverPhoto} />
+                      ) : (
+                        <View style={styles.defaultCurrentDriverPhoto}>
+                          <Ionicons name="car" size={24} color="#666" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                    <View style={styles.currentDriverDetails}>
+                      <Text style={styles.currentDriverName}>{currentTrip.driver_name}</Text>
+                      <View style={styles.currentDriverRating}>
+                        <Ionicons name="star" size={16} color="#FF9800" />
+                        <Text style={styles.currentDriverRatingText}>
+                          {currentTrip.driver_rating ? currentTrip.driver_rating.toFixed(1) : '5.0'}
+                        </Text>
                       </View>
-                    )}
-                  </TouchableOpacity>
-                  <View style={styles.driverTextInfo}>
-                    <Text style={styles.driverName}>{currentTrip.driver_name}</Text>
-                    <View style={styles.driverRating}>
-                      <Ionicons name="star" size={14} color="#FF9800" />
-                      <Text style={styles.driverRatingText}>
-                        {currentTrip.driver_rating ? currentTrip.driver_rating.toFixed(1) : '5.0'}
-                      </Text>
                     </View>
                   </View>
                 </View>
-              </View>
-            )}
+              )}
 
-            <View style={styles.tripStatus}>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(currentTrip.status) }]}>
-                {currentTrip.status === 'requested' ? (
-                  <View style={styles.searchingContainer}>
-                    <Text style={styles.searchingText}>Procurando motorista...</Text>
-                    <View style={styles.progressBarContainer}>
-                      <Animated.View 
-                        style={[
-                          styles.progressBar,
-                          {
-                            width: progressAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: ['0%', '100%'],
-                            }),
-                          }
-                        ]} 
-                      />
-                    </View>
+              {/* Trip Status and Actions */}
+              <View style={styles.tripActions}>
+                {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && (
+                  <View style={styles.chatButtonContainer}>
+                    <TouchableOpacity
+                      style={styles.chatButton}
+                      onPress={() => {
+                        setShowChatModal(true);
+                        setNewMessageAlert(false);
+                      }}
+                    >
+                      <Ionicons name="chatbubbles" size={16} color="#fff" />
+                      <Text style={styles.chatButtonText}>Chat com Motorista</Text>
+                      {newMessageAlert && (
+                        <View style={styles.messageAlert}>
+                          <Text style={styles.messageAlertText}>Nova!</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
                   </View>
-                ) : (
-                  <Text style={styles.statusText}>{getStatusText(currentTrip.status)}</Text>
                 )}
               </View>
-              <Text style={styles.priceText}>R$ {currentTrip.estimated_price.toFixed(2)}</Text>
             </View>
-
-            {/* Chat and Report Driver Buttons */}
-            {(currentTrip.status === 'accepted' || currentTrip.status === 'in_progress') && currentTrip.driver_id && (
-              <View style={styles.tripActions}>
-                <View style={styles.chatButtonContainer}>
-                  <TouchableOpacity
-                    style={styles.chatButton}
-                    onPress={() => {
-                      setShowChatModal(true);
-                      setNewMessageAlert(false); // Clear alert when opening chat
-                    }}
-                  >
-                    <Ionicons name="chatbubbles" size={16} color="#fff" />
-                    <Text style={styles.chatButtonText}>Chat com Motorista</Text>
-                    {newMessageAlert && (
-                      <View style={styles.messageAlert}>
-                        <Text style={styles.messageAlertText}>Nova!</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </View>
-                
-                <TouchableOpacity
-                  style={styles.reportButton}
-                  onPress={handleReportDriver}
-                >
-                  <Ionicons name="flag" size={16} color="#fff" />
-                  <Text style={styles.reportButtonText}>Reportar Motorista</Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         ) : (
           <View style={styles.noTripContainer}>
