@@ -627,6 +627,53 @@ export default function PassengerDashboard() {
     }
   };
 
+  // Handle Google Maps trip request
+  const handleGoogleMapTripRequest = async (tripData: {
+    origin: { latitude: number; longitude: number };
+    destination: { latitude: number; longitude: number };
+    originAddress: string;
+    destinationAddress: string;
+    estimatedPrice: number;
+    distance: string;
+    duration: string;
+  }) => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await axios.post(
+        `${API_URL}/api/trips/request`,
+        {
+          passenger_id: user?.id,
+          pickup_latitude: tripData.origin.latitude,
+          pickup_longitude: tripData.origin.longitude,
+          pickup_address: tripData.originAddress,
+          destination_latitude: tripData.destination.latitude,
+          destination_longitude: tripData.destination.longitude,
+          destination_address: tripData.destinationAddress,
+          estimated_price: tripData.estimatedPrice,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data) {
+        setCurrentTrip(response.data);
+        setShowGoogleMapModal(false);
+        showAlert(
+          'Sucesso', 
+          `Corrida solicitada!\nPreço estimado: R$ ${tripData.estimatedPrice.toFixed(2)}\nDistância: ${tripData.distance} • Tempo: ${tripData.duration}`
+        );
+      }
+    } catch (error: any) {
+      console.error('Erro ao solicitar corrida:', error);
+      const errorMessage = error.response?.data?.detail || 'Erro ao solicitar corrida';
+      showAlert('Erro', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleReportDriver = () => {
     if (!currentTrip || !currentTrip.driver_id) {
       showAlert('Erro', 'Não há motorista para reportar nesta viagem');
