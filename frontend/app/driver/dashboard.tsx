@@ -134,6 +134,21 @@ export default function DriverDashboard() {
   // Radar animation
   const radarRotation = useRef(new Animated.Value(0)).current;
 
+  // Radar rotation animation
+  useEffect(() => {
+    if (isOnline && availableTrips.length === 0) {
+      const animate = () => {
+        radarRotation.setValue(0);
+        Animated.timing(radarRotation, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }).start(() => animate());
+      };
+      animate();
+    }
+  }, [isOnline, availableTrips.length, radarRotation]);
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
