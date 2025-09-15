@@ -842,6 +842,17 @@ export default function DriverDashboard() {
         )}
       </View>
 
+      {/* Quick Actions */}
+      <View style={styles.quickActions}>
+        <TouchableOpacity 
+          style={styles.historyButton} 
+          onPress={() => router.push('/driver/history')}
+        >
+          <Ionicons name="time" size={24} color="#2196F3" />
+          <Text style={styles.historyButtonText}>Histórico</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Report Passenger Modal */}
       <Modal visible={showReportModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
