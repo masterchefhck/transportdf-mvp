@@ -816,6 +816,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
   },
+  emptyResultContainer: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  emptyResultText: {
+    color: '#888',
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
 });
 
 export default GoogleMapView;
