@@ -46,7 +46,7 @@ interface GoogleMapViewProps {
   passengerName?: string;
 }
 
-const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose }) => {
+const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, isForMe = true, passengerName }) => {
   const [region, setRegion] = useState({
     latitude: -15.7801, // Brasília default
     longitude: -47.8827,
