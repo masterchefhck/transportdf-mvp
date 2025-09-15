@@ -1693,9 +1693,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   addressText: {
-    fontSize: 16,
-    color: '#fff',
-    marginLeft: 12,
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 10,
     flex: 1,
   },
   tripStatus: {
