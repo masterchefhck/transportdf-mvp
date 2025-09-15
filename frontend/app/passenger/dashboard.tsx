@@ -67,11 +67,15 @@ interface User {
 interface Trip {
   id: string;
   driver_id?: string;
+  driver_name?: string;
+  driver_photo?: string;
+  driver_rating?: number;
   pickup_address: string;
   destination_address: string;
   estimated_price: number;
   status: string;
   requested_at: string;
+  rated?: boolean;
 }
 
 interface Report {
