@@ -734,6 +734,8 @@ export default function AdminDashboard() {
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{user.name}</Text>
                 <Text style={styles.userEmail}>{user.email}</Text>
+                <Text style={styles.userCpf}>CPF: {user.cpf}</Text>
+                <Text style={styles.userPhone}>Telefone: {user.phone}</Text>
                 <Text style={styles.userType}>
                   {user.user_type === 'driver' ? 'Motorista' : 
                    user.user_type === 'passenger' ? 'Passageiro' : 'Admin'}
