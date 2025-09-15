@@ -148,18 +148,50 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
   };
 
   const calculateRoute = async () => {
-    if (!userLocation || !destination || !GOOGLE_MAPS_API_KEY) return;
+    if (!userLocation || !destination) {
+      console.warn('Missing userLocation or destination for route calculation');
+      return;
+    }
 
     try {
       setLoading(true);
+      
+      // Check if we have a valid API key
+      if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'SUA_CHAVE_GOOGLE_MAPS_AQUI') {
+        console.warn('Google Maps API key not configured, using estimated values');
+        
+        // Fallback: Calculate estimated distance and duration
+        const estimatedDistance = calculateDistance(userLocation, destination);
+        const estimatedDuration = Math.ceil(estimatedDistance * 2); // Rough estimate: 2 min per km
+        
+        const fallbackRoute: RouteData = {
+          coordinates: [userLocation, destination], // Simple direct line
+          distance: `${estimatedDistance.toFixed(1)} km`,
+          duration: `${estimatedDuration} min`,
+        };
+        
+        setRoute(fallbackRoute);
+        setLoading(false);
+        return;
+      }
       
       // Google Directions API
       const origin = `${userLocation.latitude},${userLocation.longitude}`;
       const dest = `${destination.latitude},${destination.longitude}`;
       
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${dest}&key=${GOOGLE_MAPS_API_KEY}&mode=driving&language=pt-BR&region=BR`
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(dest)}&key=${GOOGLE_MAPS_API_KEY}&mode=driving&language=pt-BR&region=BR`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
       );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       
       const data = await response.json();
       
@@ -177,6 +209,20 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
         };
         
         setRoute(routeData);
+      } else {
+        // API returned error, use fallback
+        console.warn('Google Directions API error:', data.status, data.error_message);
+        
+        const estimatedDistance = calculateDistance(userLocation, destination);
+        const estimatedDuration = Math.ceil(estimatedDistance * 2);
+        
+        const fallbackRoute: RouteData = {
+          coordinates: [userLocation, destination],
+          distance: `${estimatedDistance.toFixed(1)} km`,
+          duration: `${estimatedDuration} min`,
+        };
+        
+        setRoute(fallbackRoute);
         
         // Calculate estimated price (R$ 2.50 base + R$ 2.50 per km)
         const distanceInKm = leg.distance.value / 1000;
