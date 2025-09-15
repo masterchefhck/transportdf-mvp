@@ -144,6 +144,9 @@ export default function PassengerDashboard() {
 
   // Progress bar animation for "Procurando motorista"
   const [progressAnim] = useState(new Animated.Value(0));
+  
+  // Google Maps integration
+  const { getDirections, geocodeAddress, calculateTripPrice } = useGoogleMaps();
 
   useEffect(() => {
     loadUserData();
