@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#1a1a1a"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -33,7 +35,9 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Este app precisa acessar sua localização para funcionar corretamente."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ]
   }
 }
