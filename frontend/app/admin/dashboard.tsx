@@ -154,6 +154,9 @@ export default function AdminDashboard() {
   const [selectedChatId, setSelectedChatId] = useState<string>('');
   const [showChatModal, setShowChatModal] = useState(false);
 
+  // Highlighted user for navigation from chat
+  const [highlightedUserId, setHighlightedUserId] = useState<string>('');
+
   useEffect(() => {
     loadUserData();
     loadData();
