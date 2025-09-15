@@ -129,6 +129,7 @@ export default function PassengerDashboard() {
 
   // Chat states
   const [showChatModal, setShowChatModal] = useState(false);
+  const [newMessageAlert, setNewMessageAlert] = useState(false);
 
   // Photo modal states
   const [showPhotoModal, setShowPhotoModal] = useState(false);
