@@ -49,12 +49,14 @@ export default function ChatComponent({
   currentUserId, 
   currentUserType, 
   onClose,
+  onNewMessage,
   style 
 }: ChatComponentProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [previousMessageCount, setPreviousMessageCount] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
   // Polling for new messages every 5 seconds
