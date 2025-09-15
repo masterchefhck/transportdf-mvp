@@ -535,23 +535,35 @@ export default function PassengerDashboard() {
       const pickupGeocode = await reverseGeocode(pickupLat, pickupLng);
       const pickupFormattedAddress = pickupGeocode?.formatted_address || 'Sua localização atual';
 
-      // Geocode destination address
-      const destinationGeocode = await geocodeAddress(destinationAddress);
-      if (!destinationGeocode) {
-        showAlert('Erro', 'Destino não encontrado. Tente usar nomes como: Asa Sul, Taguatinga, Gama, Aeroporto...');
-        return;
+      // Try to find destination in our local database first
+      let destinationLat, destinationLng, destinationFormattedAddress;
+      
+      const localDestination = brasiliaLocations.find(loc => 
+        loc.name.toLowerCase() === destinationAddress.toLowerCase()
+      );
+      
+      if (localDestination) {
+        // Use local coordinates (more reliable)
+        destinationLat = localDestination.coords.lat;
+        destinationLng = localDestination.coords.lng;
+        destinationFormattedAddress = `${localDestination.name}, Brasília - DF, Brasil`;
+      } else {
+        // Fallback to geocoding service
+        const destinationGeocode = await geocodeAddress(destinationAddress);
+        if (!destinationGeocode) {
+          showAlert('Erro', 'Destino não encontrado. Tente usar sugestões da lista ou digite um local conhecido de Brasília.');
+          return;
+        }
+        
+        destinationLat = destinationGeocode.geometry.location.lat;
+        destinationLng = destinationGeocode.geometry.location.lng;
+        destinationFormattedAddress = destinationGeocode.formatted_address;
       }
 
       // Get route for better price calculation
       const route = await getDirections(
-        {
-          lat: pickupLat,
-          lng: pickupLng,
-        },
-        {
-          lat: destinationGeocode.geometry.location.lat,
-          lng: destinationGeocode.geometry.location.lng,
-        }
+        { lat: pickupLat, lng: pickupLng },
+        { lat: destinationLat, lng: destinationLng }
       );
 
       const estimatedPrice = route ? calculateTripPrice(route.distance) : 10.0;
@@ -564,9 +576,9 @@ export default function PassengerDashboard() {
           pickup_latitude: pickupLat,
           pickup_longitude: pickupLng,
           pickup_address: pickupFormattedAddress,
-          destination_latitude: destinationGeocode.geometry.location.lat,
-          destination_longitude: destinationGeocode.geometry.location.lng,
-          destination_address: destinationGeocode.formatted_address,
+          destination_latitude: destinationLat,
+          destination_longitude: destinationLng,
+          destination_address: destinationFormattedAddress,
           estimated_price: estimatedPrice,
         },
         {
@@ -577,6 +589,8 @@ export default function PassengerDashboard() {
       if (response.data) {
         setCurrentTrip(response.data);
         setDestinationAddress('');
+        setShowSuggestions(false);
+        setSuggestions([]);
         showAlert(
           'Sucesso', 
           `Corrida solicitada!\nPreço estimado: R$ ${estimatedPrice.toFixed(2)}\n${route ? `Distância: ${route.distance} • Tempo: ${route.duration}` : ''}`
