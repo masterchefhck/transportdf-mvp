@@ -1,0 +1,5 @@
+# ARQUIVO: C:\transportdf-mvp\backend\.env
+# PARA AMBIENTE DOCKER LOCAL
+
+MONGO_URL="mongodb://localhost:27017"
+DB_NAME="transportdf_mvp"
