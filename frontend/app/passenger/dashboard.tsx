@@ -140,6 +140,9 @@ export default function PassengerDashboard() {
   // Track rated trips to prevent modal loops
   const [ratedTripIds, setRatedTripIds] = useState<Set<string>>(new Set());
 
+  // Progress bar animation for "Procurando motorista"
+  const [progressAnim] = useState(new Animated.Value(0));
+
   useEffect(() => {
     loadUserData();
     requestLocationPermission();
