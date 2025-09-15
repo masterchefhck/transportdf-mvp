@@ -252,7 +252,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Current Bug Fixes - Driver & Admin Dashboard User Info"
+    - "Google Maps Integration Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
