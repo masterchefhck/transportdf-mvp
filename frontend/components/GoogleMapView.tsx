@@ -237,21 +237,10 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
         
         setRoute(fallbackRoute);
         
-        // Calculate estimated price (R$ 2.50 base + R$ 2.50 per km)
-        const distanceInKm = leg.distance.value / 1000;
-        const price = 2.50 + (distanceInKm * 2.50);
+        // Calculate estimated price for fallback (R$ 2.50 base + R$ 2.50 per km)
+        const estimatedDistanceNum = parseFloat(fallbackRoute.distance);
+        const price = 2.50 + (estimatedDistanceNum * 2.50);
         setEstimatedPrice(Math.round(price * 100) / 100);
-        
-        // Fit map to route
-        if (mapRef.current) {
-          mapRef.current.fitToCoordinates([userLocation, destination], {
-            edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-            animated: true,
-          });
-        }
-        
-      } else {
-        Alert.alert('Erro', 'Não foi possível calcular a rota');
       }
     } catch (error) {
       console.error('Error calculating route:', error);
