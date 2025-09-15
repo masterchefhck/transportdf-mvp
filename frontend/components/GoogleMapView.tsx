@@ -275,7 +275,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
       setDestinationAddress(data.description);
       
       if (userLocation) {
-        calculateRoute();
+        fetchRoute(userLocation, destination);
       }
     } else {
       // Web implementation - get place details
@@ -296,7 +296,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
           setShowSuggestions(false);
           
           if (userLocation) {
-            calculateRoute();
+            fetchRoute(userLocation, destination);
           }
         }
       } catch (error) {
