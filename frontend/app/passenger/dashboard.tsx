@@ -1030,17 +1030,54 @@ export default function PassengerDashboard() {
               )}
             </View>
 
-            {/* Destination Input */}
-            <View style={styles.inputContainer}>
-              <Ionicons name="location" size={20} color="#f44336" />
-              <TextInput
-                style={styles.input}
-                placeholder="Digite o destino (ex: Asa Sul, Taguatinga...)"
-                placeholderTextColor="#666"
-                value={destinationAddress}
-                onChangeText={setDestinationAddress}
-                onEndEditing={calculateEstimatePrice}
-              />
+            {/* Destination Input with Autocomplete */}
+            <View style={styles.destinationInputContainer}>
+              <View style={styles.inputContainer}>
+                <Ionicons name="location" size={20} color="#f44336" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite o destino..."
+                  placeholderTextColor="#666"
+                  value={destinationAddress}
+                  onChangeText={handleDestinationChange}
+                  onFocus={() => destinationAddress.length >= 2 && setShowSuggestions(true)}
+                />
+                {destinationAddress.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setDestinationAddress('');
+                      setShowSuggestions(false);
+                      setSuggestions([]);
+                    }}
+                    style={styles.clearButton}
+                  >
+                    <Ionicons name="close-circle" size={20} color="#666" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Autocomplete Suggestions */}
+              {showSuggestions && suggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                  <ScrollView style={styles.suggestionsList} showsVerticalScrollIndicator={false}>
+                    {suggestions.map((suggestion, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.suggestionItem}
+                        onPress={() => handleSuggestionSelect(suggestion)}
+                      >
+                        <View style={styles.suggestionContent}>
+                          <Ionicons name="location-outline" size={16} color="#2196F3" />
+                          <View style={styles.suggestionText}>
+                            <Text style={styles.suggestionName}>{suggestion.name}</Text>
+                            <Text style={styles.suggestionArea}>{suggestion.area}</Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
             </View>
 
             {/* Quick Destination Buttons */}
