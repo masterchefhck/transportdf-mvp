@@ -1,30 +1,19 @@
 <analysis>
-The trajectory chronicles the transition of an application from initial AI development to user-guided refinement. Initially, the user replaced the entire codebase with clean and functional versions, leading to the removal of the previously implemented chat system. Subsequent interactions focused on re-implementing crucial features and fixing reported bugs. Key phases included re-introducing a polling-based chat system, enhancing dashboard user information (photos, ratings), implementing real-time synchronization, and adding trip history. Numerous bugs were addressed: a persistent rating modal loop, missing user data in dashboards, non-functional chat input, and UI inconsistencies like the FlatList is not defined error. The final phase concentrated on refining UI elements like chat notifications and a progressive loading bar, and critical bug fixes for password reset and detailed admin user views. The AI consistently used a read-then-edit approach, often performing backend and frontend changes concurrently, and confirmed status after each significant modification.
+The trajectory outlines the application's development from a rudimentary state to a feature-rich ride-sharing platform. Initial phases involved restoring core functionalities, such as a polling-based chat and enhanced user dashboards. A significant portion of the work focused on refining location-based features, evolving from a mock Google Maps implementation to a full integration of the Google Maps SDK. Key challenges included troubleshooting web compatibility for autocomplete, resolving Expo SDK version mismatches (upgrading to SDK 54), and debugging network configuration issues when the user ran a local frontend connecting to a remote backend. The AI systematically addressed user feedback, iterating from basic address validation to a sophisticated Uber/99-style interactive map with real-time autocomplete and routing. The continuous back-and-forth between user reports and AI-driven fixes, often involving concurrent frontend and backend adjustments, highlights an adaptive development process.
 </analysis>
 
 <product_requirements>
 The Transport App Brasília MVP is a ride-sharing mobile application for Android/iOS, supporting passenger, driver, and admin roles. Core functionalities include user registration/login, trip management (request, tracking, acceptance, completion), post-trip 5-star rating, and reporting. Admin features involve report viewing, driver alerts, user/trip management, bulk data deletion, and direct passenger messaging. Profile photo uploads are supported.
 
-Initial AI work included a polling-based chat, but this was removed with user-provided codebase replacements. Bugs needing resolution included a persistent passenger rating modal, a  error, and  issues in the admin dashboard. The user provided clean code to resolve these, aiming for a stable foundation.
+Past requirements included re-implementing a polling-based chat (5-second interval, 250-char limit), displaying photo, name, and rating of passenger/driver in trip listings/current trip views, real-time synchronization via polling, adjusting passenger rating UI, adding trip history, enhancing admin trip details, implementing Forgot Password with email/CPF validation, new message alerts for chat, replacing Procurando motorista with an animated progress bar, and showing CPF/phone in Admin Users tab with clickable names.
 
-Subsequent requirements included:
-- Re-implementing a polling-based chat (5-second interval, 250-char limit) between driver/passenger on active trips, with admin history.
-- Displaying photo, name, and rating of passenger/driver in trip listings/current trip views on dashboards, with clickable photos.
-- Implementing real-time synchronization via polling across all dashboards.
-- Adjusting passenger rating UI to be below location.
-- Adding trip history for both passenger (value paid, dates, times, destination, driver info) and driver (value received, dates, times, destination).
-- Enhancing admin trip details with passenger/driver name, photo, and phone.
-- Implementing a Forgot Password feature with email/CPF validation.
-- Adding new message alerts for chat.
-- Replacing Procurando motorista button with an animated progress bar.
-- Admin Users tab to show CPF and phone, with clickable chat names to highlight users.
+The most recent and active requirement is to implement a professional, interactive Google Maps-based trip request system, similar to Uber/99. This involves automatically using the user's current location as the origin, providing a single destination input field with dynamic Google Places autocomplete suggestions, and rendering an interactive map that visualizes the origin, selected destination, and the calculated route with an estimated price. This requires integration of the actual Google Maps SDK using an API Key.
 </product_requirements>
 
 <key_technical_concepts>
-- **Frontend**: React Native, Expo, Expo Router (file-based routing), AsyncStorage, Axios, ImagePicker, Location API, Animated API.
-- **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT Authentication, Pydantic, Bcrypt, Geodesic.
-- **Features**: User/Driver/Admin Dashboards, Trip Lifecycle, Profile Photo Upload (Base64), User Rating, Admin Reporting, Bulk Deletion, Admin Alerts/Messages, Chat System (polling-based), Trip History, Password Reset.
-- **UI/UX**: Thumb-friendly, glanceable interfaces, gesture-driven, cross-platform alerts.
+-   **Frontend**: React Native, Expo (SDK 54), Expo Router, AsyncStorage, Axios, ImagePicker, Expo Location, Animated API, , , .
+-   **Backend**: FastAPI, MongoDB (AsyncIOMotorClient), JWT Authentication, Pydantic, Bcrypt, Geodesic.
+-   **Features**: User/Driver/Admin Dashboards, Trip Lifecycle, Profile Photo Upload (Base64), User Rating, Admin Reporting, Bulk Deletion, Admin Alerts/Messages, Polling-based Chat, Trip History, Password Reset, Google Maps Integration (mock and real).
 </key_technical_concepts>
 
 <code_architecture>
@@ -33,67 +22,49 @@ The application uses a full-stack architecture with an Expo React Native fronten
 
 
 -   ****:
-    -   **Importance**: Central API for auth, user/trip/report/rating management, admin operations, and database interaction.
-    -   **Changes Made**: Completely replaced initially. Subsequently, new Pydantic models (, , , ) and endpoints for chat, trip history, and password reset were added. The  and  endpoints were updated to include full user data (, , , , , ). The  endpoint was modified to mark trips as  and . Password reset logic was fixed to correctly hash and store new passwords. Passenger phone number was removed from driver-facing trip details.
+    -   **Importance**: Central API for auth, user/trip/report/rating management, admin operations, and database interaction. It was initially updated with mock Google Maps API endpoints (, , ) which were later refined for more flexible address handling.
 -   ****:
-    -   **Importance**: Expo project configuration (name, slug, icons, splash, plugins).
-    -   **Changes Made**: Replaced with user-provided version; configured  and  plugins with permissions.
+    -   **Importance**: Expo project configuration, including SDK version, plugins, and native configurations.
+    -   **Changes Made**: Updated to target Expo SDK 54.0.0. Crucially,  was added under  and  to enable the native Google Maps SDK.
 -   ****:
-    -   **Importance**: Initial entry point for admin authentication and redirection to the dashboard.
-    -   **Changes Made**: Replaced with user-provided version. Handles session check, login/register, logout. Has specific admin styling and navigation to .
+    -   **Importance**: Manages project dependencies and scripts.
+    -   **Changes Made**: Dependencies were upgraded to be compatible with Expo SDK 54.0.0. Specifically, , , , and  were added or updated.
 -   ****:
-    -   **Importance**: Admin interface for managing users, trips, reports, ratings, and chat history.
-    -   **Changes Made**: Replaced initially. Later,  import was added to resolve an error. The CHAT P/M tab was added to the navigation, displaying chat history via . The  function was updated to display passenger and driver info (name, photo, phone) for each trip. CPF and phone numbers were added to user details in the Users tab. User names in chat history were made clickable to highlight the corresponding user in the Users tab for 3 seconds. Real-time polling (5-second interval) was implemented. Photo modal functionality for user profiles was added.
+    -   **Importance**: The main dashboard screen for passengers.
+    -   **Changes Made**: Underwent significant iterations for trip request functionality. It evolved from a manual address input, to an Uber/99-style local autocomplete (which was problematic on web and still required explicit destination selection), and is now being updated to integrate the new  component via a , effectively replacing the previous trip request UI and logic.
 -   ****:
-    -   **Importance**: Initial entry point for passenger authentication and redirection to the dashboard.
-    -   **Changes Made**: Replaced with user-provided version. Handles session check, login/register, logout, with passenger-specific styling and navigation to .
+    -   **Importance**: Provided a basic, non-interactive map for displaying trip routes and markers during the initial mock Google Maps integration phase.
+    -   **Changes Made**: Created and later augmented with fallback rendering methods (e.g., plain s) to address potential  rendering issues, although its role is now being fully superseded by .
 -   ****:
-    -   **Importance**: Passenger interface for requesting rides, tracking trips, rating drivers, and interacting via chat.
-    -   **Changes Made**: Replaced initially. Integrated  with a chat button, modal, and styles. Driver info (photo, name, rating) now appears when a trip is accepted, with a clickable photo to open a modal. Passenger rating UI moved below location. Auto-refresh polling (5-second interval) implemented. Persistent rating modal bug was fixed using  Set, and refined // logic. New Message alerts were added to the chat button. The Procurando motorista button was replaced with an animated, looping blue progress bar.
--   ** (NEW)**:
-    -   **Importance**: Displays a list of a passenger's past trips.
-    -   **Changes Made**: Created.
+    -   **Importance**: A custom React hook designed to abstract interactions with the mock Google Maps backend endpoints.
+    -   **Changes Made**: Created to encapsulate API calls for directions, geocoding, reverse geocoding, and price calculation. A critical fix involved changing the API URL source from  to  for correct environment variable access.
 -   ****:
-    -   **Importance**: Initial entry point for driver authentication and redirection to the dashboard.
-    -   **Changes Made**: Replaced with user-provided version. Handles session check, login/register, logout, with driver-specific styling and navigation to .
+    -   **Importance**: Renders a map specific to displaying an active trip's details.
+    -   **Changes Made**: Created to utilize  and the  hook to show trip origin, destination, and route for active trips.
 -   ****:
-    -   **Importance**: Driver interface for managing online status, accepting/completing trips, reporting, and interacting via chat.
-    -   **Changes Made**: Replaced initially. Integrated  with a chat button, modal, and styles. Passenger info (photo, name, rating, but NOT phone) appears for current trips and available trips, with clickable photos for a modal. Auto-refresh polling (5-second interval) implemented. Histórico button added to quick actions. New Message alerts added to the chat button. Passenger phone number removed from display for drivers.
--   ** (NEW)**:
-    -   **Importance**: Displays a list of a driver's past trips and earnings.
-    -   **Changes Made**: Created.
--   ** (NEW)**:
-    -   **Importance**: Provides an interface for users to reset their password using email and CPF.
-    -   **Changes Made**: Created. Contains two steps (validation and new password input). The Voltar para validação text was changed to Voltar para Login and links to .
--   ****:
-    -   **Importance**: User login screen for all user types.
-    -   **Changes Made**: Esqueci minha senha link was added, navigating to .
--   ****:
-    -   **Importance**: Reusable UI component for the chat interface.
-    -   **Changes Made**: Initially removed/rolled back, then recreated/overwritten to use the new backend endpoints and a 5-second polling interval. A  callback prop was added, and internal logic was refined to detect new messages. Includes character limit logic (250 chars) with blocking typing when limit is reached.
+    -   **Importance**: This is a newly created component that provides the full interactive Google Maps experience for trip requests.
+    -   **Changes Made**: Implements  from , integrates  for current user position, and uses  for destination search with real Google Places API. It handles map interactions, displays markers for origin/destination, draws routes using polylines, and estimates trip prices.
 </code_architecture>
 
 <pending_tasks>
-- Integrate fully with Google Maps API for accurate distance matrix, routing, and real-time map display.
-- Implement an advanced payment system (e.g., Stripe, PagSeguro).
-- Expand geographical coverage beyond Brasília/DF.
-- Add push notifications (e.g., Firebase Cloud Messaging).
-- Develop detailed KYC and background check processes for drivers.
+-   Integrate an advanced payment system (e.g., Stripe, PagSeguro).
+-   Expand geographical coverage beyond Brasília/DF.
+-   Add push notifications (e.g., Firebase Cloud Messaging).
+-   Develop detailed KYC and background check processes for drivers.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was addressing several bugs and adjustments reported by the user. The primary focus was on solidifying the features that had been recently re-implemented or introduced.
+Immediately prior to this summary, the AI engineer was in the process of implementing the real Google Maps SDK to replace the previous mock and local autocomplete-based trip request system in the passenger application. The user provided the Google Maps API Key.
 
-Specifically, the work included:
-1.  **Bug in Password Reset:** The backend endpoint ( in ) was corrected to properly hash and store the new password in the database, ensuring that users could log in with their newly set password.
-2.  **Forgot Password UI Text:** The text Voltar para validação on the  screen was changed to Voltar para Login and updated to navigate back to .
-3.  **Admin Dashboard User Details:** The  function in  was modified to display both the CPF and phone number for each user. Associated styles (, ) were added for visual differentiation.
-4.  **Admin Chat P/M Interactivity:** In , user names within the CHAT P/M tab () were made clickable. Clicking a name now switches to the Usuários tab and temporarily highlights (in green) the corresponding user's card in the list for 3 seconds, enhancing discoverability.
-5.  **Chat Notification Bug:** The issue where New! chat notifications were not appearing on driver and passenger dashboards when the chat modal was closed was addressed. A new  function was implemented in  and  to run independently (likely through the existing polling mechanism) and update the  state, ensuring visual alerts appear correctly.
+The current work involved:
+1.  **Local Environment Setup Instructions**: The AI provided instructions for the user to update their local  with the  and to install necessary packages (, , ).
+2.  ** Configuration**: Instructions were given to update the local  to include the  under the  and  sections, crucial for native Google Maps integration.
+3.  ** Creation**: A new file, , was created. This component is designed to be a full-screen, interactive map where passengers can see their current location, search for a destination using Google Places Autocomplete, visualize the route, and get an estimated price.
+4.  ** Integration**: The AI has provided a complete, updated version of  (Chat Message 248). This updated file imports the new  component and integrates it into a . The old  state and associated logic for the text-based trip request form (with local autocomplete and quick destinations) have been removed or commented out. The Solicitar Viagem button now triggers the display of the  modal. A placeholder function  is included to process trip details received from .
 
-All these corrections were tested, and the system reported 15/15 tests passing, indicating a stable state.
+The current state is that the  has been modified and provided to the user. The expectation is for the user to apply these changes locally, restart their Expo project, and then test the new real Google Maps-based trip request interface.
 </current_work>
 
 <optional_next_step>
-Test the implemented corrections on password reset, admin dashboard user details, chat interactivity, and chat notifications.
+The next step is to wait for the user's feedback after they have implemented the provided  changes and tested the new Google Maps functionality on their device.
 </optional_next_step>
