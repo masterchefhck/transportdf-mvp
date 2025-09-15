@@ -1299,9 +1299,153 @@ async def bulk_delete_ratings(request: BulkDeleteRequest, current_user: User = D
     result = await db.ratings.delete_many({"id": {"$in": request.ids}})
     return {"message": f"Deleted {result.deleted_count} ratings"}
 
-# ==========================================
-# PASSWORD RESET ENDPOINTS
-# ==========================================
+# Mock Google Maps API endpoints
+@api_router.post("/maps/directions", response_model=RouteResponse)
+async def get_mock_directions(route_request: RouteRequest, current_user: User = Depends(get_current_user)):
+    """Mock Google Maps Directions API - get route between two points"""
+    
+    distance_km = calculate_distance(
+        route_request.origin_lat, route_request.origin_lng,
+        route_request.destination_lat, route_request.destination_lng
+    )
+    
+    duration_seconds = calculate_realistic_duration(distance_km)
+    
+    steps = generate_mock_route_steps(
+        route_request.origin_lat, route_request.origin_lng,
+        route_request.destination_lat, route_request.destination_lng
+    )
+    
+    polyline = generate_mock_polyline(
+        route_request.origin_lat, route_request.origin_lng,
+        route_request.destination_lat, route_request.destination_lng
+    )
+    
+    # Calculate map bounds
+    lat_min = min(route_request.origin_lat, route_request.destination_lat) - 0.01
+    lat_max = max(route_request.origin_lat, route_request.destination_lat) + 0.01
+    lng_min = min(route_request.origin_lng, route_request.destination_lng) - 0.01
+    lng_max = max(route_request.origin_lng, route_request.destination_lng) + 0.01
+    
+    return RouteResponse(
+        distance=f"{distance_km:.1f} km",
+        duration=format_duration(duration_seconds),
+        steps=steps,
+        overview_polyline=polyline,
+        bounds={
+            "northeast": {"lat": lat_max, "lng": lng_max},
+            "southwest": {"lat": lat_min, "lng": lng_min}
+        }
+    )
+
+@api_router.post("/maps/distance-matrix", response_model=DistanceMatrixResponse)
+async def get_mock_distance_matrix(matrix_request: DistanceMatrixRequest, current_user: User = Depends(get_current_user)):
+    """Mock Google Maps Distance Matrix API - get distances and durations between multiple points"""
+    
+    rows = []
+    for origin in matrix_request.origins:
+        elements = []
+        for destination in matrix_request.destinations:
+            distance_km = calculate_distance(
+                origin["lat"], origin["lng"],
+                destination["lat"], destination["lng"]
+            )
+            
+            duration_seconds = calculate_realistic_duration(distance_km)
+            
+            element = DistanceMatrixElement(
+                distance={
+                    "text": f"{distance_km:.1f} km",
+                    "value": int(distance_km * 1000)  # Convert to meters
+                },
+                duration={
+                    "text": format_duration(duration_seconds),
+                    "value": duration_seconds
+                }
+            )
+            elements.append(element.dict())
+        
+        rows.append({"elements": elements})
+    
+    return DistanceMatrixResponse(rows=rows)
+
+@api_router.get("/maps/geocode/{address}")
+async def mock_geocode_address(address: str, current_user: User = Depends(get_current_user)):
+    """Mock Google Maps Geocoding API - convert address to coordinates"""
+    
+    # Mock geocoding for common Brasília locations
+    brasilia_locations = {
+        "asa norte": {"lat": -15.7801, "lng": -47.8827},
+        "asa sul": {"lat": -15.8267, "lng": -47.8934},
+        "taguatinga": {"lat": -15.8270, "lng": -48.0427},
+        "ceilandia": {"lat": -15.8190, "lng": -48.1076},
+        "gama": {"lat": -16.0209, "lng": -48.0647},
+        "sobradinho": {"lat": -15.6536, "lng": -47.7863},
+        "planaltina": {"lat": -15.4523, "lng": -47.6142},
+        "brasilia": {"lat": -15.7942, "lng": -47.8822},
+        "aeroporto": {"lat": -15.8711, "lng": -47.9178},
+        "rodoviaria": {"lat": -15.7945, "lng": -47.8828}
+    }
+    
+    address_lower = address.lower()
+    
+    # Find best match
+    for location_name, coords in brasilia_locations.items():
+        if location_name in address_lower:
+            return {
+                "results": [{
+                    "formatted_address": f"{location_name.title()}, Brasília - DF, Brasil",
+                    "geometry": {
+                        "location": coords
+                    },
+                    "place_id": f"mock_place_id_{location_name}",
+                    "types": ["locality", "political"]
+                }],
+                "status": "OK"
+            }
+    
+    # Default to central Brasília if no match found
+    return {
+        "results": [{
+            "formatted_address": f"{address}, Brasília - DF, Brasil",
+            "geometry": {
+                "location": {"lat": -15.7942, "lng": -47.8822}
+            },
+            "place_id": f"mock_place_id_default",
+            "types": ["establishment"]
+        }],
+        "status": "OK"
+    }
+
+@api_router.get("/maps/reverse-geocode")
+async def mock_reverse_geocode(lat: float, lng: float, current_user: User = Depends(get_current_user)):
+    """Mock Google Maps Reverse Geocoding API - convert coordinates to address"""
+    
+    # Determine approximate area based on coordinates
+    if lat > -15.75 and lng > -47.9:
+        area = "Asa Norte"
+    elif lat < -15.82 and lng > -47.9:
+        area = "Asa Sul"
+    elif lng < -48.0:
+        area = "Taguatinga"
+    elif lat < -15.9:
+        area = "Gama"
+    else:
+        area = "Plano Piloto"
+    
+    street_number = int(abs(lat * lng * 1000)) % 999 + 1
+    
+    return {
+        "results": [{
+            "formatted_address": f"Quadra {street_number}, {area}, Brasília - DF, Brasil",
+            "geometry": {
+                "location": {"lat": lat, "lng": lng}
+            },
+            "place_id": f"mock_place_id_{lat}_{lng}",
+            "types": ["street_address"]
+        }],
+        "status": "OK"
+    }
 
 @api_router.post("/auth/forgot-password")
 async def validate_reset_credentials(request: PasswordResetRequest):
