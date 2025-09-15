@@ -428,19 +428,32 @@ class RatingModalBugFixTestSuite:
         if not await self.complete_trip():
             return False
             
-        # Step 3: Test rating modal bug fix
+        # Step 6: Test rating modal bug fix (sequential execution for proper order)
         print("Step 6: Testing rating modal bug fix...")
-        rating_bug_fix_tests = [
-            self.test_trip_status_before_rating(),      # Trip completed, no rating flags
-            self.test_create_rating_success(),          # First rating succeeds
-            self.test_trip_marked_as_rated(),          # Trip marked as rated=true
-            self.test_duplicate_rating_prevention(),    # Second rating blocked (400)
-            self.test_rating_with_reason_required(),    # Test reason validation
-            self.test_admin_can_see_low_ratings(),     # Admin sees low ratings
-            self.test_driver_rating_updated()          # Driver rating calculated
-        ]
         
-        results = await asyncio.gather(*rating_bug_fix_tests, return_exceptions=True)
+        # Test 1: Check trip status before rating
+        test1_success = await self.test_trip_status_before_rating()
+        
+        # Test 2: Create first rating
+        test2_success = await self.test_create_rating_success()
+        
+        # Test 3: Check trip is marked as rated
+        test3_success = await self.test_trip_marked_as_rated()
+        
+        # Test 4: Try duplicate rating (should fail)
+        test4_success = await self.test_duplicate_rating_prevention()
+        
+        # Test 5: Test rating with reason validation
+        test5_success = await self.test_rating_with_reason_required()
+        
+        # Test 6: Admin can see low ratings
+        test6_success = await self.test_admin_can_see_low_ratings()
+        
+        # Test 7: Driver rating updated
+        test7_success = await self.test_driver_rating_updated()
+        
+        results = [test1_success, test2_success, test3_success, test4_success, 
+                  test5_success, test6_success, test7_success]
         
         # Count successful tests
         successful_tests = sum(1 for result in results if result is True)
