@@ -249,7 +249,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All dashboard and trip history improvements tested and working"
+    - "Current Bug Fixes - Driver & Admin Dashboard User Info"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
