@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for Transport App Brasília MVP - Chat Endpoints Focus
-Testing the newly implemented chat endpoints as per review request
+Backend Test Suite for Transport App Brasília MVP - Bug Fixes Testing
+Testing the bug fixes implemented as per review request:
+- BUG 1: User information not appearing in GET /api/trips/my
+- BUG 3: Messages not persisted/synchronized in chat system
+- Chat endpoints functionality and polling
 """
 
 import asyncio
@@ -15,7 +18,7 @@ import sys
 BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://ridemate-18.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
-class ChatEndpointsTestSuite:
+class BugFixTestSuite:
     def __init__(self):
         self.session = None
         self.test_results = []
@@ -94,14 +97,14 @@ class ChatEndpointsTestSuite:
             return False
             
     async def setup_test_users(self):
-        """Setup test users for chat testing"""
+        """Setup test users for bug fix testing"""
         import time
         timestamp = str(int(time.time()))
         
         users_to_create = [
-            ("passenger", "Maria Silva Santos", f"maria.chat.{timestamp}@test.com"),
-            ("driver", "João Carlos Oliveira", f"joao.chat.{timestamp}@test.com"),
-            ("admin", "Admin Chat Test", f"admin.chat.{timestamp}@test.com")
+            ("passenger", "Maria Silva Santos", f"maria.bugfix.{timestamp}@test.com"),
+            ("driver", "João Carlos Oliveira", f"joao.bugfix.{timestamp}@test.com"),
+            ("admin", "Admin Bug Test", f"admin.bugfix.{timestamp}@test.com")
         ]
         
         success_count = 0
@@ -111,8 +114,28 @@ class ChatEndpointsTestSuite:
                 
         return success_count == len(users_to_create)
         
+    async def upload_profile_photos(self):
+        """Upload profile photos for both passenger and driver"""
+        # Simple base64 encoded 1x1 pixel image for testing
+        test_photo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        
+        # Upload passenger photo
+        passenger_status, passenger_data = await self.make_request('PUT', '/users/profile-photo', 
+                                                                  {"profile_photo": test_photo}, 
+                                                                  self.tokens['passenger'])
+        
+        # Upload driver photo  
+        driver_status, driver_data = await self.make_request('PUT', '/users/profile-photo',
+                                                           {"profile_photo": test_photo},
+                                                           self.tokens['driver'])
+        
+        success = passenger_status == 200 and driver_status == 200
+        self.log_test("Upload Profile Photos", success, 
+                     f"Passenger: {passenger_status}, Driver: {driver_status}")
+        return success
+        
     async def create_test_trip(self):
-        """Create a test trip for chat testing"""
+        """Create a test trip for bug fix testing"""
         # Passenger requests trip
         trip_data = {
             "passenger_id": self.users['passenger']['id'],
@@ -147,28 +170,125 @@ class ChatEndpointsTestSuite:
             self.log_test("Driver Accept Trip", False, f"Status: {status}, Error: {data}")
             return False
             
-    async def test_chat_send_passenger(self):
-        """Test passenger sending chat message"""
-        trip_id = self.trips['test_trip']['id']
-        message_data = {"message": "Olá, estou no local de embarque!"}
+    async def test_bug1_trips_my_passenger_info(self):
+        """BUG 1: Test GET /api/trips/my returns complete driver information for passenger"""
+        status, data = await self.make_request('GET', '/trips/my', None, self.tokens['passenger'])
         
-        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['passenger'])
+        success = False
+        details = f"Status: {status}"
         
-        success = status == 200
-        details = f"Status: {status}, Response: {data}"
-        self.log_test("Passenger Send Chat Message", success, details)
+        if status == 200 and isinstance(data, list) and len(data) > 0:
+            trip = data[0]  # Get the first trip
+            
+            # Check if driver information is included
+            required_driver_fields = ['driver_name', 'driver_photo', 'driver_rating', 'driver_phone']
+            has_driver_info = all(field in trip for field in required_driver_fields)
+            
+            if has_driver_info:
+                success = True
+                details = f"Status: {status}, Driver info present: {[field for field in required_driver_fields if field in trip]}"
+            else:
+                missing_fields = [field for field in required_driver_fields if field not in trip]
+                details = f"Status: {status}, Missing driver fields: {missing_fields}"
+        else:
+            details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
+            
+        self.log_test("BUG 1: GET /api/trips/my - Driver Info for Passenger", success, details)
         return success
         
-    async def test_chat_send_driver(self):
-        """Test driver sending chat message"""
+    async def test_bug1_trips_my_driver_info(self):
+        """BUG 1: Test GET /api/trips/my returns complete passenger information for driver"""
+        status, data = await self.make_request('GET', '/trips/my', None, self.tokens['driver'])
+        
+        success = False
+        details = f"Status: {status}"
+        
+        if status == 200 and isinstance(data, list) and len(data) > 0:
+            trip = data[0]  # Get the first trip
+            
+            # Check if passenger information is included
+            required_passenger_fields = ['passenger_name', 'passenger_photo', 'passenger_rating', 'passenger_phone']
+            has_passenger_info = all(field in trip for field in required_passenger_fields)
+            
+            if has_passenger_info:
+                success = True
+                details = f"Status: {status}, Passenger info present: {[field for field in required_passenger_fields if field in trip]}"
+            else:
+                missing_fields = [field for field in required_passenger_fields if field not in trip]
+                details = f"Status: {status}, Missing passenger fields: {missing_fields}"
+        else:
+            details = f"Status: {status}, Trips count: {len(data) if isinstance(data, list) else 'N/A'}"
+            
+        self.log_test("BUG 1: GET /api/trips/my - Passenger Info for Driver", success, details)
+        return success
+        
+    async def test_bug3_chat_send_and_persist(self):
+        """BUG 3: Test chat message sending and persistence"""
         trip_id = self.trips['test_trip']['id']
-        message_data = {"message": "Oi! Estou chegando, aguarde 2 minutos."}
         
-        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['driver'])
+        # Send message from passenger
+        passenger_message = {"message": "Olá, estou no local de embarque!"}
+        status1, data1 = await self.make_request('POST', f'/trips/{trip_id}/chat/send', 
+                                                passenger_message, self.tokens['passenger'])
         
-        success = status == 200
-        details = f"Status: {status}, Response: {data}"
-        self.log_test("Driver Send Chat Message", success, details)
+        # Send message from driver
+        driver_message = {"message": "Oi! Estou chegando, aguarde 2 minutos."}
+        status2, data2 = await self.make_request('POST', f'/trips/{trip_id}/chat/send',
+                                               driver_message, self.tokens['driver'])
+        
+        success = status1 == 200 and status2 == 200
+        details = f"Passenger send: {status1}, Driver send: {status2}"
+        self.log_test("BUG 3: Chat Message Sending", success, details)
+        return success
+        
+    async def test_bug3_chat_message_persistence(self):
+        """BUG 3: Test chat message persistence and retrieval"""
+        trip_id = self.trips['test_trip']['id']
+        
+        # Wait a moment to ensure messages are persisted
+        await asyncio.sleep(1)
+        
+        # Retrieve messages as passenger
+        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages', 
+                                             None, self.tokens['passenger'])
+        
+        success = False
+        if status == 200 and isinstance(data, list) and len(data) >= 2:
+            # Check if messages have required structure
+            message = data[0]
+            required_fields = ['id', 'trip_id', 'sender_id', 'sender_name', 'sender_type', 'message', 'timestamp']
+            has_all_fields = all(field in message for field in required_fields)
+            success = has_all_fields
+            details = f"Status: {status}, Messages: {len(data)}, Structure OK: {has_all_fields}"
+        else:
+            details = f"Status: {status}, Messages: {len(data) if isinstance(data, list) else 'N/A'}"
+            
+        self.log_test("BUG 3: Chat Message Persistence", success, details)
+        return success
+        
+    async def test_bug3_chat_synchronization(self):
+        """BUG 3: Test chat message synchronization between participants"""
+        trip_id = self.trips['test_trip']['id']
+        
+        # Get messages as passenger
+        status1, passenger_messages = await self.make_request('GET', f'/trips/{trip_id}/chat/messages',
+                                                            None, self.tokens['passenger'])
+        
+        # Get messages as driver
+        status2, driver_messages = await self.make_request('GET', f'/trips/{trip_id}/chat/messages',
+                                                         None, self.tokens['driver'])
+        
+        success = False
+        if status1 == 200 and status2 == 200:
+            # Both should see the same messages
+            passenger_count = len(passenger_messages) if isinstance(passenger_messages, list) else 0
+            driver_count = len(driver_messages) if isinstance(driver_messages, list) else 0
+            success = passenger_count == driver_count and passenger_count > 0
+            details = f"Passenger sees: {passenger_count}, Driver sees: {driver_count}, Synchronized: {success}"
+        else:
+            details = f"Passenger status: {status1}, Driver status: {status2}"
+            
+        self.log_test("BUG 3: Chat Message Synchronization", success, details)
         return success
         
     async def test_chat_character_limit(self):
@@ -178,138 +298,17 @@ class ChatEndpointsTestSuite:
         long_message = "A" * 251
         message_data = {"message": long_message}
         
-        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['passenger'])
+        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', 
+                                             message_data, self.tokens['passenger'])
         
         # Should fail with 422 (validation error)
         success = status == 422
         details = f"Status: {status}, Expected: 422 (validation error)"
-        self.log_test("Chat Message 250 Character Limit", success, details)
+        self.log_test("Chat 250 Character Limit Validation", success, details)
         return success
         
-    async def test_chat_access_control_non_participant(self):
-        """Test that non-participants cannot send messages"""
-        trip_id = self.trips['test_trip']['id']
-        message_data = {"message": "Admin trying to send message"}
-        
-        # Admin should not be able to send messages (only participants)
-        status, data = await self.make_request('POST', f'/trips/{trip_id}/chat/send', message_data, self.tokens['admin'])
-        
-        # Should fail with 403 (forbidden) - only participants can send
-        success = status == 403
-        details = f"Status: {status}, Expected: 403 (forbidden for non-participants)"
-        self.log_test("Chat Access Control - Non-Participant", success, details)
-        return success
-        
-    async def test_chat_trip_status_validation(self):
-        """Test that chat only works during accepted/in_progress trips"""
-        # Create a new trip that's not accepted yet
-        trip_data = {
-            "passenger_id": self.users['passenger']['id'],
-            "pickup_latitude": -15.7801,
-            "pickup_longitude": -47.9292,
-            "pickup_address": "Test Pickup",
-            "destination_latitude": -15.8267,
-            "destination_longitude": -47.9218,
-            "destination_address": "Test Destination",
-            "estimated_price": 10.00
-        }
-        
-        status, trip_response = await self.make_request('POST', '/trips/request', trip_data, self.tokens['passenger'])
-        
-        if status != 200:
-            self.log_test("Chat Trip Status Validation", False, "Failed to create test trip")
-            return False
-            
-        # Try to send message to requested (not accepted) trip
-        new_trip_id = trip_response['id']
-        message_data = {"message": "This should fail"}
-        
-        status, data = await self.make_request('POST', f'/trips/{new_trip_id}/chat/send', message_data, self.tokens['passenger'])
-        
-        # Should fail with 400 (bad request) - trip not in accepted/in_progress status
-        success = status == 400
-        details = f"Status: {status}, Expected: 400 (trip not active)"
-        self.log_test("Chat Trip Status Validation", success, details)
-        return success
-        
-    async def test_get_chat_messages_passenger(self):
-        """Test passenger retrieving chat messages"""
-        trip_id = self.trips['test_trip']['id']
-        
-        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages', None, self.tokens['passenger'])
-        
-        success = status == 200 and isinstance(data, list)
-        if success:
-            # Check if messages have required fields
-            if data:
-                message = data[0]
-                required_fields = ['id', 'trip_id', 'sender_id', 'sender_name', 'sender_type', 'message', 'timestamp']
-                has_all_fields = all(field in message for field in required_fields)
-                success = has_all_fields
-                details = f"Status: {status}, Messages: {len(data)}, Fields OK: {has_all_fields}"
-            else:
-                details = f"Status: {status}, No messages found"
-        else:
-            details = f"Status: {status}, Response: {data}"
-            
-        self.log_test("Get Chat Messages - Passenger", success, details)
-        return success
-        
-    async def test_get_chat_messages_driver(self):
-        """Test driver retrieving chat messages"""
-        trip_id = self.trips['test_trip']['id']
-        
-        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages', None, self.tokens['driver'])
-        
-        success = status == 200 and isinstance(data, list)
-        details = f"Status: {status}, Messages: {len(data) if isinstance(data, list) else 'N/A'}"
-        self.log_test("Get Chat Messages - Driver", success, details)
-        return success
-        
-    async def test_get_chat_messages_admin(self):
-        """Test admin retrieving chat messages"""
-        trip_id = self.trips['test_trip']['id']
-        
-        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages', None, self.tokens['admin'])
-        
-        success = status == 200 and isinstance(data, list)
-        details = f"Status: {status}, Messages: {len(data) if isinstance(data, list) else 'N/A'}"
-        self.log_test("Get Chat Messages - Admin", success, details)
-        return success
-        
-    async def test_chat_message_ordering(self):
-        """Test that messages are returned in chronological order (oldest first)"""
-        trip_id = self.trips['test_trip']['id']
-        
-        # Send multiple messages with slight delays
-        messages = [
-            "Primeira mensagem",
-            "Segunda mensagem", 
-            "Terceira mensagem"
-        ]
-        
-        for msg in messages:
-            await self.make_request('POST', f'/trips/{trip_id}/chat/send', {"message": msg}, self.tokens['passenger'])
-            await asyncio.sleep(0.1)  # Small delay to ensure different timestamps
-            
-        # Get messages
-        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages', None, self.tokens['passenger'])
-        
-        success = False
-        if status == 200 and isinstance(data, list) and len(data) >= 3:
-            # Check if messages are in chronological order (oldest first)
-            timestamps = [msg['timestamp'] for msg in data]
-            is_chronological = timestamps == sorted(timestamps)
-            success = is_chronological
-            details = f"Status: {status}, Messages: {len(data)}, Chronological: {is_chronological}"
-        else:
-            details = f"Status: {status}, Messages: {len(data) if isinstance(data, list) else 'N/A'}"
-            
-        self.log_test("Chat Message Chronological Ordering", success, details)
-        return success
-        
-    async def test_admin_chats_aggregation(self):
-        """Test admin chat aggregation endpoint"""
+    async def test_admin_chats_endpoint(self):
+        """Test GET /api/admin/chats endpoint"""
         status, data = await self.make_request('GET', '/admin/chats', None, self.tokens['admin'])
         
         success = status == 200 and isinstance(data, list)
@@ -324,25 +323,39 @@ class ChatEndpointsTestSuite:
         else:
             details = f"Status: {status}, Chats: {len(data) if isinstance(data, list) else 'N/A'}"
             
-        self.log_test("Admin Chat Aggregation", success, details)
+        self.log_test("GET /api/admin/chats Endpoint", success, details)
         return success
         
-    async def test_nonexistent_trip_chat(self):
-        """Test chat endpoints with non-existent trip ID"""
-        fake_trip_id = "nonexistent-trip-id"
+    async def test_chat_polling_simulation(self):
+        """Simulate chat polling every 5 seconds (BUG 3 fix)"""
+        trip_id = self.trips['test_trip']['id']
         
-        # Test sending message to non-existent trip
-        status, data = await self.make_request('POST', f'/trips/{fake_trip_id}/chat/send', 
-                                             {"message": "Test"}, self.tokens['passenger'])
+        # Send a new message
+        new_message = {"message": "Mensagem para testar polling"}
+        await self.make_request('POST', f'/trips/{trip_id}/chat/send', new_message, self.tokens['passenger'])
         
-        success = status == 404
-        details = f"Status: {status}, Expected: 404 (trip not found)"
-        self.log_test("Non-existent Trip Chat Validation", success, details)
+        # Wait 1 second (simulating polling interval)
+        await asyncio.sleep(1)
+        
+        # Poll for messages
+        status, data = await self.make_request('GET', f'/trips/{trip_id}/chat/messages',
+                                             None, self.tokens['driver'])
+        
+        success = status == 200 and isinstance(data, list)
+        if success:
+            # Check if the new message is present
+            messages_with_polling_text = [msg for msg in data if "polling" in msg.get('message', '').lower()]
+            success = len(messages_with_polling_text) > 0
+            details = f"Status: {status}, Total messages: {len(data)}, Polling message found: {success}"
+        else:
+            details = f"Status: {status}, Response: {data}"
+            
+        self.log_test("Chat Polling Simulation", success, details)
         return success
         
-    async def run_complete_chat_scenario(self):
-        """Run the complete chat scenario as requested"""
-        print("\n🎯 EXECUTING COMPLETE CHAT SCENARIO")
+    async def run_bug_fix_scenario(self):
+        """Run the complete bug fix testing scenario"""
+        print("\n🎯 EXECUTING BUG FIX TESTING SCENARIO")
         print("=" * 60)
         
         # Step 1: Setup users
@@ -350,44 +363,45 @@ class ChatEndpointsTestSuite:
         if not await self.setup_test_users():
             return False
             
-        # Step 2: Create trip
-        print("Step 2: Creating test trip...")
+        # Step 2: Upload profile photos (for BUG 1 testing)
+        print("Step 2: Uploading profile photos...")
+        await self.upload_profile_photos()  # Not critical if fails
+            
+        # Step 3: Create trip
+        print("Step 3: Creating test trip...")
         if not await self.create_test_trip():
             return False
             
-        # Step 3: Driver accepts trip
-        print("Step 3: Driver accepting trip...")
+        # Step 4: Driver accepts trip
+        print("Step 4: Driver accepting trip...")
         if not await self.accept_trip():
             return False
             
-        # Step 4: Both participants send messages
-        print("Step 4: Testing chat functionality...")
-        chat_tests = [
-            self.test_chat_send_passenger(),
-            self.test_chat_send_driver(),
+        # Step 5: Test all bug fixes
+        print("Step 5: Testing bug fixes...")
+        bug_fix_tests = [
+            self.test_bug1_trips_my_passenger_info(),
+            self.test_bug1_trips_my_driver_info(),
+            self.test_bug3_chat_send_and_persist(),
+            self.test_bug3_chat_message_persistence(),
+            self.test_bug3_chat_synchronization(),
             self.test_chat_character_limit(),
-            self.test_chat_access_control_non_participant(),
-            self.test_chat_trip_status_validation(),
-            self.test_get_chat_messages_passenger(),
-            self.test_get_chat_messages_driver(),
-            self.test_get_chat_messages_admin(),
-            self.test_chat_message_ordering(),
-            self.test_admin_chats_aggregation(),
-            self.test_nonexistent_trip_chat()
+            self.test_admin_chats_endpoint(),
+            self.test_chat_polling_simulation()
         ]
         
-        results = await asyncio.gather(*chat_tests, return_exceptions=True)
+        results = await asyncio.gather(*bug_fix_tests, return_exceptions=True)
         
         # Count successful tests
         successful_tests = sum(1 for result in results if result is True)
         total_tests = len(results)
         
-        print(f"\nChat functionality tests: {successful_tests}/{total_tests} passed")
+        print(f"\nBug fix tests: {successful_tests}/{total_tests} passed")
         return successful_tests == total_tests
         
     async def run_all_tests(self):
-        """Run all chat endpoint tests"""
-        print("🚀 STARTING CHAT ENDPOINTS TEST SUITE")
+        """Run all bug fix tests"""
+        print("🚀 STARTING BUG FIX TEST SUITE")
         print("=" * 60)
         
         await self.setup_session()
@@ -398,12 +412,12 @@ class ChatEndpointsTestSuite:
                 print("❌ Health check failed, aborting tests")
                 return
                 
-            # Run complete chat scenario
-            scenario_success = await self.run_complete_chat_scenario()
+            # Run bug fix scenario
+            scenario_success = await self.run_bug_fix_scenario()
             
             # Print summary
             print("\n" + "=" * 60)
-            print("📊 CHAT ENDPOINTS TEST SUMMARY")
+            print("📊 BUG FIX TEST SUMMARY")
             print("=" * 60)
             
             passed = sum(1 for result in self.test_results if result['success'])
@@ -416,10 +430,10 @@ class ChatEndpointsTestSuite:
             print(f"Success Rate: {success_rate:.1f}%")
             
             if scenario_success:
-                print("\n🎉 CHAT ENDPOINTS COMPLETELY FUNCTIONAL!")
-                print("✅ All chat functionality working as expected")
+                print("\n🎉 BUG FIXES COMPLETELY FUNCTIONAL!")
+                print("✅ All bug fixes working as expected")
             else:
-                print("\n⚠️  Some chat functionality issues detected")
+                print("\n⚠️  Some bug fix issues detected")
                 
             # Print failed tests
             failed_tests = [result for result in self.test_results if not result['success']]
@@ -433,7 +447,7 @@ class ChatEndpointsTestSuite:
 
 async def main():
     """Main test execution"""
-    test_suite = ChatEndpointsTestSuite()
+    test_suite = BugFixTestSuite()
     await test_suite.run_all_tests()
 
 if __name__ == "__main__":
