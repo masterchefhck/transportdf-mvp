@@ -1,30 +1,36 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for Transport App Brasília MVP - Rating Modal Bug Fix Testing
-Testing the bug fix for persistent rating modal in passenger dashboard:
+Backend Test Suite for Transport App Brasília MVP - New Features Testing
+Testing all implemented adjustments as per review request:
 
-BUG ORIGINAL: Modal de avaliação aparecia repetidamente após o passageiro já ter enviado a avaliação com sucesso.
+AJUSTES IMPLEMENTADOS PARA TESTE:
 
-CORREÇÕES IMPLEMENTADAS:
-1. Backend - endpoint POST /api/ratings/create:
-   - Agora marca a viagem como "rated": true
-   - Adiciona passenger_rating_given com o valor da avaliação
-   - Previne criação de avaliações duplicadas
+1. ALERTA DE NOVA MENSAGEM NO CHAT:
+   - ChatComponent atualizado com callback onNewMessage
+   - Dashboards driver/passenger com estado newMessageAlert
+   - Notificação visual "Nova!" no botão de chat
+   - Sistema funciona via polling a cada 5 segundos
 
-2. Frontend - checkCurrentTrip():
-   - Verifica !trip.rated E !trip.passenger_rating_given 
-   - Adiciona condição !showRatingModal para evitar modal duplo
+2. REMOÇÃO DO TELEFONE DO PASSAGEIRO:
+   - Removido campo passenger_phone do dashboard do driver
+   - Mantém apenas nome, foto e rating
 
-3. Frontend - submitRating():
-   - Limpa completamente todos os estados relacionados
-   - Trata erro de avaliação duplicada
-   - Força refresh dos dados após 1 segundo
+3. BARRA DE PROGRESSO "PROCURANDO MOTORISTA":
+   - Barra animada azul transparente quando status = 'requested'
+   - Animação loop contínua de 2 segundos
+   - Substitui botão laranja estático
+
+4. FUNCIONALIDADE "ESQUECI MINHA SENHA":
+   - Endpoints: POST /api/auth/forgot-password, POST /api/auth/reset-password
+   - Tela /auth/forgot-password com validação email+CPF
+   - Link "Esqueci minha senha" na tela de login
+   - Processo em 2 etapas: validação → nova senha
 
 CENÁRIO DE TESTE COMPLETO:
-1. Criar usuários e viagem
-2. Completar viagem e testar avaliação
-3. Verificar se modal aparece apenas UMA vez
-4. Testar proteção contra avaliações duplicadas
+1. Teste chat com notificações
+2. Teste informações de usuários (sem telefone para driver)
+3. Teste barra de progresso
+4. Teste "Esqueci minha senha"
 """
 
 import asyncio
