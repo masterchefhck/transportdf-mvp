@@ -2542,4 +2542,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  tripInfoContainer: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  routeInfo: {
+    marginBottom: 12,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingRight: 8,
+  },
+  locationText: {
+    color: '#fff',
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 20,
+  },
+  statusInfoContainer: {
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#444',
+  },
+  statusInfoText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  estimatedTimeText: {
+    color: '#888',
+    fontSize: 14,
+  },
 });
