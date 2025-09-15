@@ -1056,7 +1056,6 @@ export default function PassengerDashboard() {
                   placeholderTextColor="#666"
                   value={destinationAddress}
                   onChangeText={handleDestinationChange}
-                  onFocus={() => destinationAddress.length >= 2 && setShowSuggestions(true)}
                 />
                 {destinationAddress.length > 0 && (
                   <TouchableOpacity
@@ -1072,13 +1071,20 @@ export default function PassengerDashboard() {
                 )}
               </View>
 
+              {/* Debug Info */}
+              {__DEV__ && (
+                <Text style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
+                  Sugestões: {suggestions.length} | Mostrar: {showSuggestions ? 'Sim' : 'Não'} | Texto: "{destinationAddress}"
+                </Text>
+              )}
+
               {/* Autocomplete Suggestions */}
               {showSuggestions && suggestions.length > 0 && (
                 <View style={styles.suggestionsContainer}>
                   <ScrollView style={styles.suggestionsList} showsVerticalScrollIndicator={false}>
                     {suggestions.map((suggestion, index) => (
                       <TouchableOpacity
-                        key={index}
+                        key={`${suggestion.name}-${index}`}
                         style={styles.suggestionItem}
                         onPress={() => handleSuggestionSelect(suggestion)}
                       >
@@ -1092,6 +1098,24 @@ export default function PassengerDashboard() {
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
+                </View>
+              )}
+
+              {/* Fallback: Show first few suggestions as buttons for web */}
+              {destinationAddress.length >= 2 && suggestions.length > 0 && (
+                <View style={styles.webSuggestionsContainer}>
+                  <Text style={styles.webSuggestionsTitle}>Sugestões:</Text>
+                  <View style={styles.webSuggestionsGrid}>
+                    {suggestions.slice(0, 4).map((suggestion, index) => (
+                      <TouchableOpacity
+                        key={`web-${suggestion.name}-${index}`}
+                        style={styles.webSuggestionButton}
+                        onPress={() => handleSuggestionSelect(suggestion)}
+                      >
+                        <Text style={styles.webSuggestionText}>{suggestion.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               )}
             </View>
