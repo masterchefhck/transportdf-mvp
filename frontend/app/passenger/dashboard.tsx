@@ -517,21 +517,21 @@ export default function PassengerDashboard() {
       // Show success message
       showAlert('Sucesso', 'Avaliação enviada com sucesso!');
       
+      // Mark this trip as rated in our local state to prevent modal reappearing
+      setRatedTripIds(prev => new Set([...prev, completedTrip.id]));
+      
       // Clear all rating related states
       setShowRatingModal(false);
       setRating(5);
       setRatingReason('');
       setCompletedTrip(null);
       
-      // Force refresh of trip data to get updated status
-      setTimeout(() => {
-        checkCurrentTrip();
-      }, 1000);
-      
     } catch (error: any) {
       console.error('Error submitting rating:', error);
       if (error.response?.status === 400 && error.response?.data?.detail?.includes('already exists')) {
-        showAlert('Erro', 'Você já avaliou esta viagem');
+        // If rating already exists, mark as rated and close modal
+        showAlert('Aviso', 'Você já avaliou esta viagem');
+        setRatedTripIds(prev => new Set([...prev, completedTrip.id]));
         setShowRatingModal(false);
         setCompletedTrip(null);
       } else {
