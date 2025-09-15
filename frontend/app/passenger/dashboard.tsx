@@ -1526,6 +1526,18 @@ export default function PassengerDashboard() {
         />
       </Modal>
 
+      {/* Google Map Modal */}
+      <Modal 
+        visible={showGoogleMapModal} 
+        animationType="slide" 
+        presentationStyle="pageSheet"
+      >
+        <GoogleMapView
+          onTripRequest={handleGoogleMapTripRequest}
+          onClose={() => setShowGoogleMapModal(false)}
+        />
+      </Modal>
+
       {/* Photo Viewer Modal */}
       <Modal visible={showPhotoModal} transparent animationType="fade">
         <View style={styles.photoModalOverlay}>
