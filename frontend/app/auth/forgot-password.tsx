@@ -256,11 +256,21 @@ export default function ForgotPassword() {
 
               <TouchableOpacity
                 style={styles.backToValidationButton}
-                onPress={() => router.replace('/auth/login')}
+                onPress={() => router.replace('/passenger')}
                 disabled={loading}
               >
-                <Text style={styles.backToValidationText}>← Voltar para Login</Text>
+                <Text style={styles.backToValidationText}>← Voltar Login Passageiro(a)</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.backToValidationButton}
+                onPress={() => router.replace('/driver')}
+                disabled={loading}
+              >
+                <Text style={styles.backToValidationText}>← Voltar Login Motorista</Text>
+              </TouchableOpacity>
+
+
             </View>
           )}
         </View>
