@@ -1555,22 +1555,6 @@ export default function PassengerDashboard() {
             )}
             
             <View style={styles.ratingButtons}>
-              <TouchableOpacity 
-                style={styles.skipButton} 
-                onPress={() => {
-                  // Mark this trip as handled to prevent modal reappearing
-                  if (completedTrip) {
-                    setRatedTripIds(prev => new Set([...prev, completedTrip.id]));
-                  }
-                  setShowRatingModal(false);
-                  setRating(5);
-                  setRatingReason('');
-                  setCompletedTrip(null);
-                }}
-              >
-                <Text style={styles.skipButtonText}>Pular</Text>
-              </TouchableOpacity>
-              
               <TouchableOpacity style={styles.submitButton} onPress={submitRating}>
                 <Text style={styles.submitButtonText}>Enviar Avaliação</Text>
               </TouchableOpacity>
