@@ -367,7 +367,7 @@ const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onTripRequest, onClose, i
       {/* Search Input */}
       <View style={styles.searchContainer}>
         {Platform.OS !== 'web' && nativeMapComponents.GooglePlacesAutocomplete ? (
-          <GooglePlacesAutocomplete
+          <nativeMapComponents.GooglePlacesAutocomplete
             ref={autocompleteRef}
             placeholder="Digite o destino..."
             onPress={handlePlaceSelect}
