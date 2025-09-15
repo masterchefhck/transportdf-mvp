@@ -1101,6 +1101,103 @@ async def bulk_delete_ratings(request: BulkDeleteRequest, current_user: User = D
     return {"message": f"Deleted {result.deleted_count} ratings"}
 
 # ==========================================
+# TRIP HISTORY ENDPOINTS
+# ==========================================
+
+@api_router.get("/passengers/trip-history")
+async def get_passenger_trip_history(current_user: User = Depends(get_current_user)):
+    """Get trip history for passenger"""
+    if current_user.user_type != UserType.PASSENGER:
+        raise HTTPException(status_code=403, detail="Passenger access required")
+    
+    # Get trips with driver details
+    pipeline = [
+        {"$match": {"passenger_id": current_user.id, "status": "completed"}},
+        {"$lookup": {
+            "from": "users",
+            "localField": "driver_id",
+            "foreignField": "id",
+            "as": "driver"
+        }},
+        {"$sort": {"completed_at": -1}},
+        {"$limit": 50}  # Last 50 trips
+    ]
+    
+    trips = await db.trips.aggregate(pipeline).to_list(50)
+    
+    # Process results to include driver details
+    result = []
+    for trip in trips:
+        driver = trip["driver"][0] if trip["driver"] else {}
+        
+        trip_data = {
+            "id": trip["id"],
+            "pickup_address": trip["pickup_address"],
+            "destination_address": trip["destination_address"],
+            "estimated_price": trip["estimated_price"],
+            "final_price": trip.get("final_price", trip["estimated_price"]),
+            "requested_at": trip["requested_at"],
+            "completed_at": trip.get("completed_at"),
+            "duration_minutes": trip.get("duration_minutes"),
+            "driver_name": driver.get("name"),
+            "driver_photo": driver.get("profile_photo"),
+            "driver_rating": driver.get("rating"),
+            "passenger_rating_given": trip.get("passenger_rating_given")
+        }
+        result.append(trip_data)
+    
+    return result
+
+@api_router.get("/drivers/trip-history")
+async def get_driver_trip_history(current_user: User = Depends(get_current_user)):
+    """Get trip history for driver"""
+    if current_user.user_type != UserType.DRIVER:
+        raise HTTPException(status_code=403, detail="Driver access required")
+    
+    # Get trips with passenger details
+    pipeline = [
+        {"$match": {"driver_id": current_user.id, "status": "completed"}},
+        {"$lookup": {
+            "from": "users",
+            "localField": "passenger_id",
+            "foreignField": "id",
+            "as": "passenger"
+        }},
+        {"$sort": {"completed_at": -1}},
+        {"$limit": 50}  # Last 50 trips
+    ]
+    
+    trips = await db.trips.aggregate(pipeline).to_list(50)
+    
+    # Process results
+    result = []
+    for trip in trips:
+        passenger = trip["passenger"][0] if trip["passenger"] else {}
+        
+        # Calculate driver earnings (assuming 80% of trip value)
+        estimated_price = trip["estimated_price"]
+        final_price = trip.get("final_price", estimated_price)
+        driver_earnings = final_price * 0.8  # 80% for driver, 20% for platform
+        
+        trip_data = {
+            "id": trip["id"],
+            "pickup_address": trip["pickup_address"],
+            "destination_address": trip["destination_address"],
+            "estimated_price": estimated_price,
+            "final_price": final_price,
+            "driver_earnings": driver_earnings,
+            "requested_at": trip["requested_at"],
+            "completed_at": trip.get("completed_at"),
+            "duration_minutes": trip.get("duration_minutes"),
+            "passenger_name": passenger.get("name"),
+            "passenger_photo": passenger.get("profile_photo"),
+            "driver_rating_given": trip.get("driver_rating_given")
+        }
+        result.append(trip_data)
+    
+    return result
+
+# ==========================================
 # CHAT ENDPOINTS
 # ==========================================
 
