@@ -1722,50 +1722,73 @@ export default function AdminDashboard() {
       {/* Admin Full Controls - Only show if user is Admin Full */}
       {isAdminFull && (
         <View style={styles.adminFullControls}>
-          <Text style={styles.adminFullControlsTitle}>Controles de Admin Full</Text>
-          
-          <View style={styles.adminFullButtonsRow}>
-            <TouchableOpacity
-              style={styles.adminFullControlButton}
-              onPress={() => {
-                setCreateUserType('admin');
-                setShowCreateUserModal(true);
-              }}
-            >
-              <Ionicons name="shield" size={16} color="#fff" />
-              <Text style={styles.adminFullControlButtonText}>Criar Administrador</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.adminFullControlButton}
-              onPress={() => {
-                setCreateUserType('manager');
-                setShowCreateUserModal(true);
-              }}
-            >
-              <Ionicons name="people" size={16} color="#fff" />
-              <Text style={styles.adminFullControlButtonText}>Criar Gerência</Text>
-            </TouchableOpacity>
+          <View style={styles.adminFullHeader}>
+            <Ionicons name="star" size={20} color="#FFD700" />
+            <Text style={styles.adminFullControlsTitle}>Controles de Admin Full</Text>
           </View>
           
-          <View style={styles.adminFullButtonsRow}>
-            <TouchableOpacity
-              style={styles.adminFullControlButton}
-              onPress={() => {
-                setCreateUserType('support_collaborator');
-                setShowCreateUserModal(true);
-              }}
-            >
-              <Ionicons name="headset" size={16} color="#fff" />
-              <Text style={styles.adminFullControlButtonText}>Criar Colaborador de Suporte</Text>
-            </TouchableOpacity>
-            
+          {/* Create Users Section */}
+          <View style={styles.adminFullSection}>
+            <Text style={styles.adminFullSectionTitle}>Criar Usuários</Text>
+            <View style={styles.adminFullButtonsGrid}>
+              <TouchableOpacity
+                style={[styles.adminFullControlButton, styles.createAdminButton]}
+                onPress={() => {
+                  setCreateUserType('admin');
+                  setShowCreateUserModal(true);
+                }}
+              >
+                <View style={styles.buttonIconContainer}>
+                  <Ionicons name="shield-checkmark" size={24} color="#fff" />
+                </View>
+                <Text style={styles.adminFullControlButtonText}>Criar</Text>
+                <Text style={styles.adminFullControlButtonSubtext}>Administrador</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.adminFullControlButton, styles.createManagerButton]}
+                onPress={() => {
+                  setCreateUserType('manager');
+                  setShowCreateUserModal(true);
+                }}
+              >
+                <View style={styles.buttonIconContainer}>
+                  <Ionicons name="people" size={24} color="#fff" />
+                </View>
+                <Text style={styles.adminFullControlButtonText}>Criar</Text>
+                <Text style={styles.adminFullControlButtonSubtext}>Gerência</Text>
+                <Text style={styles.buttonBadge}>{managers.length}/4</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.adminFullControlButton, styles.createSupportButton]}
+                onPress={() => {
+                  setCreateUserType('support_collaborator');
+                  setShowCreateUserModal(true);
+                }}
+              >
+                <View style={styles.buttonIconContainer}>
+                  <Ionicons name="headset" size={24} color="#fff" />
+                </View>
+                <Text style={styles.adminFullControlButtonText}>Criar</Text>
+                <Text style={styles.adminFullControlButtonSubtext}>Colaborador</Text>
+                <Text style={styles.buttonBadge}>{supportCollaborators.length}/30</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Transfer Section */}
+          <View style={styles.adminFullSection}>
+            <Text style={styles.adminFullSectionTitle}>Administração</Text>
             <TouchableOpacity
               style={[styles.adminFullControlButton, styles.transferButton]}
               onPress={() => setShowTransferAdminFullModal(true)}
             >
-              <Ionicons name="swap-horizontal" size={16} color="#fff" />
-              <Text style={styles.adminFullControlButtonText}>Transferir Admin Full</Text>
+              <View style={styles.buttonIconContainer}>
+                <Ionicons name="swap-horizontal" size={24} color="#fff" />
+              </View>
+              <Text style={styles.adminFullControlButtonText}>Transferir</Text>
+              <Text style={styles.adminFullControlButtonSubtext}>Admin Full</Text>
             </TouchableOpacity>
           </View>
         </View>
