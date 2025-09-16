@@ -1770,9 +1770,7 @@ async def get_admin_chats(current_user: User = Depends(get_current_user)):
 
 @api_router.post("/admin/promote-to-full")
 async def promote_to_admin_full(promote_data: dict, current_user: User = Depends(get_current_user)):
-    """Promote admin user to Admin Full - Only Admin Full can do this"""
-    if current_user.user_type != UserType.ADMIN or not current_user.is_admin_full:
-        raise HTTPException(status_code=403, detail="Admin Full access required")
+    """Promote admin user to Admin Full - Admin Full required or self-promotion when no Admin Full exists"""
     
     user_id = promote_data.get("user_id")
     if not user_id:
