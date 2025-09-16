@@ -393,6 +393,34 @@ export default function DriverDashboard() {
       if (activeTrip) {
         setCurrentTrip(activeTrip);
       }
+
+      // Check for completed trips that need driver rating
+      const completedTrips = response.data.filter(
+        (trip: Trip) => trip.status === 'completed'
+      );
+
+      if (completedTrips.length > 0 && !showDriverRatingModal) {
+        // Find completed trips that need rating (not already shown or rated)
+        const needsRating = completedTrips.find((trip: Trip) => {
+          // Trip needs rating if:
+          // 1. NOT in ratedTripIds (we haven't shown modal for this trip)
+          // 2. NOT has driver_rating_given 
+          // 3. Modal is not currently showing
+          const notRated = !trip.driver_rating_given && !ratedTripIds.has(trip.id);
+          const modalNotShowing = !showDriverRatingModal;
+          
+          return notRated && modalNotShowing;
+        });
+
+        if (needsRating) {
+          // Show rating modal for this trip
+          setCompletedTripForRating(needsRating);
+          setShowDriverRatingModal(true);
+          
+          // Mark this trip as handled to prevent modal reappearing
+          setRatedTripIds(prev => new Set([...prev, needsRating.id]));
+        }
+      }
     } catch (error) {
       console.log('Error checking current trip:', error);
     }
