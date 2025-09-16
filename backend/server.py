@@ -1967,6 +1967,20 @@ async def create_admin_user(user_data: dict, current_user: User = Depends(get_cu
     if not all([name, email, phone, cpf, user_type, password]):
         raise HTTPException(status_code=400, detail="All required fields must be provided")
     
+    # Email validation
+    if "@" not in email or "." not in email:
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    
+    # CPF basic validation (length)
+    cpf_digits = ''.join(filter(str.isdigit, cpf))
+    if len(cpf_digits) != 11:
+        raise HTTPException(status_code=400, detail="CPF must have 11 digits")
+    
+    # Phone basic validation
+    phone_digits = ''.join(filter(str.isdigit, phone))
+    if len(phone_digits) < 10:
+        raise HTTPException(status_code=400, detail="Phone number must have at least 10 digits")
+    
     if user_type not in ["admin", "manager", "support_collaborator"]:
         raise HTTPException(status_code=400, detail="Invalid user type")
     
