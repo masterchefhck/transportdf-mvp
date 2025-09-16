@@ -180,7 +180,7 @@ export default function AdminDashboard() {
       const userData = await AsyncStorage.getItem('user');
       if (userData) {
         const user = JSON.parse(userData);
-        setUser(user);
+        setCurrentUser(user);
         setIsAdminFull(user.is_admin_full === true);
       }
     } catch (error) {
