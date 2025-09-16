@@ -1765,6 +1765,65 @@ async def get_admin_chats(current_user: User = Depends(get_current_user)):
     
     return result
 
+@api_router.post("/admin/promote-to-full")
+async def promote_to_admin_full(promote_data: dict, current_user: User = Depends(get_current_user)):
+    """Promote admin user to Admin Full - Only Admin Full can do this"""
+    if current_user.user_type != UserType.ADMIN or not current_user.is_admin_full:
+        raise HTTPException(status_code=403, detail="Admin Full access required")
+    
+    user_id = promote_data.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+    
+    # Check if user exists and is admin
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user["user_type"] != "admin":
+        raise HTTPException(status_code=400, detail="User must be admin to promote")
+    
+    if user.get("is_admin_full", False):
+        raise HTTPException(status_code=400, detail="User is already Admin Full")
+    
+    # Check if there's already an Admin Full
+    existing_admin_full = await db.users.find_one({"user_type": "admin", "is_admin_full": True})
+    if existing_admin_full and existing_admin_full["id"] != current_user.id:
+        raise HTTPException(status_code=400, detail="There can only be one Admin Full")
+    
+    # Promote user to Admin Full
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"is_admin_full": True, "updated_at": datetime.utcnow()}}
+    )
+    
+    return {"message": f"User promoted to Admin Full successfully"}
+
+@api_router.delete("/admin/delete-admin/{user_id}")
+async def delete_admin_user(user_id: str, current_user: User = Depends(get_current_user)):
+    """Delete admin user - Only Admin Full can do this"""
+    if current_user.user_type != UserType.ADMIN or not current_user.is_admin_full:
+        raise HTTPException(status_code=403, detail="Admin Full access required")
+    
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    # Check if user exists and is admin
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user["user_type"] != "admin":
+        raise HTTPException(status_code=400, detail="Can only delete admin users")
+    
+    # Delete the admin user
+    result = await db.users.delete_one({"id": user_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Failed to delete user")
+    
+    return {"message": f"Admin user deleted successfully"}
+
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "Transport App Brasília MVP"}
