@@ -131,6 +131,13 @@ export default function DriverDashboard() {
   const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string>('');
   const [selectedPhotoUser, setSelectedPhotoUser] = useState<string>('');
 
+  // Driver Rating states (for rating passengers)
+  const [showDriverRatingModal, setShowDriverRatingModal] = useState(false);
+  const [completedTripForRating, setCompletedTripForRating] = useState<Trip | null>(null);
+  const [driverRating, setDriverRating] = useState(5);
+  const [driverRatingReason, setDriverRatingReason] = useState('');
+  const [ratedTripIds, setRatedTripIds] = useState<Set<string>>(new Set());
+
   // Radar animation
   const radarRotation = useRef(new Animated.Value(0)).current;
 
