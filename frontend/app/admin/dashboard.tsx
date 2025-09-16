@@ -1605,6 +1605,28 @@ export default function AdminDashboard() {
         </TouchableOpacity>
       </View>
 
+      {/* Admin Full Creation Alert - Only show if no Admin Full exists and current user is admin */}
+      {!hasAdminFull && currentUser?.user_type === 'admin' && (
+        <View style={styles.adminFullAlert}>
+          <View style={styles.adminFullAlertContent}>
+            <Ionicons name="warning" size={24} color="#FF9800" />
+            <View style={styles.adminFullAlertText}>
+              <Text style={styles.adminFullAlertTitle}>Sistema sem Administrador Full</Text>
+              <Text style={styles.adminFullAlertMessage}>
+                Para gerenciar completamente o sistema, é necessário definir um Administrador Full.
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.createAdminFullButton}
+              onPress={() => setShowCreateAdminFullModal(true)}
+            >
+              <Ionicons name="star" size={16} color="#fff" />
+              <Text style={styles.createAdminFullButtonText}>Tornar-me Admin Full</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       <View style={styles.mainContent}>
         {activeTab === 'stats' && renderStats()}
         {activeTab === 'users' && renderUsers()}
