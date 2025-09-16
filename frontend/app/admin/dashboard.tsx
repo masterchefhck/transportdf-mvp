@@ -1796,6 +1796,63 @@ export default function AdminDashboard() {
           onClose={() => setShowChatModal(false)}
         />
       </Modal>
+
+      {/* Create Admin Full Confirmation Modal */}
+      <Modal visible={showCreateAdminFullModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.createAdminFullModalContent}>
+            <View style={styles.createAdminFullModalHeader}>
+              <Ionicons name="star" size={32} color="#FFD700" />
+              <Text style={styles.createAdminFullModalTitle}>Tornar-se Admin Full</Text>
+            </View>
+            
+            <View style={styles.createAdminFullModalBody}>
+              <Text style={styles.createAdminFullModalText}>
+                Você está prestes a se tornar o <Text style={styles.highlightText}>Administrador Full</Text> do sistema.
+              </Text>
+              
+              <View style={styles.permissionsContainer}>
+                <Text style={styles.permissionsTitle}>Como Admin Full, você poderá:</Text>
+                <View style={styles.permissionItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                  <Text style={styles.permissionText}>Promover outros admins para Admin Full</Text>
+                </View>
+                <View style={styles.permissionItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                  <Text style={styles.permissionText}>Deletar outros administradores</Text>
+                </View>
+                <View style={styles.permissionItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                  <Text style={styles.permissionText}>Gerenciar todo o sistema</Text>
+                </View>
+              </View>
+              
+              <View style={styles.warningContainer}>
+                <Ionicons name="warning" size={20} color="#FF9800" />
+                <Text style={styles.warningText}>
+                  Esta ação é irreversível e apenas um Admin Full pode existir no sistema.
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.createAdminFullModalActions}>
+              <TouchableOpacity 
+                style={styles.cancelAdminFullButton}
+                onPress={() => setShowCreateAdminFullModal(false)}
+              >
+                <Text style={styles.cancelAdminFullButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.confirmAdminFullButton}
+                onPress={handleCreateAdminFull}
+              >
+                <Ionicons name="star" size={16} color="#fff" />
+                <Text style={styles.confirmAdminFullButtonText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
