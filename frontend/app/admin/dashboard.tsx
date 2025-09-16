@@ -766,6 +766,11 @@ export default function AdminDashboard() {
       
       showAlert('Sucesso', `${userTypeNames[userData.user_type]} criado com sucesso!`);
       setShowCreateUserModal(false);
+      // Reset form
+      setFormData({
+        name: '', age: '', email: '', phone: '', gender: '',
+        password: '', confirmPassword: '', cpf: ''
+      });
       onRefresh();
     } catch (error: any) {
       console.error('Error creating user:', error);
