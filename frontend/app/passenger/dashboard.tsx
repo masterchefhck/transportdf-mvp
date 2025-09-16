@@ -2089,9 +2089,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   ratingButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   // Rating display styles
   userRating: {
