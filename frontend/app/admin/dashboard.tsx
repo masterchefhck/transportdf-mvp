@@ -974,6 +974,64 @@ export default function AdminDashboard() {
                 </TouchableOpacity>
               )}
               
+              {/* Block/Unblock Actions - Based on user hierarchy */}
+              {(user.user_type === 'driver' || user.user_type === 'passenger') && (
+                <>
+                  {/* Admin Full and Managers can block/unblock drivers and passengers */}
+                  {(isAdminFull || currentUser?.user_type === 'manager') && !user.blocked_at && (
+                    <TouchableOpacity
+                      style={styles.blockButton}
+                      onPress={() => handleBlockUser(user)}
+                    >
+                      <Ionicons name="ban" size={16} color="#f44336" />
+                    </TouchableOpacity>
+                  )}
+                  
+                  {/* Only Admin Full can unblock users blocked by managers */}
+                  {user.blocked_at && isAdminFull && (
+                    <TouchableOpacity
+                      style={styles.unblockButton}
+                      onPress={() => handleUnblockUser(user)}
+                    >
+                      <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+              
+              {/* Support Collaborator Actions - Managers can block/unblock */}
+              {user.user_type === 'support_collaborator' && (
+                <>
+                  {(isAdminFull || currentUser?.user_type === 'manager') && !user.blocked_at && (
+                    <TouchableOpacity
+                      style={styles.blockButton}
+                      onPress={() => handleBlockUser(user)}
+                    >
+                      <Ionicons name="ban" size={16} color="#f44336" />
+                    </TouchableOpacity>
+                  )}
+                  
+                  {user.blocked_at && isAdminFull && (
+                    <TouchableOpacity
+                      style={styles.unblockButton}
+                      onPress={() => handleUnblockUser(user)}
+                    >
+                      <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+              
+              {/* Admin Full Promotion - Only for Admin Full users */}
+              {isAdminFull && user.user_type === 'admin' && !user.is_admin_full && (
+                <TouchableOpacity
+                  style={styles.promoteButton}
+                  onPress={() => handlePromoteToAdminFull(user)}
+                >
+                  <Ionicons name="star" size={16} color="#FFD700" />
+                </TouchableOpacity>
+              )}
+              
               {/* Delete Admin - Only Admin Full can delete other admins */}
               {isAdminFull && user.user_type === 'admin' && user.id !== currentUser?.id && (
                 <TouchableOpacity
