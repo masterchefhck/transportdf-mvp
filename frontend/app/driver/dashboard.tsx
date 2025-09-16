@@ -1263,6 +1263,85 @@ export default function DriverDashboard() {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* Driver Rating Modal - Rating passengers */}
+      <Modal visible={showDriverRatingModal} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.ratingModalContent}>
+            {/* Header */}
+            <View style={styles.ratingModalHeader}>
+              <Text style={styles.ratingModalTitle}>Avaliar Passageiro</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowDriverRatingModal(false);
+                  setDriverRating(5);
+                  setDriverRatingReason('');
+                  setCompletedTripForRating(null);
+                }}
+                style={styles.ratingModalCloseButton}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Trip info */}
+            {completedTripForRating && (
+              <View style={styles.tripInfoForRating}>
+                <Text style={styles.tripInfoTitle}>Viagem Concluída</Text>
+                <Text style={styles.tripInfoText}>
+                  Para: {completedTripForRating.destination_address}
+                </Text>
+                <Text style={styles.tripInfoPrice}>
+                  R$ {completedTripForRating.estimated_price?.toFixed(2) || '0.00'}
+                </Text>
+              </View>
+            )}
+
+            {/* Rating stars */}
+            <View style={styles.ratingStarsContainer}>
+              <Text style={styles.ratingLabel}>Como foi o passageiro?</Text>
+              <View style={styles.ratingStars}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setDriverRating(star)}
+                    style={styles.ratingStarButton}
+                  >
+                    <Ionicons
+                      name={star <= driverRating ? "star" : "star-outline"}
+                      size={40}
+                      color={star <= driverRating ? "#FF9800" : "#666"}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.ratingValue}>{driverRating} estrela{driverRating !== 1 ? 's' : ''}</Text>
+            </View>
+
+            {/* Rating reason */}
+            <View style={styles.ratingReasonContainer}>
+              <Text style={styles.ratingReasonLabel}>Comentário (opcional)</Text>
+              <TextInput
+                style={styles.ratingReasonInput}
+                placeholder="Deixe um comentário sobre o passageiro..."
+                placeholderTextColor="#999"
+                value={driverRatingReason}
+                onChangeText={setDriverRatingReason}
+                multiline
+                numberOfLines={3}
+                maxLength={200}
+              />
+            </View>
+
+            {/* Submit button */}
+            <View style={styles.ratingSubmitContainer}>
+              <TouchableOpacity style={styles.ratingSubmitButton} onPress={submitDriverRating}>
+                <Text style={styles.ratingSubmitButtonText}>Enviar Avaliação</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
