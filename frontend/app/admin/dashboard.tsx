@@ -1498,7 +1498,7 @@ export default function AdminDashboard() {
             <Ionicons name="settings" size={24} color="#fff" />
           </View>
           <View style={styles.userDetails}>
-            <Text style={styles.welcomeText}>Admin {user?.name || 'Usuário'}</Text>
+            <Text style={styles.welcomeText}>Admin {currentUser?.name || 'Usuário'}</Text>
             <Text style={styles.locationText}>Painel Administrativo</Text>
           </View>
         </View>
