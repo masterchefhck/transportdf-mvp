@@ -158,15 +158,6 @@ export default function Login() {
           >
             <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
           </TouchableOpacity>
-
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Não tem uma conta?</Text>
-            <TouchableOpacity onPress={goToRegister}>
-              <Text style={[styles.registerLink, { color: modeInfo.color }]}>
-                Cadastre-se
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
