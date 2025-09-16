@@ -98,6 +98,9 @@ class User(BaseModel):
     
     # Profile photo (base64 encoded)
     profile_photo: Optional[str] = None
+    
+    # Admin Full field
+    is_admin_full: Optional[bool] = False
 
 class LocationUpdate(BaseModel):
     latitude: float
