@@ -1827,6 +1827,75 @@ async def delete_admin_user(user_id: str, current_user: User = Depends(get_curre
     
     return {"message": f"Admin user deleted successfully"}
 
+@api_router.post("/trips/{trip_id}/rate-passenger")
+async def rate_passenger(
+    trip_id: str, 
+    rating_data: dict, 
+    current_user: User = Depends(get_current_user)
+):
+    """Driver rates passenger after trip completion"""
+    if current_user.user_type != UserType.DRIVER:
+        raise HTTPException(status_code=403, detail="Driver access required")
+    
+    rating = rating_data.get("rating")
+    reason = rating_data.get("reason")
+    
+    if not rating or rating < 1 or rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+    
+    # Find the trip
+    trip = await db.trips.find_one({"id": trip_id})
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    
+    # Check if driver owns this trip
+    if trip["driver_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your trip")
+    
+    # Check if trip is completed
+    if trip["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Trip must be completed to rate")
+    
+    # Check if already rated
+    if trip.get("driver_rating_given"):
+        raise HTTPException(status_code=400, detail="Trip already rated by driver")
+    
+    # Update trip with driver rating
+    await db.trips.update_one(
+        {"id": trip_id},
+        {
+            "$set": {
+                "driver_rating_stars": rating,
+                "driver_rating_reason": reason,
+                "driver_rating_given": True,
+                "driver_rated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Update passenger's average rating
+    passenger_id = trip["passenger_id"]
+    
+    # Get all completed trips where this passenger was rated
+    rated_trips = await db.trips.find({
+        "passenger_id": passenger_id,
+        "status": "completed",
+        "driver_rating_given": True,
+        "driver_rating_stars": {"$exists": True}
+    }).to_list(length=None)
+    
+    if rated_trips:
+        total_rating = sum(trip["driver_rating_stars"] for trip in rated_trips)
+        avg_rating = total_rating / len(rated_trips)
+        
+        # Update passenger's rating
+        await db.users.update_one(
+            {"id": passenger_id},
+            {"$set": {"rating": avg_rating}}
+        )
+    
+    return {"message": "Passenger rated successfully"}
+
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "Transport App Brasília MVP"}
