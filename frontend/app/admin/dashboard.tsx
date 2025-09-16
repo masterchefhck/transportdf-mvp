@@ -912,7 +912,9 @@ export default function AdminDashboard() {
                 <Text style={styles.userType}>
                   {user.user_type === 'driver' ? 'Motorista' : 
                    user.user_type === 'passenger' ? 'Passageiro' : 
-                   user.user_type === 'admin' ? (user.is_admin_full ? 'Admin Full' : 'Admin') : 'Admin'}
+                   user.user_type === 'admin' ? (user.is_admin_full ? 'Admin Full' : 'Administrador') :
+                   user.user_type === 'manager' ? 'Gerente' :
+                   user.user_type === 'support_collaborator' ? 'Colaborador de Suporte' : 'Usuário'}
                   {user.user_type === 'driver' && user.driver_status && (
                     <Text style={[styles.driverStatus, { color: user.driver_status === 'online' ? '#4CAF50' : '#666' }]}>
                       {' • '}{user.driver_status === 'online' ? 'Online' : 'Offline'}
