@@ -117,8 +117,14 @@ export default function AdminDashboard() {
   const [isAdminFull, setIsAdminFull] = useState<boolean>(false);
   const [hasAdminFull, setHasAdminFull] = useState<boolean>(false);
   const [showCreateAdminFullModal, setShowCreateAdminFullModal] = useState(false);
+  const [showTransferAdminFullModal, setShowTransferAdminFullModal] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [createUserType, setCreateUserType] = useState<'admin' | 'manager' | 'support_collaborator'>('admin');
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [admins, setAdmins] = useState<User[]>([]);
+  const [managers, setManagers] = useState<User[]>([]);
+  const [supportCollaborators, setSupportCollaborators] = useState<User[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
