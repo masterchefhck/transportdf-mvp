@@ -1984,10 +1984,13 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
+    width: '100%',
   },
   submitButtonText: {
     color: '#fff',
