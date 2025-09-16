@@ -105,6 +105,10 @@ class User(BaseModel):
     
     # Admin Full field
     is_admin_full: Optional[bool] = False
+    
+    # Additional fields for new user types
+    age: Optional[int] = None
+    gender: Optional[str] = None
 
 class LocationUpdate(BaseModel):
     latitude: float
