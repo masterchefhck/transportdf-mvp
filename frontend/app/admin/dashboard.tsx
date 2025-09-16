@@ -1730,7 +1730,7 @@ export default function AdminDashboard() {
       <Modal visible={showChatModal} animationType="slide" presentationStyle="pageSheet">
         <ChatComponent
           tripId={selectedChatId}
-          currentUserId={user?.id || ''}
+          currentUserId={currentUser?.id || ''}
           currentUserType="admin"
           onClose={() => setShowChatModal(false)}
         />
