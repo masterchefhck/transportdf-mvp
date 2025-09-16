@@ -210,6 +210,12 @@ export default function AdminDashboard() {
       setRatings(ratingsResponse.data);
       setChats(chatsResponse.data);
       
+      // Check if there's already an Admin Full in the system
+      const adminFullExists = usersResponse.data.some((user: User) => 
+        user.user_type === 'admin' && user.is_admin_full === true
+      );
+      setHasAdminFull(adminFullExists);
+      
       // Set passengers for messaging
       setPassengers(usersResponse.data.filter((user: User) => user.user_type === 'passenger'));
     } catch (error) {
