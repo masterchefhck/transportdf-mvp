@@ -74,6 +74,8 @@ class UserCreate(BaseModel):
     cpf: str
     user_type: UserType
     password: str
+    age: Optional[int] = None
+    gender: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: str
