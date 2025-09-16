@@ -41,6 +41,8 @@ class UserType(str, Enum):
     PASSENGER = "passenger"
     DRIVER = "driver"
     ADMIN = "admin"
+    MANAGER = "manager"
+    SUPPORT_COLLABORATOR = "support_collaborator"
 
 class TripStatus(str, Enum):
     REQUESTED = "requested"
