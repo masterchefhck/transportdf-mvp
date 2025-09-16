@@ -1997,6 +1997,245 @@ export default function AdminDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Create User Modal */}
+      <Modal visible={showCreateUserModal} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={styles.createUserModalContainer}>
+          <ScrollView contentContainerStyle={styles.createUserModalContent} showsVerticalScrollIndicator={true}>
+            {/* Header */}
+            <View style={styles.createUserModalHeader}>
+              <Text style={styles.createUserModalTitle}>
+                {createUserType === 'admin' ? 'Criar Administrador' :
+                 createUserType === 'manager' ? 'Criar Gerência' : 'Criar Colaborador de Suporte'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCreateUserModal(false);
+                  setFormData({
+                    name: '', age: '', email: '', phone: '', gender: '',
+                    password: '', confirmPassword: '', cpf: ''
+                  });
+                }}
+                style={styles.createUserModalCloseButton}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Form */}
+            <View style={styles.createUserForm}>
+              {/* Nome Completo */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Nome Completo *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Digite o nome completo"
+                  placeholderTextColor="#999"
+                  value={formData.name}
+                  onChangeText={(text) => setFormData({...formData, name: text})}
+                  autoCapitalize="words"
+                />
+              </View>
+
+              {/* Idade e Sexo */}
+              <View style={styles.inputRow}>
+                <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+                  <Text style={styles.inputLabel}>Idade *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Idade"
+                    placeholderTextColor="#999"
+                    value={formData.age}
+                    onChangeText={(text) => setFormData({...formData, age: text})}
+                    keyboardType="numeric"
+                    maxLength={2}
+                  />
+                </View>
+                
+                <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
+                  <Text style={styles.inputLabel}>Sexo *</Text>
+                  <View style={styles.genderContainer}>
+                    <TouchableOpacity
+                      style={[styles.genderButton, formData.gender === 'M' && styles.genderButtonSelected]}
+                      onPress={() => setFormData({...formData, gender: 'M'})}
+                    >
+                      <Text style={[styles.genderButtonText, formData.gender === 'M' && styles.genderButtonTextSelected]}>M</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.genderButton, formData.gender === 'F' && styles.genderButtonSelected]}
+                      onPress={() => setFormData({...formData, gender: 'F'})}
+                    >
+                      <Text style={[styles.genderButtonText, formData.gender === 'F' && styles.genderButtonTextSelected]}>F</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              {/* Email */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="email@exemplo.com"
+                  placeholderTextColor="#999"
+                  value={formData.email}
+                  onChangeText={(text) => setFormData({...formData, email: text.toLowerCase()})}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Telefone e CPF */}
+              <View style={styles.inputRow}>
+                <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+                  <Text style={styles.inputLabel}>Telefone *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="(61) 99999-9999"
+                    placeholderTextColor="#999"
+                    value={formData.phone}
+                    onChangeText={(text) => setFormData({...formData, phone: text})}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+                
+                <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
+                  <Text style={styles.inputLabel}>CPF *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="000.000.000-00"
+                    placeholderTextColor="#999"
+                    value={formData.cpf}
+                    onChangeText={(text) => setFormData({...formData, cpf: text})}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              {/* Senha */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Senha *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Mínimo 6 caracteres"
+                  placeholderTextColor="#999"
+                  value={formData.password}
+                  onChangeText={(text) => setFormData({...formData, password: text})}
+                  secureTextEntry
+                />
+              </View>
+
+              {/* Confirmar Senha */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Confirmar Senha *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Digite a senha novamente"
+                  placeholderTextColor="#999"
+                  value={formData.confirmPassword}
+                  onChangeText={(text) => setFormData({...formData, confirmPassword: text})}
+                  secureTextEntry
+                />
+              </View>
+
+              {/* Limits Info */}
+              <View style={styles.limitsInfo}>
+                <Ionicons name="information-circle" size={16} color="#007AFF" />
+                <Text style={styles.limitsInfoText}>
+                  {createUserType === 'manager' ? `Máximo de 4 gerentes (${managers.length}/4)` :
+                   createUserType === 'support_collaborator' ? `Máximo de 30 colaboradores (${supportCollaborators.length}/30)` :
+                   'Administradores ilimitados'}
+                </Text>
+              </View>
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={styles.createUserSubmitButton}
+                onPress={() => {
+                  // Validation
+                  if (!formData.name || !formData.age || !formData.email || !formData.phone || 
+                      !formData.gender || !formData.password || !formData.confirmPassword || !formData.cpf) {
+                    showAlert('Erro', 'Todos os campos são obrigatórios.');
+                    return;
+                  }
+                  
+                  if (formData.password !== formData.confirmPassword) {
+                    showAlert('Erro', 'As senhas não coincidem.');
+                    return;
+                  }
+                  
+                  if (formData.password.length < 6) {
+                    showAlert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+                    return;
+                  }
+
+                  handleCreateUser({
+                    name: formData.name,
+                    age: parseInt(formData.age),
+                    email: formData.email,
+                    phone: formData.phone,
+                    gender: formData.gender,
+                    password: formData.password,
+                    cpf: formData.cpf,
+                    user_type: createUserType
+                  });
+                }}
+              >
+                <Ionicons name="person-add" size={16} color="#fff" />
+                <Text style={styles.createUserSubmitButtonText}>
+                  {createUserType === 'admin' ? 'Criar Administrador' :
+                   createUserType === 'manager' ? 'Criar Gerente' : 'Criar Colaborador'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Transfer Admin Full Modal */}
+      <Modal visible={showTransferAdminFullModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.transferModalContent}>
+            <View style={styles.transferModalHeader}>
+              <Ionicons name="swap-horizontal" size={32} color="#FF9800" />
+              <Text style={styles.transferModalTitle}>Transferir Admin Full</Text>
+            </View>
+            
+            <Text style={styles.transferModalDescription}>
+              Selecione um administrador para transferir o status de Admin Full:
+            </Text>
+            
+            <ScrollView style={styles.adminsList} showsVerticalScrollIndicator={true}>
+              {admins.filter(admin => admin.id !== currentUser?.id && !admin.is_admin_full).map((admin) => (
+                <TouchableOpacity
+                  key={admin.id}
+                  style={styles.adminSelectItem}
+                  onPress={() => handleTransferAdminFull(admin.id)}
+                >
+                  <View style={styles.adminSelectInfo}>
+                    <Text style={styles.adminSelectName}>{admin.name}</Text>
+                    <Text style={styles.adminSelectEmail}>{admin.email}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#666" />
+                </TouchableOpacity>
+              ))}
+              
+              {admins.filter(admin => admin.id !== currentUser?.id && !admin.is_admin_full).length === 0 && (
+                <View style={styles.noAdminsContainer}>
+                  <Text style={styles.noAdminsText}>Nenhum administrador disponível para transferência.</Text>
+                </View>
+              )}
+            </ScrollView>
+            
+            <TouchableOpacity
+              style={styles.transferCancelButton}
+              onPress={() => setShowTransferAdminFullModal(false)}
+            >
+              <Text style={styles.transferCancelButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
