@@ -594,6 +594,35 @@ export default function DriverDashboard() {
     }
   };
 
+  const submitDriverRating = async () => {
+    if (!completedTripForRating) return;
+
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      
+      await axios.post(
+        `${API_URL}/api/trips/${completedTripForRating.id}/rate-passenger`,
+        {
+          rating: driverRating,
+          reason: driverRatingReason.trim() || null,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      showAlert('Sucesso', `Obrigado pela avaliação!`);
+      setShowDriverRatingModal(false);
+      setDriverRating(5);
+      setDriverRatingReason('');
+      setCompletedTripForRating(null);
+      
+      // Refresh trips to update ratings
+      checkCurrentTrip();
+    } catch (error) {
+      console.error('Error submitting driver rating:', error);
+      showAlert('Erro', 'Erro ao enviar avaliação');
+    }
+  };
+
   const onRefresh = () => {
     setRefreshing(true);
     Promise.all([loadAvailableTrips(), loadMyReports()]).finally(() => setRefreshing(false));
