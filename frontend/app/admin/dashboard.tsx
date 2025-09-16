@@ -2250,6 +2250,31 @@ export default function AdminDashboard() {
                     return;
                   }
 
+                  if (!formData.email.includes('@') || !formData.email.includes('.')) {
+                    showAlert('Erro', 'Email inválido.');
+                    return;
+                  }
+
+                  const age = parseInt(formData.age);
+                  if (isNaN(age) || age < 18 || age > 80) {
+                    showAlert('Erro', 'Idade deve estar entre 18 e 80 anos.');
+                    return;
+                  }
+
+                  // CPF validation (basic)
+                  const cpfDigits = formData.cpf.replace(/\D/g, '');
+                  if (cpfDigits.length !== 11) {
+                    showAlert('Erro', 'CPF deve ter 11 dígitos.');
+                    return;
+                  }
+
+                  // Phone validation (basic)
+                  const phoneDigits = formData.phone.replace(/\D/g, '');
+                  if (phoneDigits.length < 10) {
+                    showAlert('Erro', 'Telefone deve ter pelo menos 10 dígitos.');
+                    return;
+                  }
+
                   handleCreateUser({
                     name: formData.name,
                     age: parseInt(formData.age),
