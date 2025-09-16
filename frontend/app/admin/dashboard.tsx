@@ -651,6 +651,39 @@ export default function AdminDashboard() {
     );
   };
 
+  const handleCreateAdminFull = async () => {
+    if (!currentUser) return;
+
+    showConfirm(
+      'Tornar-se Admin Full',
+      `Tem certeza que deseja se tornar o Administrador Full?\n\nComo Admin Full, você terá permissões totais incluindo:\n• Promover outros admins para Admin Full\n• Deletar outros administradores\n• Gerenciar todo o sistema\n\nEsta ação é irreversível e só pode haver um Admin Full no sistema.`,
+      async () => {
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/promote-to-full`,
+            { user_id: currentUser.id },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          // Update current user to Admin Full
+          const updatedUser = { ...currentUser, is_admin_full: true };
+          setCurrentUser(updatedUser);
+          setIsAdminFull(true);
+          setHasAdminFull(true);
+          await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+          
+          showAlert('Sucesso', 'Você agora é o Administrador Full do sistema!');
+          setShowCreateAdminFullModal(false);
+          onRefresh();
+        } catch (error) {
+          console.error('Error creating admin full:', error);
+          showAlert('Erro', 'Erro ao criar Administrador Full');
+        }
+      }
+    );
+  };
+
   const renderStats = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
