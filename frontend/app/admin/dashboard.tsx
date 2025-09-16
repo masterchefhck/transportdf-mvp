@@ -120,6 +120,19 @@ export default function AdminDashboard() {
   const [showTransferAdminFullModal, setShowTransferAdminFullModal] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [createUserType, setCreateUserType] = useState<'admin' | 'manager' | 'support_collaborator'>('admin');
+  
+  // Form states for create user modal
+  const [formData, setFormData] = useState({
+    name: '',
+    age: '',
+    email: '',
+    phone: '',
+    gender: '',
+    password: '',
+    confirmPassword: '',
+    cpf: ''
+  });
+  
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [admins, setAdmins] = useState<User[]>([]);
