@@ -1910,6 +1910,120 @@ async def rate_passenger(
     
     return {"message": "Passenger rated successfully"}
 
+@api_router.post("/admin/transfer-admin-full")
+async def transfer_admin_full(transfer_data: dict, current_user: User = Depends(get_current_user)):
+    """Transfer Admin Full status to another admin - Only Admin Full can do this"""
+    if current_user.user_type != UserType.ADMIN or not current_user.is_admin_full:
+        raise HTTPException(status_code=403, detail="Admin Full access required")
+    
+    target_user_id = transfer_data.get("target_user_id")
+    if not target_user_id:
+        raise HTTPException(status_code=400, detail="target_user_id is required")
+    
+    if target_user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot transfer to yourself")
+    
+    # Check if target user exists and is admin
+    target_user = await db.users.find_one({"id": target_user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Target user not found")
+    
+    if target_user["user_type"] != "admin":
+        raise HTTPException(status_code=400, detail="Target user must be admin")
+    
+    if target_user.get("is_admin_full", False):
+        raise HTTPException(status_code=400, detail="Target user is already Admin Full")
+    
+    # Transfer Admin Full status
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$set": {"is_admin_full": False, "updated_at": datetime.utcnow()}}
+    )
+    
+    await db.users.update_one(
+        {"id": target_user_id},
+        {"$set": {"is_admin_full": True, "updated_at": datetime.utcnow()}}
+    )
+    
+    return {"message": f"Admin Full status transferred successfully"}
+
+@api_router.post("/admin/create-user")
+async def create_admin_user(user_data: dict, current_user: User = Depends(get_current_user)):
+    """Create admin, manager, or support collaborator - Only Admin Full can do this"""
+    if current_user.user_type != UserType.ADMIN or not current_user.is_admin_full:
+        raise HTTPException(status_code=403, detail="Admin Full access required")
+    
+    # Extract data
+    name = user_data.get("name", "").strip()
+    email = user_data.get("email", "").strip().lower()
+    phone = user_data.get("phone", "").strip()
+    cpf = user_data.get("cpf", "").strip()
+    user_type = user_data.get("user_type", "").strip()
+    password = user_data.get("password", "").strip()
+    age = user_data.get("age")
+    gender = user_data.get("gender", "").strip()
+    
+    # Validation
+    if not all([name, email, phone, cpf, user_type, password]):
+        raise HTTPException(status_code=400, detail="All required fields must be provided")
+    
+    if user_type not in ["admin", "manager", "support_collaborator"]:
+        raise HTTPException(status_code=400, detail="Invalid user type")
+    
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Check limits
+    if user_type == "manager":
+        manager_count = await db.users.count_documents({"user_type": "manager", "is_active": True})
+        if manager_count >= 4:
+            raise HTTPException(status_code=400, detail="Maximum of 4 managers allowed")
+    
+    if user_type == "support_collaborator":
+        support_count = await db.users.count_documents({"user_type": "support_collaborator", "is_active": True})
+        if support_count >= 30:
+            raise HTTPException(status_code=400, detail="Maximum of 30 support collaborators allowed")
+    
+    # Check if email already exists
+    existing_user = await db.users.find_one({"email": email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Check if CPF already exists
+    existing_cpf = await db.users.find_one({"cpf": cpf})
+    if existing_cpf:
+        raise HTTPException(status_code=400, detail="CPF already registered")
+    
+    # Create user
+    user_id = str(uuid4())
+    hashed_password = pwd_context.hash(password)
+    
+    new_user = {
+        "id": user_id,
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "cpf": cpf,
+        "user_type": user_type,
+        "password": hashed_password,
+        "is_active": True,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "age": age,
+        "gender": gender,
+        "is_admin_full": False
+    }
+    
+    await db.users.insert_one(new_user)
+    
+    user_type_names = {
+        "admin": "Administrador",
+        "manager": "Gerente", 
+        "support_collaborator": "Colaborador de Suporte"
+    }
+    
+    return {"message": f"{user_type_names[user_type]} criado com sucesso"}
+
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "Transport App Brasília MVP"}
