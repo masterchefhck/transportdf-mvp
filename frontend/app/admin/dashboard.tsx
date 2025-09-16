@@ -220,10 +220,17 @@ export default function AdminDashboard() {
       setRatings(ratingsResponse.data);
       setChats(chatsResponse.data);
       
+      // Categorize users by type
+      const adminUsers = usersResponse.data.filter((user: User) => user.user_type === 'admin');
+      const managerUsers = usersResponse.data.filter((user: User) => user.user_type === 'manager');
+      const supportUsers = usersResponse.data.filter((user: User) => user.user_type === 'support_collaborator');
+      
+      setAdmins(adminUsers);
+      setManagers(managerUsers);
+      setSupportCollaborators(supportUsers);
+      
       // Check if there's already an Admin Full in the system
-      const adminFullExists = usersResponse.data.some((user: User) => 
-        user.user_type === 'admin' && user.is_admin_full === true
-      );
+      const adminFullExists = adminUsers.some((user: User) => user.is_admin_full === true);
       setHasAdminFull(adminFullExists);
       
       // Set passengers for messaging
