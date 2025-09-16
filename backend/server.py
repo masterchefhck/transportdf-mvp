@@ -1791,8 +1791,16 @@ async def promote_to_admin_full(promote_data: dict, current_user: User = Depends
     
     # Check if there's already an Admin Full
     existing_admin_full = await db.users.find_one({"user_type": "admin", "is_admin_full": True})
-    if existing_admin_full and existing_admin_full["id"] != current_user.id:
+    if existing_admin_full and existing_admin_full["id"] != user_id:
         raise HTTPException(status_code=400, detail="There can only be one Admin Full")
+    
+    # Allow self-promotion if user is promoting themselves and no Admin Full exists
+    if user_id == current_user.id and not existing_admin_full:
+        # Self-promotion to Admin Full when none exists is allowed
+        pass
+    elif current_user.user_type != UserType.ADMIN or not current_user.is_admin_full:
+        # For promoting others, must be Admin Full
+        raise HTTPException(status_code=403, detail="Admin Full access required")
     
     # Promote user to Admin Full
     await db.users.update_one(
