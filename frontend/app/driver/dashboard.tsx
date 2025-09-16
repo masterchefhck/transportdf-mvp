@@ -2067,4 +2067,114 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
   },
+  // Driver Rating Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  ratingModalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  ratingModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  ratingModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  ratingModalCloseButton: {
+    padding: 8,
+  },
+  tripInfoForRating: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  tripInfoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  tripInfoText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  tripInfoPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  ratingStarsContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  ratingLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  ratingStarButton: {
+    padding: 4,
+  },
+  ratingValue: {
+    fontSize: 16,
+    color: '#FF9800',
+    fontWeight: 'bold',
+  },
+  ratingReasonContainer: {
+    marginBottom: 24,
+  },
+  ratingReasonLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  ratingReasonInput: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
+    textAlignVertical: 'top',
+    minHeight: 80,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  ratingSubmitContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  ratingSubmitButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  ratingSubmitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
