@@ -701,6 +701,66 @@ export default function AdminDashboard() {
     );
   };
 
+  const handleTransferAdminFull = async (targetUserId: string) => {
+    if (!targetUserId) return;
+
+    const targetUser = admins.find(admin => admin.id === targetUserId);
+    if (!targetUser) return;
+
+    showConfirm(
+      'Transferir Admin Full',
+      `Tem certeza que deseja transferir seu status de Administrador Full para ${targetUser.name}?\n\nVocê perderá todas as permissões de Admin Full e ${targetUser.name} se tornará o novo Administrador Full do sistema.\n\nEsta ação é irreversível.`,
+      async () => {
+        try {
+          const token = await AsyncStorage.getItem('access_token');
+          await axios.post(
+            `${API_URL}/api/admin/transfer-admin-full`,
+            { target_user_id: targetUserId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          // Update current user status
+          const updatedUser = { ...currentUser!, is_admin_full: false };
+          setCurrentUser(updatedUser);
+          setIsAdminFull(false);
+          await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+          
+          showAlert('Sucesso', `Status de Admin Full transferido para ${targetUser.name} com sucesso!`);
+          setShowTransferAdminFullModal(false);
+          onRefresh();
+        } catch (error) {
+          console.error('Error transferring admin full:', error);
+          showAlert('Erro', 'Erro ao transferir status de Admin Full');
+        }
+      }
+    );
+  };
+
+  const handleCreateUser = async (userData: any) => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/admin/create-user`,
+        userData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const userTypeNames = {
+        admin: 'Administrador',
+        manager: 'Gerente',
+        support_collaborator: 'Colaborador de Suporte'
+      };
+      
+      showAlert('Sucesso', `${userTypeNames[userData.user_type]} criado com sucesso!`);
+      setShowCreateUserModal(false);
+      onRefresh();
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      const errorMessage = error.response?.data?.detail || 'Erro ao criar usuário';
+      showAlert('Erro', errorMessage);
+    }
+  };
+
   const renderStats = () => (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
