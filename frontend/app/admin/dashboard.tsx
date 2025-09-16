@@ -68,6 +68,10 @@ interface User {
   block_reason?: string;
   profile_photo?: string;
   is_admin_full?: boolean;
+  age?: number;
+  gender?: string;
+  phone?: string;
+  cpf?: string;
 }
 
 interface Trip {
